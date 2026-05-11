@@ -207,7 +207,7 @@ async function remove(r: any) {
 
 <template>
   <div class="djawal-container djawal-section">
-    <header class="page-head">
+    <div style="margin-bottom:16px"><a href="/admin" style="color:#1B4965;font-weight:600;text-decoration:none">Retour admin</a></div><header class="page-head">
       <div>
         <div class="eyebrow">Administration · Master Data</div>
         <h1>{{ config.icon }} {{ config.label }}</h1>
