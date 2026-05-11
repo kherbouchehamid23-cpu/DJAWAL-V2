@@ -73,7 +73,7 @@ Tout est appliqué par Row Level Security PostgreSQL — voir `supabase/migratio
 
 ## 5. Sprint en cours
 
-**Sprint 1 — Fondations** ✅ (ce sprint)
+**Sprint 1 — Fondations** ✅
 - Repo Git + scaffolding Vue+Vite+Vuetify
 - Migrations SQL initiales (12 tables)
 - Design system avec 3 thèmes culturels
@@ -81,13 +81,23 @@ Tout est appliqué par Row Level Security PostgreSQL — voir `supabase/migratio
 - CI GitHub Actions
 - Config Vercel + .env.example
 
-**Sprint 2 — Auth & rôles** (suivant)
-- Pages signin/signup
-- OAuth Google
-- Formulaire KYC pour les guides
-- Dashboard Super Admin de validation KYC
-- RLS policies appliquées et testées
-- MFA pour rôles privilégiés
+**Sprint 2 — Auth & rôles + KYC** ✅ (ce sprint)
+- Migration `0002_storage_kyc.sql` : buckets + policies + table `kyc_documents`
+- Store Pinia auth complet (signin, signup, OAuth Google, magic link, reset password)
+- Router guards (requiresAuth + requiresRole)
+- Pages auth : Login, Signup (avec choix de rôle), Callback OAuth, ConfirmEmail, ResetPassword
+- Composant `AuthCard` avec layout split-view culturel
+- Page `MyAccountPage` pour les voyageurs
+- Page `GuideDashboardPage` + `KycPage` pour les guides
+- Dashboard `AdminDashboardPage` + `KycValidationPage` pour le Super Admin
+- Initialisation auth au démarrage dans `main.ts`
+
+**Sprint 3 — Master Data** (suivant)
+- CRUD destinations / hotels / sites / restaurants
+- Upload images via Supabase Storage
+- Géocodage automatique via Nominatim
+- Triggers pour calculer les embeddings
+- Seed initial ~50 ressources
 
 ## 6. Commandes utiles
 

@@ -5,6 +5,7 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
+import { useAuthStore } from './stores/auth'
 
 // Styles globaux : ordre important — base avant thèmes avant overrides
 import './styles/base.css'
@@ -16,7 +17,6 @@ import './styles/patterns.css'
 // PWA — enregistrement du service worker avec mise à jour silencieuse
 const updateSW = registerSW({
   onNeedRefresh() {
-    // Le hook peut afficher une snackbar Vuetify pour proposer le reload
     console.info('[PWA] Mise à jour disponible — rechargement au prochain navigate')
   },
   onOfflineReady() {
@@ -25,9 +25,16 @@ const updateSW = registerSW({
 })
 
 const app = createApp(App)
-app.use(createPinia())
-app.use(router)
+const pinia = createPinia()
+
+app.use(pinia)
 app.use(vuetify)
-app.mount('#app')
+
+// Initialiser l'authentification AVANT de monter le router
+const authStore = useAuthStore()
+authStore.initialize().finally(() => {
+  app.use(router)
+  app.mount('#app')
+})
 
 export { updateSW }

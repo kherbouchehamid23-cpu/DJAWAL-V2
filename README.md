@@ -136,6 +136,3 @@ Propriétaire — © 2026 Djawal. Tous droits réservés.
 ---
 
 Conçu en Algérie · صُنع في الجزائر 🇩🇿
-
-
-<!-- Deployment trigger: 2026-05-11 -->
