@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import AIAssistant from '@/components/AIAssistant.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -33,6 +34,7 @@ onMounted(() => {
       </router-view>
     </v-main>
     <AppFooter />
+    <AIAssistant />
   </v-app>
 </template>
 

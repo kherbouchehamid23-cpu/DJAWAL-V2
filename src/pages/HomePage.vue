@@ -46,8 +46,8 @@ function tryTheme(theme: CulturalTheme) {
             Découvrir un voyage
             <v-icon end>mdi-arrow-right</v-icon>
           </v-btn>
-          <v-btn variant="outlined" color="primary" size="x-large" rounded="md">
-            Composer avec l'IA
+          <v-btn variant="outlined" color="primary" size="x-large" rounded="md" to="/composer">
+            ✨ Composer avec l'IA
           </v-btn>
         </div>
 

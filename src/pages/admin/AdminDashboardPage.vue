@@ -111,11 +111,11 @@ onMounted(async () => {
           <h3>Souvenirs voyageurs</h3>
           <p>Approuver les témoignages avant publication sur le mur public.</p>
         </router-link>
-        <div class="module-card disabled">
+        <router-link to="/admin/ia-logs" class="module-card">
           <div class="module-icon">🤖</div>
-          <h3>Logs RAG</h3>
-          <p>Sprint 6 — audit des conversations IA et détection d'hallucinations.</p>
-        </div>
+          <h3>Logs RAG & Embeddings</h3>
+          <p>Audit des conversations IA, embeddings vectoriels, anti-hallucination.</p>
+        </router-link>
       </div>
     </section>
   </div>

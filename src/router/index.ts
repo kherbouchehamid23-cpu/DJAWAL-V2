@@ -45,6 +45,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/MemoriesPage.vue'),
     meta: { culturalTheme: 'mauresque', title: 'Souvenirs — Djawal' }
   },
+  {
+    path: '/composer',
+    name: 'composer',
+    component: () => import('@/pages/ComposerPage.vue'),
+    meta: { culturalTheme: 'mauresque', title: 'Composer avec l\'IA — Djawal' }
+  },
 
   // === Authentification ===
   {
@@ -174,6 +180,12 @@ const routes: RouteRecordRaw[] = [
     name: 'admin-memories',
     component: () => import('@/pages/admin/MemoriesAdminPage.vue'),
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Modération souvenirs — Admin' }
+  },
+  {
+    path: '/admin/ia-logs',
+    name: 'admin-ai-logs',
+    component: () => import('@/pages/admin/AILogsPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Logs IA — Admin' }
   },
 
   // === 404 ===

@@ -10,9 +10,7 @@ const drawer = ref(false)
 
 const navItems = [
   { to: '/voyages', label: 'Voyages' },
-  { to: '/voyages?type=hotel', label: 'Hôtels' },
-  { to: '/voyages?type=restaurant', label: 'Restaurants' },
-  { to: '/voyages?type=site', label: 'Sites' },
+  { to: '/composer', label: '✨ IA' },
   { to: '/temoignages', label: 'Souvenirs' },
   { to: '/about', label: 'À propos' }
 ]
