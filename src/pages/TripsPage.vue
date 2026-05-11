@@ -16,7 +16,18 @@ interface Destination {
   coordinates: any
 }
 
+interface PublishedTrip {
+  id: string
+  title: string
+  duration_days: number
+  price_da: number
+  cover_image_url: string | null
+  destinations?: { name: string; cultural_theme: string } | null
+  profiles?: { display_name: string; role: string } | null
+}
+
 const destinations = ref<Destination[]>([])
+const publishedTrips = ref<PublishedTrip[]>([])
 const loading = ref(true)
 const searchQuery = ref('')
 const themeFilter = ref<'all' | 'saharien' | 'mauresque' | 'aures'>('all')
@@ -59,13 +70,26 @@ const mapMarkers = computed<MapMarker[]>(() => {
 
 onMounted(async () => {
   loading.value = true
-  const { data, error } = await supabase
-    .from('destinations')
-    .select('id, name, name_ar, slug, wilaya, cultural_theme, description, hero_image_url, coordinates')
-    .order('name')
-  if (!error && data) destinations.value = data as Destination[]
+  const [destRes, tripsRes] = await Promise.all([
+    supabase
+      .from('destinations')
+      .select('id, name, name_ar, slug, wilaya, cultural_theme, description, hero_image_url, coordinates')
+      .order('name'),
+    supabase
+      .from('trips')
+      .select('id, title, duration_days, price_da, cover_image_url, destinations(name, cultural_theme), profiles!trips_created_by_fkey(display_name, role)')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(8)
+  ])
+  if (!destRes.error && destRes.data) destinations.value = destRes.data as Destination[]
+  if (!tripsRes.error && tripsRes.data) publishedTrips.value = tripsRes.data as any[]
   loading.value = false
 })
+
+function fmtPrice(p: number) {
+  return new Intl.NumberFormat('fr-DZ').format(p) + ' DA'
+}
 
 function themeBadgeColor(theme: string) {
   return themes.find(t => t.value === theme)?.color || 'var(--c-primaire)'
@@ -116,6 +140,39 @@ function themeLabel(theme: string) {
             {{ t.label }}
           </button>
         </div>
+      </div>
+    </section>
+
+    <!-- VOYAGES PROPOSÉS PAR NOS GUIDES -->
+    <section v-if="publishedTrips.length > 0" class="djawal-container djawal-section trips-showcase">
+      <div class="showcase-head">
+        <div>
+          <div class="section-eyebrow">Parcours signés</div>
+          <h2>Voyages proposés par nos guides</h2>
+        </div>
+      </div>
+      <div class="trip-strip">
+        <router-link
+          v-for="trip in publishedTrips"
+          :key="trip.id"
+          :to="`/voyages/${trip.id}`"
+          class="trip-strip-card"
+        >
+          <div
+            class="trip-strip-cover"
+            :style="trip.cover_image_url ? `background-image: url(${trip.cover_image_url})` : ''"
+          >
+            <span v-if="trip.profiles?.role === 'guide_senior'" class="senior-badge">⭐ Senior</span>
+          </div>
+          <div class="trip-strip-body">
+            <div class="trip-strip-dest">📍 {{ trip.destinations?.name }}</div>
+            <h4>{{ trip.title }}</h4>
+            <div class="trip-strip-meta">
+              {{ trip.duration_days }}j · {{ fmtPrice(trip.price_da) }}
+            </div>
+            <div class="trip-strip-author">par {{ trip.profiles?.display_name }}</div>
+          </div>
+        </router-link>
       </div>
     </section>
 
@@ -362,6 +419,94 @@ function themeLabel(theme: string) {
 }
 
 .loading { text-align: center; padding: var(--space-8); color: var(--c-texte-doux); }
+
+/* === SHOWCASE VOYAGES === */
+.trips-showcase {
+  background: var(--c-fond-chaud);
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-radius: var(--r-lg);
+  margin-top: var(--space-4);
+}
+.section-eyebrow {
+  color: var(--c-accent-fort);
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.showcase-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: var(--space-4);
+}
+.showcase-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  color: var(--c-primaire-profond);
+}
+.trip-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+.trip-strip-card {
+  background: var(--c-surface);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--ombre-douce);
+  transition: var(--t-base);
+  display: flex;
+  flex-direction: column;
+}
+.trip-strip-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ombre-elevee);
+}
+.trip-strip-cover {
+  height: 140px;
+  background: linear-gradient(135deg, #D4A04F, #C97050);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.senior-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(45, 90, 61, 0.95);
+  color: var(--c-fond);
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.trip-strip-body { padding: var(--space-3); flex: 1; display: flex; flex-direction: column; }
+.trip-strip-dest {
+  font-size: 11px;
+  color: var(--c-texte-doux);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.trip-strip-body h4 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--c-primaire-profond);
+  margin-bottom: 4px;
+  line-height: 1.2;
+  flex: 1;
+}
+.trip-strip-meta {
+  font-size: 13px;
+  color: var(--c-texte);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.trip-strip-author {
+  font-size: 11px;
+  color: var(--c-accent-fort);
+  font-style: italic;
+}
 
 @media (max-width: 980px) {
   .split-view { grid-template-columns: 1fr; }

@@ -45,6 +45,12 @@ onMounted(async () => {
         <span>KYC en attente</span>
       </router-link>
 
+      <router-link to="/admin/moderation" class="stat-card alert">
+        <div class="stat-icon">📝</div>
+        <strong>{{ loading ? '—' : stats.pendingTrips }}</strong>
+        <span>Parcours à modérer</span>
+      </router-link>
+
       <div class="stat-card">
         <div class="stat-icon">🎒</div>
         <strong>{{ loading ? '—' : stats.totalGuides }}</strong>
@@ -55,12 +61,6 @@ onMounted(async () => {
         <div class="stat-icon">🧳</div>
         <strong>{{ loading ? '—' : stats.totalVoyageurs }}</strong>
         <span>Voyageurs</span>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon">📝</div>
-        <strong>{{ loading ? '—' : stats.pendingTrips }}</strong>
-        <span>Parcours à modérer</span>
       </div>
     </div>
 
@@ -92,11 +92,11 @@ onMounted(async () => {
           <h3>Restaurants</h3>
           <p>Tables, brasseries et auberges traditionnelles.</p>
         </router-link>
-        <div class="module-card disabled">
+        <router-link to="/admin/moderation" class="module-card">
           <div class="module-icon">✓</div>
           <h3>Modération parcours</h3>
-          <p>Sprint 5 — valider les parcours soumis par les guides juniors.</p>
-        </div>
+          <p>Valider ou refuser les parcours soumis par les guides juniors.</p>
+        </router-link>
         <div class="module-card disabled">
           <div class="module-icon">🤖</div>
           <h3>Logs RAG</h3>

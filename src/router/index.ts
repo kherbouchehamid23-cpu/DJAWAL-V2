@@ -20,6 +20,13 @@ const routes: RouteRecordRaw[] = [
     meta: { culturalTheme: 'mauresque', title: 'Voyages — Djawal' }
   },
   {
+    path: '/voyages/:id',
+    name: 'trip-detail',
+    component: () => import('@/pages/trips/TripDetailPage.vue'),
+    props: true,
+    meta: { title: 'Voyage — Djawal' }
+  },
+  {
     path: '/destination/:id',
     name: 'destination',
     component: () => import('@/pages/DestinationPage.vue'),
@@ -86,6 +93,25 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/guide/KycPage.vue'),
     meta: { requiresAuth: true, requiresRole: ['guide_senior', 'guide_junior'], title: 'Vérification KYC — Djawal' }
   },
+  {
+    path: '/espace-guide/voyages',
+    name: 'guide-trips',
+    component: () => import('@/pages/guide/MyTripsPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['guide_senior', 'guide_junior', 'super_admin'], title: 'Mes voyages — Djawal' }
+  },
+  {
+    path: '/espace-guide/voyages/nouveau',
+    name: 'guide-trip-new',
+    component: () => import('@/pages/guide/TripBuilderPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['guide_senior', 'guide_junior', 'super_admin'], title: 'Nouveau voyage — Djawal' }
+  },
+  {
+    path: '/espace-guide/voyages/:id',
+    name: 'guide-trip-edit',
+    component: () => import('@/pages/guide/TripBuilderPage.vue'),
+    props: true,
+    meta: { requiresAuth: true, requiresRole: ['guide_senior', 'guide_junior', 'super_admin'], title: 'Modifier voyage — Djawal' }
+  },
 
   // === Administration (Super Admin uniquement) ===
   {
@@ -112,6 +138,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/admin/ResourcesAdminPage.vue'),
     props: true,
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Master Data — Admin' }
+  },
+  {
+    path: '/admin/moderation',
+    name: 'admin-trip-moderation',
+    component: () => import('@/pages/admin/TripModerationPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Modération voyages — Admin' }
   },
 
   // === 404 ===
