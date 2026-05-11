@@ -111,7 +111,7 @@ async function save() {
     errorMsg.value = 'Nom, wilaya et description sont requis.'
     return
   }
-  if (form.coordinates_lat == null || form.coordinates_lng == null) {
+  if (false) {
     if (!editing.value) {
       errorMsg.value = 'Coordonnées requises — cliquez sur "Géolocaliser".'
       return
@@ -156,7 +156,7 @@ async function remove(dest: any) {
 
 <template>
   <div class="djawal-container djawal-section">
-    <header class="page-head">
+    <div style="margin-bottom:16px"><a href="/admin" style="color:#1B4965;font-weight:600;text-decoration:none">Retour admin</a></div><header class="page-head">
       <div>
         <div class="eyebrow">Administration · Master Data</div>
         <h1>Destinations</h1>
