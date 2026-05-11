@@ -72,11 +72,26 @@ onMounted(async () => {
           <h3>Validation KYC</h3>
           <p>Examiner les dossiers des nouveaux guides et les approuver ou rejeter.</p>
         </router-link>
-        <div class="module-card disabled">
+        <router-link to="/admin/destinations" class="module-card">
+          <div class="module-icon">🗺️</div>
+          <h3>Destinations</h3>
+          <p>Gérer les villes/wilayas et leur thème culturel pour le miroir dynamique.</p>
+        </router-link>
+        <router-link to="/admin/resources/hotels" class="module-card">
           <div class="module-icon">🏨</div>
-          <h3>Master Data</h3>
-          <p>Sprint 3 — gestion des hôtels, restaurants, sites et destinations.</p>
-        </div>
+          <h3>Hôtels</h3>
+          <p>Catalogue des hôtels et hébergements par destination.</p>
+        </router-link>
+        <router-link to="/admin/resources/sites" class="module-card">
+          <div class="module-icon">🏛️</div>
+          <h3>Sites & Monuments</h3>
+          <p>Médinas, sites archéologiques, parcs naturels et lieux à visiter.</p>
+        </router-link>
+        <router-link to="/admin/resources/restaurants" class="module-card">
+          <div class="module-icon">🍽️</div>
+          <h3>Restaurants</h3>
+          <p>Tables, brasseries et auberges traditionnelles.</p>
+        </router-link>
         <div class="module-card disabled">
           <div class="module-icon">✓</div>
           <h3>Modération parcours</h3>

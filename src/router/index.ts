@@ -100,6 +100,19 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/admin/KycValidationPage.vue'),
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Validation KYC — Djawal' }
   },
+  {
+    path: '/admin/destinations',
+    name: 'admin-destinations',
+    component: () => import('@/pages/admin/DestinationsAdminPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Destinations — Admin' }
+  },
+  {
+    path: '/admin/resources/:type',
+    name: 'admin-resources',
+    component: () => import('@/pages/admin/ResourcesAdminPage.vue'),
+    props: true,
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Master Data — Admin' }
+  },
 
   // === 404 ===
   {

@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'; const setTheme = (t: 'saharien' | 'mauresque' | 'aures') => { document.documentElement.className = 'theme-' + t; localStorage.setItem('djawal-cultural-theme', t); }
+import { ref } from 'vue'
+import { useThemeStore, type CulturalTheme } from '@/stores/theme'
+
+const themeStore = useThemeStore()
 
 const stats = ref([
   { value: '1 247', label: 'Voyages partagés' },
@@ -9,13 +12,17 @@ const stats = ref([
 ])
 
 const emotions = ref([
-  { icon: '🏜️', title: 'Désert & Silence', sub: 'Tassili · Tamanrasset · Djanet', theme: 'saharien' },
-  { icon: '🌊', title: 'Méditerranée', sub: 'Tipaza · Béjaïa · Oran', theme: 'mauresque' },
-  { icon: '⛰️', title: 'Kabylie & Sommets', sub: 'Djurdjura · Tikjda', theme: 'aures' },
-  { icon: '🏛️', title: 'Casbah & Patrimoine', sub: 'Alger · Constantine', theme: 'mauresque' },
-  { icon: '🌙', title: 'Spiritualité', sub: 'Médersa · zaouïas', theme: 'mauresque' },
-  { icon: '🥾', title: 'Aventure', sub: 'Trek · 4×4 · plongée', theme: 'aures' }
+  { icon: '🏜️', title: 'Désert & Silence', sub: 'Tassili · Tamanrasset · Djanet', theme: 'saharien' as CulturalTheme },
+  { icon: '🌊', title: 'Méditerranée', sub: 'Tipaza · Béjaïa · Oran', theme: 'mauresque' as CulturalTheme },
+  { icon: '⛰️', title: 'Kabylie & Sommets', sub: 'Djurdjura · Tikjda', theme: 'aures' as CulturalTheme },
+  { icon: '🏛️', title: 'Casbah & Patrimoine', sub: 'Alger · Constantine', theme: 'mauresque' as CulturalTheme },
+  { icon: '🌙', title: 'Spiritualité', sub: 'Médersa · zaouïas', theme: 'mauresque' as CulturalTheme },
+  { icon: '🥾', title: 'Aventure', sub: 'Trek · 4×4 · plongée', theme: 'aures' as CulturalTheme }
 ])
+
+function tryTheme(theme: CulturalTheme) {
+  themeStore.setTheme(theme)
+}
 </script>
 
 <template>
@@ -92,11 +99,26 @@ const emotions = ref([
         </p>
         <div class="theme-switcher">
           <span>Tester le miroir culturel :</span>
-          <v-btn-group divided density="comfortable">
-            <v-btn @click="setTheme('saharien')">🏜️ Saharien</v-btn>
-            <v-btn @click="setTheme('mauresque')">🏛️ Mauresque</v-btn>
-            <v-btn @click="setTheme('aures')">⛰️ Aurès</v-btn>
-          </v-btn-group>
+          <div class="theme-buttons">
+            <button
+              class="theme-btn"
+              :class="{ active: themeStore.currentTheme === 'saharien' }"
+              @click="tryTheme('saharien')"
+            >🏜️ Saharien</button>
+            <button
+              class="theme-btn"
+              :class="{ active: themeStore.currentTheme === 'mauresque' }"
+              @click="tryTheme('mauresque')"
+            >🏛️ Mauresque</button>
+            <button
+              class="theme-btn"
+              :class="{ active: themeStore.currentTheme === 'aures' }"
+              @click="tryTheme('aures')"
+            >⛰️ Aurès</button>
+          </div>
+          <small class="theme-current">
+            Thème actif : <strong>{{ themeStore.themeLabel }}</strong>
+          </small>
         </div>
       </div>
     </section>
@@ -228,18 +250,56 @@ const emotions = ref([
 }
 .theme-switcher {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-5);
   background: var(--c-fond-chaud);
-  border-radius: var(--r-pill);
-  flex-wrap: wrap;
-  justify-content: center;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-gris-clair);
 }
-.theme-switcher span {
+.theme-switcher > span {
   font-size: 13px;
   color: var(--c-texte-doux);
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.theme-buttons {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.theme-btn {
+  padding: 10px 18px;
+  background: var(--c-surface);
+  border: 2px solid var(--c-gris-clair);
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-primaire-profond);
+  cursor: pointer;
+  transition: var(--t-base);
+}
+.theme-btn:hover {
+  border-color: var(--c-accent);
+  transform: translateY(-2px);
+}
+.theme-btn.active {
+  background: var(--c-primaire);
+  color: var(--c-fond);
+  border-color: var(--c-primaire);
+  box-shadow: var(--ombre-douce);
+}
+.theme-current {
+  font-size: 12px;
+  color: var(--c-texte-doux);
+}
+.theme-current strong {
+  color: var(--c-accent-fort);
+  font-weight: 700;
 }
 .text-center { text-align: center; }
 

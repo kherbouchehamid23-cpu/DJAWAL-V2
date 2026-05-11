@@ -92,12 +92,21 @@ Tout est appliqué par Row Level Security PostgreSQL — voir `supabase/migratio
 - Dashboard `AdminDashboardPage` + `KycValidationPage` pour le Super Admin
 - Initialisation auth au démarrage dans `main.ts`
 
-**Sprint 3 — Master Data** (suivant)
-- CRUD destinations / hotels / sites / restaurants
-- Upload images via Supabase Storage
-- Géocodage automatique via Nominatim
-- Triggers pour calculer les embeddings
-- Seed initial ~50 ressources
+**Sprint 3 — Master Data** ✅
+- Migration `0004_seed_initial_data.sql` : 8 destinations, 14 sites, 12 hôtels, 12 restaurants
+- Page `DestinationsAdminPage` : CRUD complet avec image hero, thème culturel, géocodage
+- Page `ResourcesAdminPage` générique pour hôtels/sites/restaurants
+- Composable `useGeocode` (Nominatim/OpenStreetMap gratuit)
+- Composable `useStorageUpload` (Supabase Storage)
+- Composant `ImageUpload` réutilisable
+- Routes admin ajoutées : `/admin/destinations`, `/admin/resources/:type`
+
+**Sprint 4 — Vitrine voyageur** (suivant)
+- Pages publiques de découverte des voyages et destinations
+- Application des thèmes culturels selon `destination.cultural_theme`
+- Carte Leaflet
+- Recherche full-text + filtres
+- Fiches détaillées par destination/voyage
 
 ## 6. Commandes utiles
 

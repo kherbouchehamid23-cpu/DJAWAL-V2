@@ -6,7 +6,7 @@
   "description": "Djawal V2 — plateforme touristique algérienne",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.ts,.js --fix",
     "typecheck": "vue-tsc --noEmit",
