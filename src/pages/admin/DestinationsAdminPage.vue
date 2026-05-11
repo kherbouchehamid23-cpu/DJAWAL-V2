@@ -1,4 +1,4 @@
-é<script setup lang="ts">
+<script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useGeocode } from '@/composables/useGeocode'
@@ -111,12 +111,6 @@ async function save() {
     errorMsg.value = 'Nom, wilaya et description sont requis.'
     return
   }
-  if (false) {
-    if (!editing.value) {
-      errorMsg.value = 'Coordonnées requises — cliquez sur "Géolocaliser".'
-      return
-    }
-  }
 
   const payload: any = {
     name: form.name,
@@ -156,7 +150,10 @@ async function remove(dest: any) {
 
 <template>
   <div class="djawal-container djawal-section">
-    <div style="margin-bottom:16px"><a href="/admin" style="color:#1B4965;font-weight:600;text-decoration:none">Retour admin</a></div><header class="page-head">
+    <nav class="admin-breadcrumb">
+      <router-link to="/admin">← Retour à l'administration</router-link>
+    </nav>
+    <header class="page-head">
       <div>
         <div class="eyebrow">Administration · Master Data</div>
         <h1>Destinations</h1>
@@ -317,6 +314,19 @@ async function remove(dest: any) {
 </template>
 
 <style scoped>
+.admin-breadcrumb {
+  margin-bottom: var(--space-4);
+}
+.admin-breadcrumb a {
+  color: var(--c-primaire);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 14px;
+}
+.admin-breadcrumb a:hover {
+  color: var(--c-cta);
+  text-decoration: underline;
+}
 .page-head {
   display: flex;
   justify-content: space-between;

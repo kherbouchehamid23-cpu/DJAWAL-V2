@@ -48,10 +48,9 @@ export default defineConfig({
             options: { cacheName: 'djawal-images', expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 } }
           },
           {
-            // API publique Supabase — stale-while-revalidate avec TTL court
-            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(destinations|hotels|sites|restaurants|trips).*/,
-            handler: 'NetworkOnly',
-            options: { cacheName: 'djawal-api-public', expiration: { maxAgeSeconds: 300 } }
+            // API Supabase — NetworkOnly (jamais de cache, données fraîches à chaque fois)
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/,
+            handler: 'NetworkOnly'
           },
           {
             // Panoramas 360° — cache LRU 100 MB

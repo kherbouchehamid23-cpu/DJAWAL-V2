@@ -207,7 +207,10 @@ async function remove(r: any) {
 
 <template>
   <div class="djawal-container djawal-section">
-    <div style="margin-bottom:16px"><a href="/admin" style="color:#1B4965;font-weight:600;text-decoration:none">Retour admin</a></div><header class="page-head">
+    <nav class="admin-breadcrumb">
+      <router-link to="/admin">← Retour à l'administration</router-link>
+    </nav>
+    <header class="page-head">
       <div>
         <div class="eyebrow">Administration · Master Data</div>
         <h1>{{ config.icon }} {{ config.label }}</h1>
@@ -345,6 +348,9 @@ async function remove(r: any) {
 </template>
 
 <style scoped>
+.admin-breadcrumb { margin-bottom: var(--space-4); }
+.admin-breadcrumb a { color: var(--c-primaire); font-weight: 600; text-decoration: none; font-size: 14px; }
+.admin-breadcrumb a:hover { color: var(--c-cta); text-decoration: underline; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-3); }
 .eyebrow { color: var(--c-accent-fort); font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; margin-bottom: var(--space-2); }
 h1 { font-size: clamp(28px, 4vw, 40px); margin-bottom: var(--space-2); }
