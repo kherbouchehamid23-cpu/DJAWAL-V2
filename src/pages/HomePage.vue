@@ -93,9 +93,9 @@ const emotions = ref([
         <div class="theme-switcher">
           <span>Tester le miroir culturel :</span>
           <v-btn-group divided density="comfortable">
-            <v-btn @click="$router.push({ query: { theme: 'saharien' }})">🏜️ Saharien</v-btn>
-            <v-btn @click="$router.push({ query: { theme: 'mauresque' }})">🏛️ Mauresque</v-btn>
-            <v-btn @click="$router.push({ query: { theme: 'aures' }})">⛰️ Aurès</v-btn>
+            <v-btn @click="document.documentElement.className='theme-saharien';localStorage.setItem('djawal-cultural-theme','saharien')">🏜️ Saharien</v-btn>
+            <v-btn @click="document.documentElement.className='theme-mauresque';localStorage.setItem('djawal-cultural-theme','mauresque')">🏛️ Mauresque</v-btn>
+            <v-btn @click="document.documentElement.className='theme-aures';localStorage.setItem('djawal-cultural-theme','aures')">⛰️ Aurès</v-btn>
           </v-btn-group>
         </div>
       </div>
