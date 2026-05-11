@@ -50,7 +50,7 @@ export default defineConfig({
           {
             // API publique Supabase — stale-while-revalidate avec TTL court
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(destinations|hotels|sites|restaurants|trips).*/,
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkOnly',
             options: { cacheName: 'djawal-api-public', expiration: { maxAgeSeconds: 300 } }
           },
           {

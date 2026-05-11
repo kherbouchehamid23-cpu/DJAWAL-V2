@@ -111,7 +111,7 @@ async function save() {
     errorMsg.value = 'Nom, wilaya et description sont requis.'
     return
   }
-  if (false) {
+  if (form.coordinates_lat == null || form.coordinates_lng == null) {
     if (!editing.value) {
       errorMsg.value = 'Coordonnées requises — cliquez sur "Géolocaliser".'
       return
