@@ -1,0 +1,78 @@
+# Configuration Supabase locale pour Djawal V2
+# Lancer : npx supabase start
+
+project_id = "djawal-v2"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[storage.buckets.avatars]
+public = true
+file_size_limit = "2MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+
+[storage.buckets.hero-images]
+public = true
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+
+[storage.buckets.panoramas]
+public = true
+file_size_limit = "30MiB"
+allowed_mime_types = ["image/jpeg"]
+
+[storage.buckets.kyc-documents]
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "application/pdf"]
+
+[storage.buckets.ambient-sounds]
+public = true
+file_size_limit = "500KiB"
+allowed_mime_types = ["audio/opus", "audio/ogg"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["https://djawal.com", "https://*.vercel.app"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+redirect_uri = "https://djawal.com/auth/callback"
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
+
+[functions.plan-trip]
+verify_jwt = true
+
+[functions.kyc-prescreen]
+verify_jwt = true

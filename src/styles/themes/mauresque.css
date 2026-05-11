@@ -1,0 +1,20 @@
+/* =========================================================
+   THÈME MAURESQUE — Alger, Casbah, Béjaïa, Tipaza, Tlemcen
+   Bleus méditerranéens, blancs éclatants, zellige
+   ========================================================= */
+
+html.theme-mauresque {
+  --c-primaire: #1B4965;           /* bleu Casbah */
+  --c-primaire-profond: #0A1F2E;
+  --c-secondaire: #4A90BD;         /* bleu Sidi Bou Said */
+  --c-accent: #D4A04F;             /* or Sahara — accent unifié */
+  --c-accent-fort: #B8862E;
+  --c-cta: #C04A3A;
+  --c-fond: #FAF7F2;               /* blanc chaux */
+  --c-fond-chaud: #F4EDE0;
+  --c-surface: #FFFFFF;
+  --c-texte: #1A1A1A;
+  --c-texte-doux: #6B6B6B;
+
+  --motif-principal-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%23D4A04F' stroke-width='1.2' opacity='0.35'><path d='M40 8 L52 20 L72 20 L60 32 L72 44 L52 44 L40 56 L28 44 L8 44 L20 32 L8 20 L28 20 Z'/><circle cx='40' cy='32' r='6'/></g></svg>");
+}

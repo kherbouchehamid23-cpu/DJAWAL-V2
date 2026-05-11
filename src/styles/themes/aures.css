@@ -1,0 +1,20 @@
+/* =========================================================
+   THÈME AURÈS / TELLIEN — Constantine, Batna, Khenchela
+   Tons pierre, verts forestiers, cuivre, artisanat chaoui
+   ========================================================= */
+
+html.theme-aures {
+  --c-primaire: #2D5A3D;           /* vert zellige profond */
+  --c-primaire-profond: #1A3324;
+  --c-secondaire: #6B7A4A;         /* olivier */
+  --c-accent: #C97050;             /* cuivre / terracotta */
+  --c-accent-fort: #8B4A2C;
+  --c-cta: #B8862E;
+  --c-fond: #EFEAE0;               /* pierre claire */
+  --c-fond-chaud: #DDD3C0;
+  --c-surface: #FFFFFF;
+  --c-texte: #1A2B1F;
+  --c-texte-doux: #5A6650;
+
+  --motif-principal-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%238B4A2C' stroke-width='1.2' opacity='0.35'><path d='M10 40 L30 20 L50 40 L70 20 M10 60 L30 40 L50 60 L70 40'/><circle cx='40' cy='40' r='4'/></g></svg>");
+}

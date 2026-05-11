@@ -1,0 +1,20 @@
+/* =========================================================
+   THÈME SAHARIEN — Tassili, Taghit, Ghardaïa, Djanet
+   Ocres, sables chauds, terre cuite, géométrie touarègue
+   ========================================================= */
+
+html.theme-saharien {
+  --c-primaire: #8B4A2C;          /* terre cuite profonde */
+  --c-primaire-profond: #5C2F1A;
+  --c-secondaire: #C97050;        /* terracotta Hoggar */
+  --c-accent: #D4A04F;            /* or Sahara */
+  --c-accent-fort: #B8862E;       /* or médina */
+  --c-cta: #C04A3A;
+  --c-fond: #F5E9D3;              /* sable clair */
+  --c-fond-chaud: #EDD9B5;        /* sable doux */
+  --c-surface: #FFFFFF;
+  --c-texte: #2A1810;
+  --c-texte-doux: #6B5340;
+
+  --motif-principal-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%23B8862E' stroke-width='1.2' opacity='0.4'><path d='M40 10 L55 30 L55 50 L40 70 L25 50 L25 30 Z'/><path d='M40 30 L40 50 M30 40 L50 40'/></g></svg>");
+}

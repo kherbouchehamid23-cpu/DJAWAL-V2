@@ -1,0 +1,77 @@
+/* =========================================================
+   MOTIFS CULTURELS — Composants visuels réutilisables
+   Tous en SVG inline pour rester légers et nets
+   ========================================================= */
+
+/* Frise zellige horizontale — séparateur de section */
+.djawal-frise {
+  height: 36px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='36' viewBox='0 0 60 36'><g fill='none' stroke='%23B8862E' stroke-width='1.5'><path d='M30 4 L40 14 L50 4 M30 32 L40 22 L50 32 M30 4 L20 14 L10 4 M30 32 L20 22 L10 32'/><path d='M30 4 L30 32'/><circle cx='30' cy='18' r='3' fill='%23C97050' stroke='none'/></g></svg>");
+  background-repeat: repeat-x;
+  background-position: center;
+  margin: var(--space-7) 0;
+}
+
+/* Bandeau Tifinagh décoratif */
+.djawal-tifinagh-strip {
+  height: 30px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='30' viewBox='0 0 120 30'><g fill='%23D4A04F' opacity='0.4' font-family='serif' font-size='18' text-anchor='middle'><text x='15' y='22'>ⵣ</text><text x='45' y='22'>ⴰ</text><text x='75' y='22'>ⵣ</text><text x='105' y='22'>ⴰ</text></g></svg>");
+  background-repeat: repeat-x;
+}
+
+/* Badge "Vérifié" / "Senior" — style poinçon d'orfèvrerie */
+.djawal-poincon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--c-secondaire);
+  color: var(--c-fond);
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Arche mihrab pour cover d'image */
+.djawal-arche-cover {
+  border-radius: 200px 200px 8px 8px / 140px 140px 8px 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Pattern de fond zellige discret pour sections premium */
+.djawal-bg-zellige {
+  background-color: var(--c-fond);
+  background-image: var(--motif-principal-url);
+  background-position: center;
+}
+
+/* Diviseur ornemental avec losange central */
+.djawal-divider-rhombus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--space-6) 0;
+}
+.djawal-divider-rhombus::before,
+.djawal-divider-rhombus::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--c-accent), transparent);
+}
+.djawal-divider-rhombus::after {
+  background: linear-gradient(to right, var(--c-accent), transparent);
+}
+.djawal-divider-rhombus::before {
+  background: linear-gradient(to left, var(--c-accent), transparent);
+}
+.djawal-divider-rhombus span {
+  margin: 0 var(--space-3);
+  width: 10px;
+  height: 10px;
+  background: var(--c-accent);
+  transform: rotate(45deg);
+}
