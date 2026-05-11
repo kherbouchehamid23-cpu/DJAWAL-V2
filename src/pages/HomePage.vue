@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useThemeStore, type CulturalTheme } from '@/stores/theme'
+import MemoriesCarousel from '@/components/MemoriesCarousel.vue'
 
 const themeStore = useThemeStore()
 
@@ -122,6 +123,9 @@ function tryTheme(theme: CulturalTheme) {
         </div>
       </div>
     </section>
+
+    <!-- SOUVENIRS DE VOYAGEURS -->
+    <MemoriesCarousel />
   </div>
 </template>
 

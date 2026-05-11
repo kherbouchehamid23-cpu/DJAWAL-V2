@@ -13,6 +13,7 @@ const navItems = [
   { to: '/voyages?type=hotel', label: 'Hôtels' },
   { to: '/voyages?type=restaurant', label: 'Restaurants' },
   { to: '/voyages?type=site', label: 'Sites' },
+  { to: '/temoignages', label: 'Souvenirs' },
   { to: '/about', label: 'À propos' }
 ]
 </script>

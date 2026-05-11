@@ -39,6 +39,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/AboutPage.vue'),
     meta: { culturalTheme: 'mauresque', title: 'À propos — Djawal' }
   },
+  {
+    path: '/temoignages',
+    name: 'memories',
+    component: () => import('@/pages/MemoriesPage.vue'),
+    meta: { culturalTheme: 'mauresque', title: 'Souvenirs — Djawal' }
+  },
 
   // === Authentification ===
   {
@@ -78,6 +84,24 @@ const routes: RouteRecordRaw[] = [
     name: 'my-account',
     component: () => import('@/pages/account/MyAccountPage.vue'),
     meta: { requiresAuth: true, title: 'Mon espace — Djawal' }
+  },
+  {
+    path: '/mon-espace/favoris',
+    name: 'my-favorites',
+    component: () => import('@/pages/account/MyFavoritesPage.vue'),
+    meta: { requiresAuth: true, title: 'Mes favoris — Djawal' }
+  },
+  {
+    path: '/mon-espace/souvenirs',
+    name: 'my-memories',
+    component: () => import('@/pages/account/MyMemoriesPage.vue'),
+    meta: { requiresAuth: true, title: 'Mes souvenirs — Djawal' }
+  },
+  {
+    path: '/mon-espace/avis',
+    name: 'my-reviews',
+    component: () => import('@/pages/account/MyReviewsPage.vue'),
+    meta: { requiresAuth: true, title: 'Mes avis — Djawal' }
   },
 
   // === Espace guide (authentifié + rôle guide) ===
@@ -144,6 +168,12 @@ const routes: RouteRecordRaw[] = [
     name: 'admin-trip-moderation',
     component: () => import('@/pages/admin/TripModerationPage.vue'),
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Modération voyages — Admin' }
+  },
+  {
+    path: '/admin/memoires',
+    name: 'admin-memories',
+    component: () => import('@/pages/admin/MemoriesAdminPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Modération souvenirs — Admin' }
   },
 
   // === 404 ===

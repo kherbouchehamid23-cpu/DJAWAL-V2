@@ -14,7 +14,19 @@ interface TripSummary {
   destinations?: { name: string } | null
 }
 
+interface ReceivedReview {
+  id: string
+  rating: number
+  comment: string | null
+  created_at: string
+  trip_id: string
+  trips?: { title: string } | null
+  profiles?: { display_name: string } | null
+}
+
 const recentTrips = ref<TripSummary[]>([])
+const recentReviews = ref<ReceivedReview[]>([])
+const avgRating = ref<string | null>(null)
 const counts = ref({ draft: 0, pending: 0, published: 0 })
 const loading = ref(true)
 
@@ -29,15 +41,42 @@ onMounted(async () => {
 
   const { data: all } = await supabase
     .from('trips')
-    .select('status')
+    .select('id, status')
     .eq('created_by', auth.user!.id)
+  const myTripIds: string[] = []
   for (const t of (all || [])) {
+    myTripIds.push(t.id)
     if (t.status === 'draft') counts.value.draft++
     else if (t.status === 'pending_review') counts.value.pending++
     else if (t.status === 'published') counts.value.published++
   }
+
+  // Avis reçus sur les voyages du guide
+  if (myTripIds.length > 0) {
+    const { data: revs } = await supabase
+      .from('reviews')
+      .select('id, rating, comment, created_at, trip_id, trips(title), profiles(display_name)')
+      .in('trip_id', myTripIds)
+      .order('created_at', { ascending: false })
+      .limit(5)
+    recentReviews.value = (revs as any) || []
+
+    const { data: allRevs } = await supabase
+      .from('reviews')
+      .select('rating')
+      .in('trip_id', myTripIds)
+    if (allRevs && allRevs.length > 0) {
+      const sum = allRevs.reduce((s: number, r: any) => s + r.rating, 0)
+      avgRating.value = (sum / allRevs.length).toFixed(1)
+    }
+  }
+
   loading.value = false
 })
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
 function statusLabel(s: string) {
   return { draft: 'Brouillon', pending_review: 'En modération', published: 'Publié', rejected: 'Refusé' }[s] || s
@@ -129,6 +168,33 @@ function statusColor(s: string) {
             <div class="recent-meta">📍 {{ t.destinations?.name || '—' }} · {{ t.duration_days }}j</div>
           </div>
         </router-link>
+      </div>
+    </section>
+
+    <!-- AVIS REÇUS -->
+    <section class="djawal-section" v-if="recentReviews.length > 0">
+      <div class="section-head">
+        <h2>Avis reçus</h2>
+        <div v-if="avgRating" class="avg-pill">
+          <span class="avg-num">{{ avgRating }}</span> / 5 ★
+        </div>
+      </div>
+
+      <div class="reviews-grid">
+        <article v-for="r in recentReviews" :key="r.id" class="review-mini">
+          <div class="rm-head">
+            <span class="rm-stars">
+              <span v-for="n in 5" :key="n" :class="['star', { filled: n <= r.rating }]">★</span>
+            </span>
+            <span class="rm-date">{{ fmtDate(r.created_at) }}</span>
+          </div>
+          <p v-if="r.comment" class="rm-comment">« {{ r.comment }} »</p>
+          <p v-else class="rm-no-comment">Sans commentaire.</p>
+          <div class="rm-meta">
+            <strong>{{ r.profiles?.display_name }}</strong> sur
+            <router-link :to="`/voyages/${r.trip_id}`" class="rm-trip">{{ r.trips?.title }}</router-link>
+          </div>
+        </article>
       </div>
     </section>
   </div>
@@ -260,4 +326,55 @@ h2 { font-size: 28px; }
   line-height: 1.2;
 }
 .recent-meta { font-size: 12px; color: var(--c-texte-doux); }
+
+/* === AVIS REÇUS === */
+.avg-pill {
+  background: var(--c-fond-chaud);
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  font-weight: 700;
+  color: var(--c-primaire-profond);
+}
+.avg-num {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--c-accent-fort);
+}
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+.review-mini {
+  background: var(--c-surface);
+  border-radius: var(--r-md);
+  padding: var(--space-3);
+  box-shadow: var(--ombre-douce);
+  border-left: 3px solid var(--c-accent);
+}
+.rm-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--space-2);
+}
+.rm-stars { letter-spacing: 2px; }
+.star { color: var(--c-gris-clair); font-size: 14px; }
+.star.filled { color: #D4A04F; }
+.rm-date { font-size: 11px; color: var(--c-texte-doux); }
+.rm-comment {
+  font-style: italic;
+  font-size: 14px;
+  color: var(--c-texte);
+  line-height: 1.4;
+  margin-bottom: var(--space-2);
+}
+.rm-no-comment { font-style: italic; color: var(--c-texte-doux); font-size: 13px; }
+.rm-meta {
+  font-size: 12px;
+  color: var(--c-texte-doux);
+  border-top: 1px solid var(--c-fond-chaud);
+  padding-top: var(--space-2);
+}
+.rm-meta strong { color: var(--c-accent-fort); }
+.rm-trip { color: var(--c-primaire); font-weight: 600; text-decoration: none; }
+.rm-trip:hover { text-decoration: underline; }
 </style>

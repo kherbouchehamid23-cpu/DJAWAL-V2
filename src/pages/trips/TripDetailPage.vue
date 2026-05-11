@@ -2,6 +2,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth'
+import { useFavorites } from '@/composables/useFavorites'
+import ReviewSection from '@/components/ReviewSection.vue'
+
+const auth = useAuthStore()
+const { loadFavorites, toggleFavorite, isFavorite, loaded: favLoaded } = useFavorites()
 
 interface Trip {
   id: string
@@ -125,7 +131,22 @@ onMounted(async () => {
   if (trip.value?.destinations?.cultural_theme) {
     document.documentElement.className = `theme-${trip.value.destinations.cultural_theme}`
   }
+
+  // Charger les favoris si user connecté
+  if (auth.user && !favLoaded.value) {
+    await loadFavorites()
+  }
 })
+
+const isFav = computed(() => trip.value ? isFavorite(trip.value.id) : false)
+async function handleToggleFav() {
+  if (!trip.value) return
+  if (!auth.user) {
+    window.location.href = '/auth/login?redirect=' + encodeURIComponent(route.fullPath)
+    return
+  }
+  await toggleFavorite(trip.value.id)
+}
 
 const totalSteps = computed(() => days.value.reduce((s, d) => s + d.steps.length, 0))
 
@@ -187,6 +208,11 @@ function difficultyLabel(d: string | null) {
           <div v-if="trip.tags && trip.tags.length > 0" class="tags">
             <span v-for="t in trip.tags" :key="t" class="tag">#{{ t }}</span>
           </div>
+
+          <button class="fav-btn" :class="{ active: isFav }" @click="handleToggleFav">
+            <span class="fav-icon">{{ isFav ? '❤️' : '🤍' }}</span>
+            <span>{{ isFav ? 'Dans vos favoris' : 'Ajouter aux favoris' }}</span>
+          </button>
         </div>
       </section>
 
@@ -234,6 +260,9 @@ function difficultyLabel(d: string | null) {
               </article>
             </div>
           </section>
+
+          <!-- AVIS -->
+          <ReviewSection :trip-id="trip.id" />
         </main>
 
         <aside class="detail-side">
@@ -339,6 +368,31 @@ function difficultyLabel(d: string | null) {
   font-size: 12px;
   font-weight: 600;
 }
+
+.fav-btn {
+  margin-top: var(--space-4);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: var(--c-fond);
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: var(--t-base);
+}
+.fav-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+.fav-btn.active {
+  background: rgba(192, 74, 58, 0.9);
+  border-color: rgba(192, 74, 58, 0.9);
+}
+.fav-icon { font-size: 18px; }
 
 /* === GRID === */
 .detail-grid {

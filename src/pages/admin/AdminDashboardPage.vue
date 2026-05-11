@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 const stats = ref({
   pendingKyc: 0,
   pendingTrips: 0,
+  pendingMemories: 0,
   totalGuides: 0,
   totalVoyageurs: 0
 })
@@ -13,10 +14,11 @@ const loading = ref(true)
 onMounted(async () => {
   loading.value = true
 
-  const [kyc, trips, guides, voyageurs] = await Promise.all([
+  const [kyc, trips, memories, guides, voyageurs] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .in('role', ['guide_senior', 'guide_junior']).eq('kyc_status', 'pending'),
     supabase.from('trips').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
+    supabase.from('memories').select('id', { count: 'exact', head: true }).eq('published', false),
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .in('role', ['guide_senior', 'guide_junior']),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'voyageur')
@@ -25,6 +27,7 @@ onMounted(async () => {
   stats.value = {
     pendingKyc: kyc.count ?? 0,
     pendingTrips: trips.count ?? 0,
+    pendingMemories: memories.count ?? 0,
     totalGuides: guides.count ?? 0,
     totalVoyageurs: voyageurs.count ?? 0
   }
@@ -49,6 +52,12 @@ onMounted(async () => {
         <div class="stat-icon">📝</div>
         <strong>{{ loading ? '—' : stats.pendingTrips }}</strong>
         <span>Parcours à modérer</span>
+      </router-link>
+
+      <router-link to="/admin/memoires" class="stat-card alert">
+        <div class="stat-icon">✨</div>
+        <strong>{{ loading ? '—' : stats.pendingMemories }}</strong>
+        <span>Souvenirs à valider</span>
       </router-link>
 
       <div class="stat-card">
@@ -97,6 +106,11 @@ onMounted(async () => {
           <h3>Modération parcours</h3>
           <p>Valider ou refuser les parcours soumis par les guides juniors.</p>
         </router-link>
+        <router-link to="/admin/memoires" class="module-card">
+          <div class="module-icon">✨</div>
+          <h3>Souvenirs voyageurs</h3>
+          <p>Approuver les témoignages avant publication sur le mur public.</p>
+        </router-link>
         <div class="module-card disabled">
           <div class="module-icon">🤖</div>
           <h3>Logs RAG</h3>
@@ -119,7 +133,7 @@ h2 { font-size: 28px; margin: var(--space-7) 0 var(--space-4); }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }

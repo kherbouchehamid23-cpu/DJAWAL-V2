@@ -148,6 +148,33 @@ const kycLabel: Record<string, { text: string; color: string }> = {
       <aside class="sidebar">
         <h3>Accès rapide</h3>
         <ul class="quick-links">
+          <li>
+            <router-link to="/mon-espace/favoris">
+              <span class="link-icon">❤️</span>
+              <div>
+                <strong>Mes favoris</strong>
+                <small>Voyages sauvegardés</small>
+              </div>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/mon-espace/souvenirs">
+              <span class="link-icon">✨</span>
+              <div>
+                <strong>Mes souvenirs</strong>
+                <small>Récits & témoignages</small>
+              </div>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/mon-espace/avis">
+              <span class="link-icon">⭐</span>
+              <div>
+                <strong>Mes avis</strong>
+                <small>Vos notes & commentaires</small>
+              </div>
+            </router-link>
+          </li>
           <li v-if="auth.isGuide">
             <router-link to="/espace-guide">
               <span class="link-icon">🎒</span>
@@ -172,6 +199,15 @@ const kycLabel: Record<string, { text: string; color: string }> = {
               <div>
                 <strong>Catalogue voyages</strong>
                 <small>Explorer les itinéraires</small>
+              </div>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/temoignages">
+              <span class="link-icon">💬</span>
+              <div>
+                <strong>Mur des souvenirs</strong>
+                <small>Témoignages communauté</small>
               </div>
             </router-link>
           </li>
