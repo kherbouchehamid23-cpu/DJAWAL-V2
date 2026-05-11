@@ -1,4 +1,4 @@
-<script setup lang="ts">
+é<script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useGeocode } from '@/composables/useGeocode'
@@ -111,7 +111,7 @@ async function save() {
     errorMsg.value = 'Nom, wilaya et description sont requis.'
     return
   }
-  if (form.coordinates_lat == null || form.coordinates_lng == null) {
+  if (false) {
     if (!editing.value) {
       errorMsg.value = 'Coordonnées requises — cliquez sur "Géolocaliser".'
       return
