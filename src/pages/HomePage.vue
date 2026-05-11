@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue'; const setTheme = (t: 'saharien' | 'mauresque' | 'aures') => { document.documentElement.className = 'theme-' + t; localStorage.setItem('djawal-cultural-theme', t); }
 
 const stats = ref([
   { value: '1 247', label: 'Voyages partagés' },
@@ -93,9 +93,9 @@ const emotions = ref([
         <div class="theme-switcher">
           <span>Tester le miroir culturel :</span>
           <v-btn-group divided density="comfortable">
-            <v-btn @click="window.document.documentElement.className='theme-saharien';window.localStorage.setItem('djawal-cultural-theme','saharien')">🏜️ Saharien</v-btn>
-            <v-btn @click="window.document.documentElement.className='theme-mauresque';window.localStorage.setItem('djawal-cultural-theme','mauresque')">🏛️ Mauresque</v-btn>
-            <v-btn @click="window.document.documentElement.className='theme-aures';window.localStorage.setItem('djawal-cultural-theme','aures')">⛰️ Aurès</v-btn>
+            <v-btn @click="setTheme('saharien')">🏜️ Saharien</v-btn>
+            <v-btn @click="setTheme('mauresque')">🏛️ Mauresque</v-btn>
+            <v-btn @click="setTheme('aures')">⛰️ Aurès</v-btn>
           </v-btn-group>
         </div>
       </div>
