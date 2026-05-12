@@ -24,6 +24,30 @@ const fullscreen = ref(false)
 const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css'
 const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js'
 
+/**
+ * Proxifie les URLs d'images sans CORS via images.weserv.nl.
+ * Nécessaire pour les images bilnov.com qui ne servent pas Access-Control-Allow-Origin.
+ */
+function proxyIfNeeded(url: string): string {
+  if (!url) return url
+  // Liste des domaines à proxifier (sans CORS)
+  const needsProxy = [
+    'djawal.bilnov.com',
+    'bilnov.com'
+  ]
+  try {
+    const u = new URL(url)
+    if (needsProxy.some(d => u.hostname.includes(d))) {
+      // weserv.nl prend l'URL sans protocole
+      const cleanUrl = url.replace(/^https?:\/\//, '')
+      return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}`
+    }
+  } catch {
+    // URL invalide, on retourne tel quel
+  }
+  return url
+}
+
 async function loadPannellum(): Promise<void> {
   // Inject CSS if missing
   if (!document.querySelector(`link[href="${PANNELLUM_CSS}"]`)) {
@@ -58,13 +82,14 @@ async function initViewer() {
 
   viewer.value = pannellum.viewer(containerEl.value, {
     type: 'equirectangular',
-    panorama: props.panoramaUrl,
+    panorama: proxyIfNeeded(props.panoramaUrl),
     autoLoad: true,
     autoRotate: -2,
     compass: true,
     showZoomCtrl: true,
     showFullscreenCtrl: false, // on gère nous-mêmes
-    hotSpotDebug: false
+    hotSpotDebug: false,
+    crossOrigin: 'anonymous'
   })
   loaded.value = true
 }
