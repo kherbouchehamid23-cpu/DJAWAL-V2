@@ -19,12 +19,12 @@ const stats = ref([
 ])
 
 const emotions = ref([
-  { icon: '🏜️', title: 'Désert & Silence', sub: 'Tassili · Tamanrasset · Djanet', theme: 'saharien' as CulturalTheme, q: 'desert' },
-  { icon: '🌊', title: 'Méditerranée', sub: 'Tipaza · Béjaïa · Oran', theme: 'mauresque' as CulturalTheme, q: 'mer' },
-  { icon: '⛰️', title: 'Kabylie & Sommets', sub: 'Djurdjura · Tikjda', theme: 'aures' as CulturalTheme, q: 'montagne' },
-  { icon: '🏛️', title: 'Casbah & Patrimoine', sub: 'Alger · Constantine', theme: 'mauresque' as CulturalTheme, q: 'casbah' },
-  { icon: '🌙', title: 'Spiritualité', sub: 'Médersa · zaouïas', theme: 'mauresque' as CulturalTheme, q: 'patrimoine' },
-  { icon: '🥾', title: 'Aventure', sub: 'Trek · 4×4 · plongée', theme: 'aures' as CulturalTheme, q: 'aventure' }
+  { icon: '🏜️', title: 'Désert & Silence', sub: 'Tassili · Tamanrasset · Djanet', theme: 'saharien' as CulturalTheme },
+  { icon: '🌊', title: 'Méditerranée', sub: 'Tipaza · Béjaïa · Oran', theme: 'mauresque' as CulturalTheme },
+  { icon: '⛰️', title: 'Kabylie & Sommets', sub: 'Djurdjura · Tikjda', theme: 'aures' as CulturalTheme },
+  { icon: '🏛️', title: 'Casbah & Patrimoine', sub: 'Alger · Constantine', theme: 'mauresque' as CulturalTheme },
+  { icon: '🌙', title: 'Spiritualité', sub: 'Médersa · zaouïas', theme: 'mauresque' as CulturalTheme },
+  { icon: '🥾', title: 'Aventure', sub: 'Trek · 4×4 · plongée', theme: 'aures' as CulturalTheme }
 ])
 
 function tryTheme(theme: CulturalTheme) {
@@ -81,7 +81,7 @@ function tryTheme(theme: CulturalTheme) {
           <router-link
             v-for="emotion in emotions"
             :key="emotion.title"
-            :to="`/voyages?theme=${emotion.theme}&q=${emotion.q}`"
+            :to="`/voyages?theme=${emotion.theme}`"
             :class="['emotion-card', `theme-bg-${emotion.theme}`]"
           >
             <div class="emotion-icon">{{ emotion.icon }}</div>
