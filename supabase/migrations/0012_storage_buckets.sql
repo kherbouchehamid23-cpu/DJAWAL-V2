@@ -2,12 +2,18 @@
 -- DJAWAL V2 — Buckets Storage pour uploads d'images
 -- =========================================================
 
--- Créer les buckets s'ils n'existent pas (publics)
+-- Créer les buckets s'ils n'existent pas (publics, 25 Mo max)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES
-  ('trip-covers', 'trip-covers', true, 10485760, ARRAY['image/jpeg','image/png','image/webp','image/avif']),
-  ('memory-photos', 'memory-photos', true, 10485760, ARRAY['image/jpeg','image/png','image/webp','image/avif'])
+  ('trip-covers', 'trip-covers', true, 26214400, ARRAY['image/jpeg','image/png','image/webp','image/avif']),
+  ('memory-photos', 'memory-photos', true, 26214400, ARRAY['image/jpeg','image/png','image/webp','image/avif'])
 ON CONFLICT (id) DO NOTHING;
+
+-- === Mettre à jour les limites des buckets existants ===
+UPDATE storage.buckets SET file_size_limit = 26214400 WHERE id IN ('hero-images', 'trip-covers', 'memory-photos');
+UPDATE storage.buckets SET file_size_limit = 52428800 WHERE id = 'panoramas';
+UPDATE storage.buckets SET file_size_limit = 10485760 WHERE id IN ('kyc-documents', 'ambient-sounds');
+UPDATE storage.buckets SET file_size_limit = 5242880 WHERE id = 'avatars';
 
 -- ===== Policies bucket trip-covers =====
 -- Lecture publique

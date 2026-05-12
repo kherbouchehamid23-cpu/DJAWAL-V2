@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useStorageUpload, type StorageBucket } from '@/composables/useStorageUpload'
 
 const props = defineProps<{
@@ -7,6 +7,17 @@ const props = defineProps<{
   bucket?: StorageBucket
   label?: string
 }>()
+
+const SIZE_LIMITS: Record<string, number> = {
+  'avatars': 5,
+  'hero-images': 25,
+  'panoramas': 50,
+  'kyc-documents': 10,
+  'ambient-sounds': 10,
+  'trip-covers': 25,
+  'memory-photos': 25
+}
+const maxSize = computed(() => SIZE_LIMITS[props.bucket || 'hero-images'] ?? 25)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', url: string | null): void
@@ -55,7 +66,7 @@ function removeImage() {
       <div v-else class="upload-prompt">
         <div class="icon">📷</div>
         <strong>Choisir une image</strong>
-        <small>JPG, PNG, WebP, AVIF — 10 Mo max</small>
+        <small>JPG, PNG, WebP, AVIF — {{ maxSize }} Mo max</small>
       </div>
     </label>
 

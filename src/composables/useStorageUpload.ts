@@ -18,8 +18,17 @@ export function useStorageUpload(bucket: StorageBucket) {
     error.value = null
 
     try {
-      // Validation taille (5 MB par défaut)
-      const maxSize = bucket === 'panoramas' ? 30 : bucket === 'hero-images' ? 10 : 5
+      // Validation taille par bucket
+      const sizeLimits: Record<string, number> = {
+        'avatars': 5,
+        'hero-images': 25,
+        'panoramas': 50,
+        'kyc-documents': 10,
+        'ambient-sounds': 10,
+        'trip-covers': 25,
+        'memory-photos': 25
+      }
+      const maxSize = sizeLimits[bucket] ?? 25
       if (file.size > maxSize * 1024 * 1024) {
         error.value = `Fichier trop volumineux (${maxSize} Mo max)`
         return null
