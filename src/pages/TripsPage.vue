@@ -3,6 +3,12 @@ import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { parseCoordinates } from '@/lib/geo'
 import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
+import { useSEO } from '@/composables/useSEO'
+
+useSEO({
+  title: 'Toutes les destinations algériennes',
+  description: 'Explorez les destinations d\'Algérie sur la carte interactive — du Tassili au Djurdjura, de la Casbah à Ghardaïa. Hôtels, sites et restaurants signés par nos guides locaux.'
+})
 
 interface Destination {
   id: string

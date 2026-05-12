@@ -2,6 +2,12 @@
 import { ref } from 'vue'
 import { useThemeStore, type CulturalTheme } from '@/stores/theme'
 import MemoriesCarousel from '@/components/MemoriesCarousel.vue'
+import { useSEO } from '@/composables/useSEO'
+
+useSEO({
+  title: 'Voyager l\'Algérie autrement',
+  description: 'Découvrez l\'Algérie par l\'émotion. Plateforme communautaire de voyages, hôtels et sites touristiques. Composez votre parcours sur mesure avec notre IA.'
+})
 
 const themeStore = useThemeStore()
 

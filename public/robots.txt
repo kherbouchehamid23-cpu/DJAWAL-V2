@@ -1,8 +1,8 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /espace-guide
-Disallow: /mon-espace
+Disallow: /admin/
+Disallow: /espace-guide/
+Disallow: /mon-espace/
 Disallow: /auth/
 
-Sitemap: https://djawal.com/sitemap.xml
+Sitemap: https://upysjmymsafqmrbgzhva.supabase.co/functions/v1/sitemap

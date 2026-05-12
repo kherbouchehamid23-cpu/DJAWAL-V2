@@ -116,6 +116,11 @@ onMounted(async () => {
           <h3>Logs RAG & Embeddings</h3>
           <p>Audit des conversations IA, embeddings vectoriels, anti-hallucination.</p>
         </router-link>
+        <router-link to="/admin/messages" class="module-card">
+          <div class="module-icon">📬</div>
+          <h3>Messages contact</h3>
+          <p>Boîte de réception du formulaire public, suivi et archivage.</p>
+        </router-link>
       </div>
     </section>
   </div>

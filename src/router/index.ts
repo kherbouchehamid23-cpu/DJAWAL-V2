@@ -51,6 +51,31 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/ComposerPage.vue'),
     meta: { culturalTheme: 'mauresque', title: 'Composer avec l\'IA — Djawal' }
   },
+  {
+    path: '/guide/:id',
+    name: 'guide-profile',
+    component: () => import('@/pages/GuideProfilePage.vue'),
+    props: true,
+    meta: { culturalTheme: 'mauresque', title: 'Profil guide — Djawal' }
+  },
+  {
+    path: '/contact',
+    name: 'contact',
+    component: () => import('@/pages/ContactPage.vue'),
+    meta: { culturalTheme: 'mauresque', title: 'Contact — Djawal' }
+  },
+  {
+    path: '/mentions-legales',
+    name: 'mentions',
+    component: () => import('@/pages/LegalPage.vue'),
+    meta: { culturalTheme: 'mauresque', title: 'Mentions légales — Djawal' }
+  },
+  {
+    path: '/cgu',
+    name: 'cgu',
+    component: () => import('@/pages/LegalPage.vue'),
+    meta: { culturalTheme: 'mauresque', title: 'CGU — Djawal' }
+  },
 
   // === Authentification ===
   {
@@ -186,6 +211,12 @@ const routes: RouteRecordRaw[] = [
     name: 'admin-ai-logs',
     component: () => import('@/pages/admin/AILogsPage.vue'),
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Logs IA — Admin' }
+  },
+  {
+    path: '/admin/messages',
+    name: 'admin-contact-messages',
+    component: () => import('@/pages/admin/ContactMessagesPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Messages contact — Admin' }
   },
 
   // === 404 ===

@@ -5,6 +5,7 @@ import { useThemeStore } from '@/stores/theme'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import AIAssistant from '@/components/AIAssistant.vue'
+import OnboardingHint from '@/components/OnboardingHint.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -35,6 +36,7 @@ onMounted(() => {
     </v-main>
     <AppFooter />
     <AIAssistant />
+    <OnboardingHint />
   </v-app>
 </template>
 

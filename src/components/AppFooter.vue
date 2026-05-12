@@ -27,35 +27,35 @@ const year = new Date().getFullYear()
         <div>
           <h4>Découvrir</h4>
           <ul>
-            <li><router-link to="/voyages">Voyages signature</router-link></li>
-            <li><router-link to="/voyages?ia=true">Composer avec l'IA</router-link></li>
-            <li><router-link to="/voyages?type=hotel">Hôtels & maisons</router-link></li>
-            <li><router-link to="/voyages?type=restaurant">Restaurants</router-link></li>
+            <li><router-link to="/voyages">Destinations</router-link></li>
+            <li><router-link to="/composer">✨ Composer avec l'IA</router-link></li>
+            <li><router-link to="/temoignages">Souvenirs voyageurs</router-link></li>
+            <li><router-link to="/about">Notre démarche</router-link></li>
           </ul>
         </div>
 
         <div>
           <h4>Communauté</h4>
           <ul>
-            <li><router-link to="/auth/signup?role=guide">Devenir ambassadeur</router-link></li>
-            <li><router-link to="/about">Notre démarche</router-link></li>
-            <li><router-link to="/about#charte">Charte de qualité</router-link></li>
+            <li><router-link to="/auth/signup">Créer un compte</router-link></li>
+            <li><router-link to="/auth/signup?role=guide_junior">Devenir guide</router-link></li>
+            <li><router-link to="/contact">Contact</router-link></li>
           </ul>
         </div>
 
         <div>
-          <h4>Aide</h4>
+          <h4>Légal</h4>
           <ul>
-            <li><a href="mailto:support@djawal.com">Contact support</a></li>
-            <li><router-link to="/legal/cgu">Conditions</router-link></li>
-            <li><router-link to="/legal/privacy">Confidentialité</router-link></li>
+            <li><router-link to="/mentions-legales">Mentions légales</router-link></li>
+            <li><router-link to="/cgu">Conditions d'utilisation</router-link></li>
+            <li><a href="mailto:hello@djawal.app">hello@djawal.app</a></li>
           </ul>
         </div>
       </div>
 
       <div class="footer-bottom">
         <span>© {{ year }} Djawal — Tous droits réservés</span>
-        <span><span class="arabic">صُنع في الجزائر</span> · Conçu en Algérie 🇩🇿</span>
+        <span class="locale-note"><span class="arabic">صُنع في الجزائر</span> · Conçu en Algérie 🇩🇿</span>
       </div>
     </div>
   </footer>

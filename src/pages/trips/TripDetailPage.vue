@@ -266,7 +266,7 @@ function difficultyLabel(d: string | null) {
         </main>
 
         <aside class="detail-side">
-          <div class="card guide-card">
+          <router-link :to="`/guide/${trip.created_by}`" class="card guide-card guide-link">
             <h3>Votre guide</h3>
             <div class="guide-info">
               <div class="guide-avatar">
@@ -284,9 +284,10 @@ function difficultyLabel(d: string | null) {
                 <div class="guide-role">
                   {{ trip.profiles?.role === 'guide_senior' ? '⭐ Guide Senior' : 'Guide' }}
                 </div>
+                <div class="guide-cta">Voir le profil →</div>
               </div>
             </div>
-          </div>
+          </router-link>
 
           <div class="card cta-card">
             <div class="cta-price">{{ fmtPrice(trip.price_da) }}</div>
@@ -524,8 +525,11 @@ function difficultyLabel(d: string | null) {
   font-weight: 700;
   color: var(--c-primaire);
 }
+.guide-link { text-decoration: none; color: inherit; transition: var(--t-base); display: block; }
+.guide-link:hover { transform: translateY(-2px); box-shadow: var(--ombre-elevee); }
 .guide-name { font-weight: 700; color: var(--c-primaire-profond); }
 .guide-role { font-size: 13px; color: var(--c-accent-fort); }
+.guide-cta { font-size: 12px; color: var(--c-primaire); font-weight: 600; margin-top: 4px; }
 
 .cta-card { text-align: center; background: var(--c-fond-chaud); }
 .cta-price {

@@ -10,10 +10,15 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!
 
+const EMBED_MODEL = 'gemini-embedding-001'
+const EMBED_DIM = 768
+const GEN_MODEL = 'gemini-2.5-flash-lite'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+  'Access-Control-Allow-Headers': '*',
+  'Access-Control-Max-Age': '86400'
 }
 
 interface ResourceMatch {
@@ -47,13 +52,14 @@ interface TripMatch {
 
 // === Génération d'embedding ===
 async function embed(text: string): Promise<number[]> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:embedContent?key=${GEMINI_API_KEY}`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'models/text-embedding-004',
-      content: { parts: [{ text }] }
+      model: `models/${EMBED_MODEL}`,
+      content: { parts: [{ text }] },
+      outputDimensionality: EMBED_DIM
     })
   })
   if (!res.ok) {
@@ -66,16 +72,16 @@ async function embed(text: string): Promise<number[]> {
 
 // === Génération de texte ===
 async function generate(prompt: string): Promise<{ text: string; tokens: number }> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_MODEL}:generateContent?key=${GEMINI_API_KEY}`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 800,
-        topP: 0.9
+        temperature: 0.35,
+        maxOutputTokens: 1024,
+        topP: 0.85
       }
     })
   })
@@ -161,13 +167,14 @@ serve(async (req) => {
       })
     ])
 
-    const resources: ResourceMatch[] = resourcesRes.data || []
-    const destinations: DestinationMatch[] = destinationsRes.data || []
-    const trips: TripMatch[] = tripsRes.data || []
+    const SIMILARITY_THRESHOLD = 0.4
+    const resources: ResourceMatch[] = (resourcesRes.data || []).filter((r: ResourceMatch) => r.similarity >= SIMILARITY_THRESHOLD)
+    const destinations: DestinationMatch[] = (destinationsRes.data || []).filter((d: DestinationMatch) => d.similarity >= SIMILARITY_THRESHOLD)
+    const trips: TripMatch[] = (tripsRes.data || []).filter((t: TripMatch) => t.similarity >= SIMILARITY_THRESHOLD)
 
     // 3. Si rien trouvé : réponse honnête sans inventer
     if (resources.length === 0 && destinations.length === 0 && trips.length === 0) {
-      const fallback = "Je n'ai pas trouvé d'informations précises dans le catalogue Djawal pour répondre à votre question. Essayez de la reformuler ou explorez les destinations disponibles depuis le menu Voyages."
+      const fallback = "Je n'ai pas la connaissance précise pour répondre à ça. Reformule autrement ou jette un œil au menu Voyages — il y a peut-être déjà l'inspiration que tu cherches."
 
       await supabase.from('ai_conversations').insert({
         user_id: user_id || null,
@@ -214,23 +221,35 @@ serve(async (req) => {
     }
 
     // 5. Prompt système strict (anti-hallucination)
-    const prompt = `Tu es Djawal, un assistant de voyage spécialisé sur l'Algérie. Tu réponds exclusivement à partir du contexte ci-dessous et tu n'inventes JAMAIS de noms d'hôtels, de restaurants ou de sites qui n'y figurent pas.
+    const prompt = `Tu es Djawal, un guide de voyage algérien chaleureux et passionné. Tu connais ton pays intimement.
 
-CONTEXTE DJAWAL :
+INFOS INTERNES (NE JAMAIS LES CITER DANS TA RÉPONSE) :
 ${context}
-
-RÈGLES STRICTES :
-- Si le contexte ne suffit pas à répondre, dis-le clairement : "Je n'ai pas cette information dans le catalogue Djawal."
-- N'invente AUCUN nom d'établissement, AUCUNE adresse, AUCUN prix qui ne soit pas dans le contexte
-- Tu peux mentionner librement des informations générales sur l'Algérie (géographie, culture, histoire)
-- Sois chaleureux, concis et utilise un ton d'ami connaisseur du pays
-- Réponds en français
-- Utilise occasionnellement des mots arabes/berbères communs avec leur signification entre parenthèses (ex : medersa, kasbah, casbah)
 
 QUESTION DU VOYAGEUR :
 ${question}
 
-RÉPONSE :`
+INSTRUCTIONS DE RÉPONSE :
+
+Réponds de manière naturelle, comme un ami qui partage des recommandations autour d'un thé. Tu PEUX mentionner par leur nom les lieux des infos internes ci-dessus si tu les recommandes vraiment, mais tu ne dois en aucun cas :
+- Dire "d'après notre catalogue", "selon les données", "voici ce que j'ai trouvé", "les ressources fournies"
+- Lister mécaniquement plusieurs noms à la suite (l'interface affiche déjà des cartes cliquables sous ta réponse — pas besoin de les répéter en liste)
+- Faire des phrases du genre "il y a aussi X, Y et Z disponibles"
+- Te présenter comme un assistant IA ou parler de toi à la troisième personne
+
+Au contraire :
+- Réponds comme si tu parlais de mémoire à un ami
+- Choisis UNE ou DEUX recommandations pertinentes et raconte-les avec personnalité (anecdote, atmosphère, conseil pratique)
+- Le reste des suggestions sera vu via les cartes en bas — n'aie pas peur de ne pas tout mentionner
+- Si tu n'as vraiment rien de pertinent à recommander dans les infos internes, dis simplement "Je n'ai pas la connaissance précise pour ça, mais je peux te parler de [topic général algérien lié à la question] si tu veux"
+
+STYLE :
+- Français limpide, ton chaleureux mais pas excessif
+- 3-5 phrases au total maximum (sauf si la question demande un développement)
+- Pas de bullet points, pas de titres — du texte fluide
+- Une touche de mots arabes/berbères de temps en temps avec leur sens (medersa = école coranique, kasbah = citadelle, ksour = villages fortifiés)
+
+# TA RÉPONSE :`
 
     // 6. Génération
     const { text: answer, tokens } = await generate(prompt)
@@ -248,7 +267,7 @@ RÉPONSE :`
       user_id: user_id || null,
       user_query: question,
       retrieved_resource_ids: resourceIds,
-      llm_response: { text: answer, model: 'gemini-2.0-flash' },
+      llm_response: { text: answer, model: GEN_MODEL },
       validation_passed: validation.passed,
       validation_notes: validation.notes || null,
       tokens_used: tokens,

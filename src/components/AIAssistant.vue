@@ -316,6 +316,9 @@ function goToDestination(id: string) {
   margin-top: var(--space-2);
   padding-top: var(--space-2);
   border-top: 1px solid var(--c-fond-chaud);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .rich-label {
   font-size: 11px;
@@ -323,16 +326,17 @@ function goToDestination(id: string) {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 .rich-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   width: 100%;
   background: var(--c-fond-chaud);
   border: 1px solid var(--c-gris-clair);
   border-radius: var(--r-sm);
-  padding: 8px 12px;
-  margin-bottom: 4px;
+  padding: 10px 12px;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
@@ -346,11 +350,13 @@ function goToDestination(id: string) {
   display: block;
   color: var(--c-primaire-profond);
   font-size: 13px;
-  margin-bottom: 2px;
+  line-height: 1.3;
 }
 .rich-card span {
+  display: block;
   color: var(--c-texte-doux);
   font-size: 11px;
+  line-height: 1.3;
 }
 
 .quick-prompts {

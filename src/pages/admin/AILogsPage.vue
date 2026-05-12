@@ -61,7 +61,14 @@ async function generateEmbeddings(table: string) {
       body: { table, limit: 50 }
     })
     if (error) throw error
-    embedStatus.value[table] = `✓ ${data.processed} traités${data.failed ? `, ${data.failed} échecs` : ''}`
+    let msg = `✓ ${data.processed} traités`
+    if (data.failed) {
+      msg += `, ${data.failed} échecs`
+      if (data.errors && data.errors.length > 0) {
+        msg += `\n  → 1er échec : ${data.errors[0]}`
+      }
+    }
+    embedStatus.value[table] = msg
   } catch (e: any) {
     embedStatus.value[table] = `✗ Erreur : ${e.message}`
   } finally {
@@ -270,6 +277,9 @@ function answerPreview(r: any): string {
   font-size: 13px;
   color: var(--c-texte-doux);
   font-family: 'Inter', monospace;
+  white-space: pre-line;
+  flex: 1;
+  min-width: 200px;
 }
 
 .logs-head {
