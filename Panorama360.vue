@@ -25,22 +25,18 @@ const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannel
 const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js'
 
 /**
- * Proxifie les URLs d'images sans CORS via images.weserv.nl.
+ * Proxifie les URLs d'images sans CORS via notre Edge Function image-proxy.
  * Nécessaire pour les images bilnov.com qui ne servent pas Access-Control-Allow-Origin.
  */
+const IMAGE_PROXY_URL = 'https://upysjmymsafqmrbgzhva.supabase.co/functions/v1/image-proxy'
+
 function proxyIfNeeded(url: string): string {
   if (!url) return url
-  // Liste des domaines à proxifier (sans CORS)
-  const needsProxy = [
-    'djawal.bilnov.com',
-    'bilnov.com'
-  ]
+  const needsProxy = ['djawal.bilnov.com', 'bilnov.com']
   try {
     const u = new URL(url)
-    if (needsProxy.some(d => u.hostname.includes(d))) {
-      // weserv.nl prend l'URL sans protocole
-      const cleanUrl = url.replace(/^https?:\/\//, '')
-      return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}`
+    if (needsProxy.some(d => u.hostname === d || u.hostname.endsWith('.' + d))) {
+      return `${IMAGE_PROXY_URL}?url=${encodeURIComponent(url)}`
     }
   } catch {
     // URL invalide, on retourne tel quel
@@ -133,15 +129,13 @@ watch(() => props.panoramaUrl, () => {
     <!-- Cas 1 : image equirectangulaire → Pannellum -->
     <template v-if="panoramaUrl">
       <div ref="containerEl" class="panorama-viewer"></div>
-      <div class="panorama-overlay">
-        <div class="badge-360">
-          <span class="badge-icon">🌐</span>
-          <span>Visite 360°</span>
-        </div>
-        <button class="fs-btn" @click="toggleFullscreen" :title="fullscreen ? 'Quitter' : 'Plein écran'">
-          {{ fullscreen ? '⤓' : '⤢' }}
-        </button>
+      <div class="badge-360">
+        <span class="badge-icon">🌐</span>
+        <span>Visite 360°</span>
       </div>
+      <button class="fs-btn" @click="toggleFullscreen" :title="fullscreen ? 'Quitter' : 'Plein écran'">
+        {{ fullscreen ? '⤓' : '⤢' }}
+      </button>
       <div v-if="!loaded" class="panorama-loading">
         <div class="spinner"></div>
         <p>Chargement de la visite 360°…</p>
@@ -156,13 +150,11 @@ watch(() => props.panoramaUrl, () => {
         allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
         :title="title || 'Visite virtuelle'"
       ></iframe>
-      <div class="panorama-overlay">
-        <div class="badge-360">
-          <span class="badge-icon">🎥</span>
-          <span>Visite virtuelle</span>
-        </div>
-        <a :href="virtualTourUrl" target="_blank" rel="noopener" class="fs-btn" title="Ouvrir en plein écran">⤢</a>
+      <div class="badge-360">
+        <span class="badge-icon">🎥</span>
+        <span>Visite virtuelle</span>
       </div>
+      <a :href="virtualTourUrl" target="_blank" rel="noopener" class="fs-btn" title="Ouvrir en plein écran">⤢</a>
     </template>
 
     <!-- Aucun panorama disponible -->
@@ -189,16 +181,10 @@ watch(() => props.panoramaUrl, () => {
   display: block;
 }
 
-.panorama-overlay {
-  position: absolute;
-  top: 12px; left: 12px; right: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  pointer-events: none;
-  z-index: 10;
-}
+/* Badge titre en bas-gauche, FS en bas-droite — laisse les contrôles zoom Pannellum libres en haut */
 .badge-360 {
+  position: absolute;
+  bottom: 14px; left: 14px;
   background: rgba(10, 31, 46, 0.85);
   color: var(--c-fond);
   padding: 6px 14px;
@@ -211,11 +197,14 @@ watch(() => props.panoramaUrl, () => {
   align-items: center;
   gap: 6px;
   backdrop-filter: blur(8px);
+  z-index: 10;
+  pointer-events: none;
 }
 .badge-icon { font-size: 14px; }
 
 .fs-btn {
-  pointer-events: auto;
+  position: absolute;
+  bottom: 14px; right: 14px;
   background: rgba(10, 31, 46, 0.85);
   color: var(--c-fond);
   border: none;
@@ -229,6 +218,7 @@ watch(() => props.panoramaUrl, () => {
   text-decoration: none;
   transition: var(--t-base);
   backdrop-filter: blur(8px);
+  z-index: 10;
 }
 .fs-btn:hover { background: var(--c-primaire); transform: scale(1.05); }
 

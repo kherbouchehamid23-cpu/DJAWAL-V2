@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useThemeStore, type CulturalTheme } from '@/stores/theme'
+import { supabase } from '@/lib/supabase'
 import MemoriesCarousel from '@/components/MemoriesCarousel.vue'
 import { useSEO } from '@/composables/useSEO'
 
@@ -10,6 +11,28 @@ useSEO({
 })
 
 const themeStore = useThemeStore()
+
+// Images de fond par thème — une photo de destination ayant ce thème
+const themePhotos = ref<Record<string, string>>({
+  saharien: '',
+  mauresque: '',
+  aures: ''
+})
+
+onMounted(async () => {
+  // Récupère une destination ayant une hero_image par thème
+  const { data } = await supabase
+    .from('destinations')
+    .select('cultural_theme, hero_image_url')
+    .not('hero_image_url', 'is', null)
+  if (data) {
+    for (const d of data) {
+      if (d.cultural_theme && d.hero_image_url && !themePhotos.value[d.cultural_theme]) {
+        themePhotos.value[d.cultural_theme] = d.hero_image_url
+      }
+    }
+  }
+})
 
 const stats = ref([
   { value: '1 247', label: 'Voyages partagés' },
@@ -48,12 +71,18 @@ function tryTheme(theme: CulturalTheme) {
         </p>
 
         <div class="hero-actions">
-          <v-btn color="primary" size="x-large" rounded="md" to="/voyages">
-            Découvrir un voyage
+          <router-link to="/composer" class="cta-ai">
+            <div class="cta-ai-glow"></div>
+            <span class="cta-ai-sparkle">✨</span>
+            <div class="cta-ai-content">
+              <strong>Composer mon voyage avec l'IA</strong>
+              <small>Un parcours sur mesure en 30 secondes</small>
+            </div>
+            <span class="cta-ai-arrow">→</span>
+          </router-link>
+          <v-btn color="primary" size="large" rounded="md" variant="outlined" to="/voyages">
+            Ou parcourir les destinations
             <v-icon end>mdi-arrow-right</v-icon>
-          </v-btn>
-          <v-btn variant="outlined" color="primary" size="x-large" rounded="md" to="/composer">
-            ✨ Composer avec l'IA
           </v-btn>
         </div>
 
@@ -83,6 +112,7 @@ function tryTheme(theme: CulturalTheme) {
             :key="emotion.title"
             :to="`/voyages?theme=${emotion.theme}`"
             :class="['emotion-card', `theme-bg-${emotion.theme}`]"
+            :style="themePhotos[emotion.theme] ? `background-image: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(10,31,46,0.7) 100%), url('${themePhotos[emotion.theme]}'); background-size: cover; background-position: center;` : ''"
           >
             <div class="emotion-icon">{{ emotion.icon }}</div>
             <div class="emotion-text">
@@ -181,8 +211,82 @@ function tryTheme(theme: CulturalTheme) {
 .hero-actions {
   display: flex; gap: var(--space-3);
   justify-content: center; flex-wrap: wrap;
+  align-items: center;
   margin-bottom: var(--space-7);
 }
+
+/* === CTA IA prééminent === */
+.cta-ai {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 28px;
+  background: linear-gradient(135deg, var(--c-primaire) 0%, var(--c-primaire-profond) 100%);
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  color: var(--c-fond);
+  box-shadow: 0 12px 32px rgba(10, 31, 46, 0.25), 0 0 0 0 rgba(212, 160, 79, 0.4);
+  overflow: hidden;
+  transition: all var(--t-base);
+  animation: cta-pulse 3s ease-in-out infinite;
+}
+@keyframes cta-pulse {
+  0%, 100% { box-shadow: 0 12px 32px rgba(10, 31, 46, 0.25), 0 0 0 0 rgba(212, 160, 79, 0.5); }
+  50% { box-shadow: 0 16px 40px rgba(10, 31, 46, 0.35), 0 0 0 12px rgba(212, 160, 79, 0); }
+}
+.cta-ai:hover {
+  transform: translateY(-3px) scale(1.02);
+  animation: none;
+}
+.cta-ai-glow {
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(212, 160, 79, 0.4) 0%, transparent 60%);
+  animation: glow-spin 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes glow-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.cta-ai-sparkle {
+  font-size: 32px;
+  position: relative;
+  z-index: 1;
+  animation: sparkle 2s ease-in-out infinite;
+}
+@keyframes sparkle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(15deg) scale(1.15); }
+}
+.cta-ai-content {
+  position: relative;
+  z-index: 1;
+  text-align: left;
+}
+.cta-ai-content strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.cta-ai-content small {
+  display: block;
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.cta-ai-arrow {
+  position: relative;
+  z-index: 1;
+  font-size: 28px;
+  font-weight: 700;
+  transition: transform var(--t-base);
+}
+.cta-ai:hover .cta-ai-arrow { transform: translateX(4px); }
 .hero-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
