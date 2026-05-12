@@ -5,8 +5,6 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
  * Composant visite virtuelle 360° avec Pannellum (CDN, open source).
  * - panoramaUrl : URL d'une image equirectangulaire (.jpg/.webp)
  * - virtualTourUrl : URL d'un tour HTML externe (Matterport, krpano, etc.)
- *
- * Priorité : panoramaUrl en natif (rendu Pannellum), sinon iframe vers virtualTourUrl.
  */
 
 const props = defineProps<{
@@ -24,15 +22,27 @@ const fullscreen = ref(false)
 const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css'
 const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js'
 
+const IMAGE_PROXY_URL = 'https://upysjmymsafqmrbgzhva.supabase.co/functions/v1/image-proxy'
+
+function proxyIfNeeded(url: string): string {
+  if (!url) return url
+  const needsProxy = ['djawal.bilnov.com', 'bilnov.com']
+  try {
+    const u = new URL(url)
+    if (needsProxy.some(d => u.hostname === d || u.hostname.endsWith('.' + d))) {
+      return `${IMAGE_PROXY_URL}?url=${encodeURIComponent(url)}`
+    }
+  } catch {}
+  return url
+}
+
 async function loadPannellum(): Promise<void> {
-  // Inject CSS if missing
   if (!document.querySelector(`link[href="${PANNELLUM_CSS}"]`)) {
     const link = document.createElement('link')
     link.rel = 'stylesheet'
     link.href = PANNELLUM_CSS
     document.head.appendChild(link)
   }
-  // Inject JS if missing
   if ((window as any).pannellum) return
   return new Promise((resolve, reject) => {
     const script = document.createElement('script')
@@ -46,25 +56,24 @@ async function loadPannellum(): Promise<void> {
 
 async function initViewer() {
   if (!props.panoramaUrl || !containerEl.value) return
-
   await loadPannellum()
   const pannellum = (window as any).pannellum
   if (!pannellum) return
 
-  // Destroy previous instance if any
   if (viewer.value && viewer.value.destroy) {
     try { viewer.value.destroy() } catch {}
   }
 
   viewer.value = pannellum.viewer(containerEl.value, {
     type: 'equirectangular',
-    panorama: props.panoramaUrl,
+    panorama: proxyIfNeeded(props.panoramaUrl),
     autoLoad: true,
     autoRotate: -2,
     compass: true,
     showZoomCtrl: true,
-    showFullscreenCtrl: false, // on gère nous-mêmes
-    hotSpotDebug: false
+    showFullscreenCtrl: false,
+    hotSpotDebug: false,
+    crossOrigin: 'anonymous'
   })
   loaded.value = true
 }
@@ -82,6 +91,10 @@ function toggleFullscreen() {
   }
 }
 
+function onFSChange() {
+  fullscreen.value = !!document.fullscreenElement
+}
+
 onMounted(() => {
   if (props.panoramaUrl) initViewer()
   document.addEventListener('fullscreenchange', onFSChange)
@@ -94,10 +107,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', onFSChange)
 })
 
-function onFSChange() {
-  fullscreen.value = !!document.fullscreenElement
-}
-
 watch(() => props.panoramaUrl, () => {
   if (props.panoramaUrl) initViewer()
 })
@@ -105,7 +114,6 @@ watch(() => props.panoramaUrl, () => {
 
 <template>
   <div class="panorama-wrap" :style="{ height: height || '420px' }">
-    <!-- Cas 1 : image equirectangulaire → Pannellum -->
     <template v-if="panoramaUrl">
       <div ref="containerEl" class="panorama-viewer"></div>
       <div class="panorama-overlay">
@@ -123,7 +131,6 @@ watch(() => props.panoramaUrl, () => {
       </div>
     </template>
 
-    <!-- Cas 2 : URL externe → iframe -->
     <template v-else-if="virtualTourUrl">
       <iframe
         :src="virtualTourUrl"
@@ -140,7 +147,6 @@ watch(() => props.panoramaUrl, () => {
       </div>
     </template>
 
-    <!-- Aucun panorama disponible -->
     <div v-else class="no-panorama">
       <span>🌐</span>
       <p>Pas encore de visite virtuelle disponible.</p>
@@ -163,7 +169,6 @@ watch(() => props.panoramaUrl, () => {
   border: none;
   display: block;
 }
-
 .panorama-overlay {
   position: absolute;
   top: 12px; left: 12px; right: 12px;
@@ -188,7 +193,6 @@ watch(() => props.panoramaUrl, () => {
   backdrop-filter: blur(8px);
 }
 .badge-icon { font-size: 14px; }
-
 .fs-btn {
   pointer-events: auto;
   background: rgba(10, 31, 46, 0.85);
@@ -206,7 +210,6 @@ watch(() => props.panoramaUrl, () => {
   backdrop-filter: blur(8px);
 }
 .fs-btn:hover { background: var(--c-primaire); transform: scale(1.05); }
-
 .panorama-loading {
   position: absolute;
   inset: 0;
@@ -227,7 +230,6 @@ watch(() => props.panoramaUrl, () => {
   animation: spin 1s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 .no-panorama {
   height: 100%;
   display: flex;
