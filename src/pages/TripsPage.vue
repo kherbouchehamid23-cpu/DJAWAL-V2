@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { parseCoordinates } from '@/lib/geo'
 import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
 import { useSEO } from '@/composables/useSEO'
+
+const route = useRoute()
 
 useSEO({
   title: 'Toutes les destinations algériennes',
@@ -74,7 +77,23 @@ const mapMarkers = computed<MapMarker[]>(() => {
     .filter((m): m is MapMarker => m !== null)
 })
 
+// Pré-remplissage depuis les query params (?theme=saharien&q=desert)
+function applyQueryParams() {
+  const qTheme = route.query.theme as string | undefined
+  const qSearch = route.query.q as string | undefined
+  if (qTheme && ['all', 'saharien', 'mauresque', 'aures'].includes(qTheme)) {
+    themeFilter.value = qTheme as any
+  }
+  if (qSearch) {
+    searchQuery.value = qSearch
+  }
+}
+
+// Réagir aux changements de query (navigation depuis la home par ex.)
+watch(() => route.query, applyQueryParams)
+
 onMounted(async () => {
+  applyQueryParams()
   loading.value = true
   const [destRes, tripsRes] = await Promise.all([
     supabase

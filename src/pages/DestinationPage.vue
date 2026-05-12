@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { parseCoordinates } from '@/lib/geo'
 import { useThemeStore } from '@/stores/theme'
 import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
+import Panorama360 from '@/components/Panorama360.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -28,6 +29,8 @@ interface Resource {
   description: string
   coordinates: any
   images?: string[]
+  panorama_360_url?: string | null
+  virtual_tour_url?: string | null
   // hotel-specific
   address?: string
   star_rating?: number
@@ -48,6 +51,14 @@ const hotels = ref<Resource[]>([])
 const restaurants = ref<Resource[]>([])
 const loading = ref(true)
 const activeTab = ref<'all' | 'sites' | 'hotels' | 'restaurants'>('all')
+
+// Visite 360 modale
+const panoramaResource = ref<Resource | null>(null)
+function openPanorama(r: Resource) { panoramaResource.value = r }
+function closePanorama() { panoramaResource.value = null }
+function has360(r: Resource): boolean {
+  return !!(r.panorama_360_url || r.virtual_tour_url)
+}
 
 const slug = computed(() => route.params.id as string)
 
@@ -228,6 +239,9 @@ function parsePriceRange(range: any): string {
                     {{ s.best_season.join(', ') }}
                   </span>
                 </div>
+                <button v-if="has360(s)" class="badge-360-btn" @click="openPanorama(s)">
+                  🌐 Visite 360°
+                </button>
               </div>
             </div>
           </article>
@@ -250,6 +264,9 @@ function parsePriceRange(range: any): string {
                 <div v-if="h.amenities?.length" class="rc-amenities">
                   <span v-for="a in h.amenities" :key="a" class="amenity">{{ a }}</span>
                 </div>
+                <button v-if="has360(h)" class="badge-360-btn" @click="openPanorama(h)">
+                  🌐 Visite 360°
+                </button>
               </div>
             </div>
           </article>
@@ -271,6 +288,9 @@ function parsePriceRange(range: any): string {
                 <div v-if="r.signature_dishes?.length" class="rc-amenities">
                   <span v-for="d in r.signature_dishes" :key="d" class="amenity dishes">{{ d }}</span>
                 </div>
+                <button v-if="has360(r)" class="badge-360-btn" @click="openPanorama(r)">
+                  🌐 Visite 360°
+                </button>
               </div>
             </div>
           </article>
@@ -290,6 +310,27 @@ function parsePriceRange(range: any): string {
         </aside>
       </div>
     </section>
+
+    <!-- Modale visite 360° -->
+    <transition name="fade">
+      <div v-if="panoramaResource" class="panorama-modal" @click.self="closePanorama">
+        <div class="panorama-modal-inner">
+          <header class="panorama-modal-head">
+            <div>
+              <h3>{{ panoramaResource.name }}</h3>
+              <p v-if="panoramaResource.name_ar" class="arabic">{{ panoramaResource.name_ar }}</p>
+            </div>
+            <button class="modal-close" @click="closePanorama" aria-label="Fermer">✕</button>
+          </header>
+          <Panorama360
+            :panorama-url="panoramaResource.panorama_360_url"
+            :virtual-tour-url="panoramaResource.virtual_tour_url"
+            :title="panoramaResource.name"
+            height="70vh"
+          />
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -541,4 +582,78 @@ function parsePriceRange(range: any): string {
   .content-grid { grid-template-columns: 1fr; }
   .map-aside { position: static; height: 360px; }
 }
+
+/* === BADGE 360 + MODALE === */
+.badge-360-btn {
+  margin-top: var(--space-2);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-fort));
+  color: var(--c-fond);
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: var(--t-base);
+  box-shadow: 0 2px 8px rgba(212, 160, 79, 0.3);
+}
+.badge-360-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(212, 160, 79, 0.5);
+}
+
+.panorama-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 31, 46, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: var(--space-3);
+}
+.panorama-modal-inner {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  width: 100%;
+  max-width: 1200px;
+  max-height: 92vh;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+}
+.panorama-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--c-fond-chaud);
+}
+.panorama-modal-head h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--c-primaire-profond);
+  margin: 0;
+}
+.panorama-modal-head .arabic {
+  font-size: 14px;
+  color: var(--c-accent-fort);
+  margin: 0;
+}
+.modal-close {
+  background: var(--c-fond-chaud);
+  border: none;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--c-primaire);
+  transition: var(--t-base);
+}
+.modal-close:hover { background: var(--c-gris-clair); }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

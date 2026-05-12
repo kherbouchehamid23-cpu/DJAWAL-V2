@@ -6,6 +6,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import AIAssistant from '@/components/AIAssistant.vue'
 import OnboardingHint from '@/components/OnboardingHint.vue'
+import InstallPWA from '@/components/InstallPWA.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -37,6 +38,7 @@ onMounted(() => {
     <AppFooter />
     <AIAssistant />
     <OnboardingHint />
+    <InstallPWA />
   </v-app>
 </template>
 

@@ -78,9 +78,10 @@ function tryTheme(theme: CulturalTheme) {
         </div>
 
         <div class="emotions-grid">
-          <div
+          <router-link
             v-for="emotion in emotions"
             :key="emotion.title"
+            :to="`/voyages?theme=${emotion.theme}`"
             :class="['emotion-card', `theme-bg-${emotion.theme}`]"
           >
             <div class="emotion-icon">{{ emotion.icon }}</div>
@@ -88,7 +89,8 @@ function tryTheme(theme: CulturalTheme) {
               <h3>{{ emotion.title }}</h3>
               <span>{{ emotion.sub }}</span>
             </div>
-          </div>
+            <div class="emotion-cta">Explorer →</div>
+          </router-link>
         </div>
       </div>
     </section>
@@ -226,9 +228,27 @@ function tryTheme(theme: CulturalTheme) {
   overflow: hidden;
   position: relative;
   cursor: pointer;
+  text-decoration: none;
+  display: block;
   transition: transform var(--t-base), box-shadow var(--t-base);
 }
 .emotion-card:hover { transform: translateY(-6px); box-shadow: var(--ombre-elevee); }
+.emotion-card:hover .emotion-cta { transform: translateX(4px); }
+.emotion-cta {
+  position: absolute;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  color: var(--c-fond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  transition: transform var(--t-base);
+}
 .emotion-card::before {
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(180deg, transparent 30%, rgba(10, 31, 46, 0.8) 100%);
