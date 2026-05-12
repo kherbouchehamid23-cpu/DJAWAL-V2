@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import ImageUpload from '@/components/admin/ImageUpload.vue'
 
 interface Memory {
   id: string
@@ -209,13 +210,13 @@ function fmtDate(iso: string) {
         class="mt-3"
       />
 
-      <v-text-field
-        v-model="photoUrl"
-        label="URL d'une photo (optionnel)"
-        placeholder="https://…"
-        variant="outlined"
-        density="comfortable"
-      />
+      <div class="mt-3">
+        <ImageUpload
+          v-model="photoUrl"
+          bucket="memory-photos"
+          label="Photo (optionnel — JPG, PNG, WebP, max 10 Mo)"
+        />
+      </div>
 
       <div class="form-actions">
         <v-btn variant="outlined" @click="showForm = false">Annuler</v-btn>

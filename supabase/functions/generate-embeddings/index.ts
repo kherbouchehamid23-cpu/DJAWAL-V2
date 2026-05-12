@@ -18,7 +18,7 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400'
 }
 
-const TABLES = ['destinations', 'hotels', 'sites', 'restaurants', 'trips'] as const
+const TABLES = ['destinations', 'hotels', 'sites', 'restaurants', 'trips', 'activities'] as const
 
 async function embed(text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`
@@ -41,6 +41,9 @@ function buildText(row: any, table: string): string {
   }
   if (table === 'trips') {
     return `${row.title}. ${row.description}. Tags: ${(row.tags || []).join(', ')}`
+  }
+  if (table === 'activities') {
+    return `${row.name}. ${row.description}. Type: ${row.activity_type || ''}. Difficulté: ${row.difficulty || ''}.`
   }
   // hotels / sites / restaurants
   const extra = row.cuisine ? row.cuisine.join(', ')
@@ -71,6 +74,7 @@ serve(async (req) => {
     if (table === 'sites') cols = 'id, name, description, category'
     if (table === 'restaurants') cols = 'id, name, description, cuisine'
     if (table === 'trips') cols = 'id, title, description, tags'
+    if (table === 'activities') cols = 'id, name, description, activity_type, difficulty'
 
     const { data: rows, error } = await supabase
       .from(table)

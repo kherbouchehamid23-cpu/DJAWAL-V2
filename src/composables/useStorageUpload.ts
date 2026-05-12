@@ -5,7 +5,9 @@ import { supabase } from '@/lib/supabase'
  * Upload d'un fichier dans un bucket Supabase Storage.
  * Renvoie l'URL publique pour les buckets publics, ou le chemin pour les privés.
  */
-export function useStorageUpload(bucket: 'avatars' | 'hero-images' | 'panoramas' | 'kyc-documents' | 'ambient-sounds') {
+export type StorageBucket = 'avatars' | 'hero-images' | 'panoramas' | 'kyc-documents' | 'ambient-sounds' | 'trip-covers' | 'memory-photos'
+
+export function useStorageUpload(bucket: StorageBucket) {
   const uploading = ref(false)
   const progress = ref(0)
   const error = ref<string | null>(null)

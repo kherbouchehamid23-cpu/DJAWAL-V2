@@ -51,7 +51,7 @@ async function load() {
 
 onMounted(load)
 
-const TABLES = ['destinations', 'hotels', 'sites', 'restaurants', 'trips']
+const TABLES = ['destinations', 'hotels', 'sites', 'restaurants', 'activities', 'trips']
 
 async function generateEmbeddings(table: string) {
   embedding.value = table

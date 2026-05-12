@@ -49,8 +49,9 @@ const destination = ref<Destination | null>(null)
 const sites = ref<Resource[]>([])
 const hotels = ref<Resource[]>([])
 const restaurants = ref<Resource[]>([])
+const activities = ref<any[]>([])
 const loading = ref(true)
-const activeTab = ref<'all' | 'sites' | 'hotels' | 'restaurants'>('all')
+const activeTab = ref<'all' | 'sites' | 'hotels' | 'restaurants' | 'activities'>('all')
 
 // Visite 360 modale
 const panoramaResource = ref<Resource | null>(null)
@@ -80,15 +81,17 @@ async function loadDestination() {
   themeStore.setTheme(dest.cultural_theme)
 
   // Charge les ressources en parallèle
-  const [sitesRes, hotelsRes, restaurantsRes] = await Promise.all([
+  const [sitesRes, hotelsRes, restaurantsRes, activitiesRes] = await Promise.all([
     supabase.from('sites').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null),
     supabase.from('hotels').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null),
-    supabase.from('restaurants').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null)
+    supabase.from('restaurants').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null),
+    supabase.from('activities').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null)
   ])
 
   sites.value = (sitesRes.data || []) as Resource[]
   hotels.value = (hotelsRes.data || []) as Resource[]
   restaurants.value = (restaurantsRes.data || []) as Resource[]
+  activities.value = activitiesRes.data || []
   loading.value = false
 }
 
@@ -134,11 +137,17 @@ const mapMarkers = computed<MapMarker[]>(() => {
       if (c) list.push({ id: r.id, lat: c.lat, lng: c.lng, title: r.name, subtitle: '🍽️ Restaurant', theme })
     }
   }
+  if (shouldShow('activities')) {
+    for (const a of activities.value) {
+      const c = parseCoordinates(a.coordinates)
+      if (c) list.push({ id: a.id, lat: c.lat, lng: c.lng, title: a.name, subtitle: '🥾 Activité', theme })
+    }
+  }
   return list
 })
 
 const totalResources = computed(() =>
-  sites.value.length + hotels.value.length + restaurants.value.length
+  sites.value.length + hotels.value.length + restaurants.value.length + activities.value.length
 )
 
 function parsePriceRange(range: any): string {
@@ -192,6 +201,10 @@ function parsePriceRange(range: any): string {
           <strong>{{ restaurants.length }}</strong>
           <span>restaurant{{ restaurants.length > 1 ? 's' : '' }}</span>
         </div>
+        <div class="stat">
+          <strong>{{ activities.length }}</strong>
+          <span>activité{{ activities.length > 1 ? 's' : '' }}</span>
+        </div>
       </div>
     </section>
 
@@ -207,6 +220,9 @@ function parsePriceRange(range: any): string {
           </button>
           <button class="tab" :class="{ active: activeTab === 'hotels' }" @click="activeTab = 'hotels'">
             🏨 Hôtels ({{ hotels.length }})
+          </button>
+          <button class="tab" :class="{ active: activeTab === 'activities' }" @click="activeTab = 'activities'">
+            🥾 Activités ({{ activities.length }})
           </button>
           <button class="tab" :class="{ active: activeTab === 'restaurants' }" @click="activeTab = 'restaurants'">
             🍽️ Restaurants ({{ restaurants.length }})
@@ -289,6 +305,37 @@ function parsePriceRange(range: any): string {
                   <span v-for="d in r.signature_dishes" :key="d" class="amenity dishes">{{ d }}</span>
                 </div>
                 <button v-if="has360(r)" class="badge-360-btn" @click="openPanorama(r)">
+                  🌐 Visite 360°
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- ACTIVITÉS -->
+          <article v-if="(activeTab === 'all' || activeTab === 'activities') && activities.length > 0" class="resource-group">
+            <h2 class="group-title">🥾 Activités</h2>
+            <div class="resource-cards">
+              <div v-for="a in activities" :key="a.id" class="resource-card">
+                <div class="rc-header">
+                  <strong>{{ a.name }}</strong>
+                  <span v-if="a.activity_type" class="rc-tag">{{ a.activity_type }}</span>
+                </div>
+                <div v-if="a.name_ar" class="rc-arabic arabic">{{ a.name_ar }}</div>
+                <p class="rc-desc">{{ a.description }}</p>
+                <div class="rc-meta">
+                  <span v-if="a.duration_hours">⏱️ {{ a.duration_hours }}h</span>
+                  <span v-if="a.price_da !== null">💵 {{ a.price_da.toLocaleString('fr-FR') }} DA / pers.</span>
+                  <span v-if="a.difficulty">📊 {{ a.difficulty }}</span>
+                  <span v-if="a.min_age">👤 {{ a.min_age }}+ ans</span>
+                </div>
+                <div v-if="a.best_season?.length" class="rc-amenities">
+                  <span v-for="s in a.best_season" :key="s" class="amenity">{{ s }}</span>
+                </div>
+                <div v-if="a.operator_name" class="rc-operator">
+                  <strong>Opérateur :</strong> {{ a.operator_name }}
+                  <span v-if="a.operator_phone"> · 📞 {{ a.operator_phone }}</span>
+                </div>
+                <button v-if="has360(a)" class="badge-360-btn" @click="openPanorama(a)">
                   🌐 Visite 360°
                 </button>
               </div>
@@ -582,6 +629,15 @@ function parsePriceRange(range: any): string {
   .content-grid { grid-template-columns: 1fr; }
   .map-aside { position: static; height: 360px; }
 }
+
+.rc-operator {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--c-fond-chaud);
+  font-size: 12px;
+  color: var(--c-texte-doux);
+}
+.rc-operator strong { color: var(--c-primaire-profond); }
 
 /* === BADGE 360 + MODALE === */
 .badge-360-btn {

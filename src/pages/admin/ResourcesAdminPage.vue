@@ -10,7 +10,7 @@ import ImageUpload from '@/components/admin/ImageUpload.vue'
  * Le type est déterminé par route.params.type.
  */
 const route = useRoute()
-const resourceType = computed(() => route.params.type as 'hotels' | 'sites' | 'restaurants')
+const resourceType = computed(() => route.params.type as 'hotels' | 'sites' | 'restaurants' | 'activities')
 
 const configs = {
   hotels: {
@@ -33,8 +33,18 @@ const configs = {
     table: 'restaurants',
     extraFields: ['signature_dishes'],
     cuisineField: true
+  },
+  activities: {
+    label: 'Activités',
+    icon: '🥾',
+    table: 'activities',
+    extraFields: ['activity_type', 'duration_hours', 'price_da', 'difficulty', 'min_age', 'max_group_size', 'operator_name', 'operator_phone', 'booking_required', 'best_season'],
+    cuisineField: false
   }
 }
+
+const activityTypes = ['trek', 'plongée', 'artisanat', 'gastronomie', 'culture', '4x4', 'cheval', 'voile', 'photographie', 'famille', 'aventure', 'spiritualité', 'patrimoine', 'détente']
+const difficulties = ['facile', 'modere', 'difficile', 'expert']
 
 const config = computed(() => configs[resourceType.value])
 
@@ -62,6 +72,16 @@ const form = reactive<any>({
   images: [] as string[],
   price_min: null,
   price_max: null,
+  // Activités
+  activity_type: null,
+  duration_hours: null,
+  price_da: null,
+  difficulty: null,
+  min_age: null,
+  max_group_size: null,
+  operator_name: null,
+  operator_phone: null,
+  booking_required: true,
   coordinates_lat: null,
   coordinates_lng: null
 })
@@ -101,6 +121,9 @@ function resetForm() {
     category: null, entry_fee_da: null, best_season: [],
     cuisine: [], signature_dishes: [],
     images: [], price_min: null, price_max: null,
+    activity_type: null, duration_hours: null, price_da: null,
+    difficulty: null, min_age: null, max_group_size: null,
+    operator_name: null, operator_phone: null, booking_required: true,
     coordinates_lat: null, coordinates_lng: null
   })
 }
@@ -126,7 +149,16 @@ function openEdit(r: any) {
     best_season: r.best_season || [],
     cuisine: r.cuisine || [],
     signature_dishes: r.signature_dishes || [],
-    images: r.images || []
+    images: r.images || [],
+    activity_type: r.activity_type ?? null,
+    duration_hours: r.duration_hours ?? null,
+    price_da: r.price_da ?? null,
+    difficulty: r.difficulty ?? null,
+    min_age: r.min_age ?? null,
+    max_group_size: r.max_group_size ?? null,
+    operator_name: r.operator_name ?? null,
+    operator_phone: r.operator_phone ?? null,
+    booking_required: r.booking_required ?? true
   })
   editing.value = r
   dialogOpen.value = true
@@ -180,6 +212,17 @@ async function save() {
     if (form.price_min != null && form.price_max != null) {
       payload.price_range_da = `[${form.price_min},${form.price_max})`
     }
+  } else if (resourceType.value === 'activities') {
+    payload.activity_type = form.activity_type
+    payload.duration_hours = form.duration_hours
+    payload.price_da = form.price_da
+    payload.difficulty = form.difficulty
+    payload.min_age = form.min_age
+    payload.max_group_size = form.max_group_size
+    payload.operator_name = form.operator_name
+    payload.operator_phone = form.operator_phone
+    payload.booking_required = form.booking_required
+    payload.best_season = form.best_season
   }
 
   if (editing.value) {
@@ -318,6 +361,26 @@ async function remove(r: any) {
               </v-col>
               <v-col cols="6"><v-text-field v-model.number="form.price_min" label="Prix min DA" type="number" density="comfortable" /></v-col>
               <v-col cols="6"><v-text-field v-model.number="form.price_max" label="Prix max DA" type="number" density="comfortable" /></v-col>
+            </template>
+
+            <!-- Activités -->
+            <template v-if="resourceType === 'activities'">
+              <v-col cols="6">
+                <v-select v-model="form.activity_type" :items="activityTypes" label="Type d'activité" density="comfortable" />
+              </v-col>
+              <v-col cols="6">
+                <v-select v-model="form.difficulty" :items="difficulties" label="Difficulté" density="comfortable" />
+              </v-col>
+              <v-col cols="4"><v-text-field v-model.number="form.duration_hours" label="Durée (heures)" type="number" step="0.5" min="0.5" density="comfortable" /></v-col>
+              <v-col cols="4"><v-text-field v-model.number="form.price_da" label="Prix DA / pers." type="number" density="comfortable" /></v-col>
+              <v-col cols="4"><v-text-field v-model.number="form.max_group_size" label="Taille groupe max" type="number" density="comfortable" /></v-col>
+              <v-col cols="6"><v-text-field v-model.number="form.min_age" label="Âge minimum" type="number" density="comfortable" hint="0 si pas de restriction" /></v-col>
+              <v-col cols="6">
+                <v-switch v-model="form.booking_required" label="Réservation requise" color="primary" density="comfortable" inset />
+              </v-col>
+              <v-col cols="12"><v-select v-model="form.best_season" :items="seasons" label="Meilleures saisons" multiple chips density="comfortable" /></v-col>
+              <v-col cols="6"><v-text-field v-model="form.operator_name" label="Opérateur / Guide" density="comfortable" /></v-col>
+              <v-col cols="6"><v-text-field v-model="form.operator_phone" label="Téléphone opérateur" density="comfortable" /></v-col>
             </template>
 
             <v-col cols="12">

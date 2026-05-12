@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import ImageUpload from '@/components/admin/ImageUpload.vue'
 
 const auth = useAuthStore()
 const displayName = ref('')
 const bio = ref('')
 const region = ref('')
+const avatarUrl = ref<string | null>(null)
 const saving = ref(false)
 const savedMsg = ref<string | null>(null)
 const errorMsg = ref<string | null>(null)
@@ -15,6 +17,7 @@ onMounted(() => {
     displayName.value = auth.profile.display_name ?? ''
     bio.value = auth.profile.bio ?? ''
     region.value = auth.profile.region ?? ''
+    avatarUrl.value = auth.profile.avatar_url ?? null
   }
 })
 
@@ -25,7 +28,8 @@ async function handleSave() {
   const { error } = await auth.updateProfile({
     display_name: displayName.value.trim(),
     bio: bio.value.trim() || null,
-    region: region.value.trim() || null
+    region: region.value.trim() || null,
+    avatar_url: avatarUrl.value
   })
   saving.value = false
   if (error) {
@@ -90,6 +94,11 @@ const kycLabel: Record<string, { text: string; color: string }> = {
         <v-alert v-if="savedMsg" type="success" variant="tonal" class="mb-3">{{ savedMsg }}</v-alert>
 
         <v-form @submit.prevent="handleSave">
+          <ImageUpload
+            v-model="avatarUrl"
+            bucket="avatars"
+            label="Photo de profil"
+          />
           <v-text-field
             v-model="displayName"
             label="Nom d'affichage"

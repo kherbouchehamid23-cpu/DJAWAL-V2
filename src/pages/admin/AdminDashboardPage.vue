@@ -101,6 +101,11 @@ onMounted(async () => {
           <h3>Restaurants</h3>
           <p>Tables, brasseries et auberges traditionnelles.</p>
         </router-link>
+        <router-link to="/admin/resources/activities" class="module-card">
+          <div class="module-icon">🥾</div>
+          <h3>Activités</h3>
+          <p>Excursions, trek, plongée, ateliers artisanat, balades et expériences.</p>
+        </router-link>
         <router-link to="/admin/moderation" class="module-card">
           <div class="module-icon">✓</div>
           <h3>Modération parcours</h3>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useStorageUpload } from '@/composables/useStorageUpload'
+import { useStorageUpload, type StorageBucket } from '@/composables/useStorageUpload'
 
 const props = defineProps<{
   modelValue: string | null
-  bucket?: 'hero-images' | 'avatars' | 'panoramas'
+  bucket?: StorageBucket
   label?: string
 }>()
 

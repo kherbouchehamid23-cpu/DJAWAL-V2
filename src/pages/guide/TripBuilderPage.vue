@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import ImageUpload from '@/components/admin/ImageUpload.vue'
 
 /**
  * Sprint 5 — Constructeur de parcours.
@@ -19,12 +20,12 @@ interface Resource {
   id: string
   name: string
   description: string
-  type: 'hotel' | 'site' | 'restaurant'
+  type: 'hotel' | 'site' | 'restaurant' | 'activity'
 }
 interface Step {
   id?: string // si existant en base
   tempId: string // identifiant local
-  resource_type: 'hotel' | 'site' | 'restaurant'
+  resource_type: 'hotel' | 'site' | 'restaurant' | 'activity'
   resource_id: string
   resource_name?: string
   note: string
@@ -68,7 +69,7 @@ const days = ref<Day[]>([])
 
 // Catalogue de la destination sélectionnée
 const catalog = ref<Resource[]>([])
-const catalogTypeFilter = ref<'all' | 'hotel' | 'site' | 'restaurant'>('all')
+const catalogTypeFilter = ref<'all' | 'hotel' | 'site' | 'restaurant' | 'activity'>('all')
 const catalogSearch = ref('')
 
 // === COMPUTED ===
@@ -115,15 +116,17 @@ watch(destinationId, async (newId) => {
 })
 
 async function loadCatalog(destId: string) {
-  const [hotelsRes, sitesRes, restaurantsRes] = await Promise.all([
+  const [hotelsRes, sitesRes, restaurantsRes, activitiesRes] = await Promise.all([
     supabase.from('hotels').select('id, name, description').eq('destination_id', destId),
     supabase.from('sites').select('id, name, description').eq('destination_id', destId),
-    supabase.from('restaurants').select('id, name, description').eq('destination_id', destId)
+    supabase.from('restaurants').select('id, name, description').eq('destination_id', destId),
+    supabase.from('activities').select('id, name, description').eq('destination_id', destId)
   ])
   const list: Resource[] = []
   for (const h of (hotelsRes.data as any[] || [])) list.push({ ...h, type: 'hotel' })
   for (const s of (sitesRes.data as any[] || [])) list.push({ ...s, type: 'site' })
   for (const r of (restaurantsRes.data as any[] || [])) list.push({ ...r, type: 'restaurant' })
+  for (const a of (activitiesRes.data as any[] || [])) list.push({ ...a, type: 'activity' })
   catalog.value = list
 }
 
@@ -349,10 +352,16 @@ async function save(targetStatus: 'draft' | 'published') {
 }
 
 function typeIcon(t: string) {
-  return t === 'hotel' ? '🏨' : t === 'restaurant' ? '🍴' : '📍'
+  if (t === 'hotel') return '🏨'
+  if (t === 'restaurant') return '🍴'
+  if (t === 'activity') return '🥾'
+  return '📍'
 }
 function typeLabel(t: string) {
-  return t === 'hotel' ? 'Hôtel' : t === 'restaurant' ? 'Restaurant' : 'Site'
+  if (t === 'hotel') return 'Hôtel'
+  if (t === 'restaurant') return 'Restaurant'
+  if (t === 'activity') return 'Activité'
+  return 'Site'
 }
 </script>
 
@@ -460,14 +469,13 @@ function typeLabel(t: string) {
               rows="4"
               class="mt-3"
             />
-            <v-text-field
-              v-model="coverImageUrl"
-              label="URL de l'image de couverture (optionnel)"
-              placeholder="https://…"
-              variant="outlined"
-              density="comfortable"
-              class="mt-3"
-            />
+            <div class="cover-upload mt-3">
+              <ImageUpload
+                v-model="coverImageUrl"
+                bucket="trip-covers"
+                label="Image de couverture (recommandé)"
+              />
+            </div>
           </section>
 
           <!-- JOURNÉES -->
@@ -608,7 +616,8 @@ function typeLabel(t: string) {
                     { v: 'all', l: 'Tout', i: '✨' },
                     { v: 'hotel', l: 'Hôtels', i: '🏨' },
                     { v: 'site', l: 'Sites', i: '📍' },
-                    { v: 'restaurant', l: 'Restos', i: '🍴' }
+                    { v: 'restaurant', l: 'Restos', i: '🍴' },
+                    { v: 'activity', l: 'Activités', i: '🥾' }
                   ]"
                   :key="t.v"
                   class="cat-chip"
