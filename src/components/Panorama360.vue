@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
-/**
- * Composant visite virtuelle 360° avec Pannellum (CDN, open source).
- * - panoramaUrl : URL d'une image equirectangulaire (.jpg/.webp)
- * - virtualTourUrl : URL d'un tour HTML externe (Matterport, krpano, etc.)
- */
-
 const props = defineProps<{
   panoramaUrl?: string | null
   virtualTourUrl?: string | null
@@ -21,7 +15,6 @@ const fullscreen = ref(false)
 
 const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css'
 const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js'
-
 const IMAGE_PROXY_URL = 'https://upysjmymsafqmrbgzhva.supabase.co/functions/v1/image-proxy'
 
 function proxyIfNeeded(url: string): string {
@@ -59,11 +52,9 @@ async function initViewer() {
   await loadPannellum()
   const pannellum = (window as any).pannellum
   if (!pannellum) return
-
   if (viewer.value && viewer.value.destroy) {
     try { viewer.value.destroy() } catch {}
   }
-
   viewer.value = pannellum.viewer(containerEl.value, {
     type: 'equirectangular',
     panorama: proxyIfNeeded(props.panoramaUrl),
@@ -81,9 +72,7 @@ async function initViewer() {
 function toggleFullscreen() {
   if (!containerEl.value) return
   if (!fullscreen.value) {
-    if (containerEl.value.requestFullscreen) {
-      containerEl.value.requestFullscreen()
-    }
+    if (containerEl.value.requestFullscreen) containerEl.value.requestFullscreen()
     fullscreen.value = true
   } else {
     if (document.exitFullscreen) document.exitFullscreen()
@@ -91,9 +80,7 @@ function toggleFullscreen() {
   }
 }
 
-function onFSChange() {
-  fullscreen.value = !!document.fullscreenElement
-}
+function onFSChange() { fullscreen.value = !!document.fullscreenElement }
 
 onMounted(() => {
   if (props.panoramaUrl) initViewer()
@@ -116,21 +103,18 @@ watch(() => props.panoramaUrl, () => {
   <div class="panorama-wrap" :style="{ height: height || '420px' }">
     <template v-if="panoramaUrl">
       <div ref="containerEl" class="panorama-viewer"></div>
-      <div class="panorama-overlay">
-        <div class="badge-360">
-          <span class="badge-icon">🌐</span>
-          <span>Visite 360°</span>
-        </div>
-        <button class="fs-btn" @click="toggleFullscreen" :title="fullscreen ? 'Quitter' : 'Plein écran'">
-          {{ fullscreen ? '⤓' : '⤢' }}
-        </button>
+      <div class="badge-360">
+        <span class="badge-icon">🌐</span>
+        <span>Visite 360°</span>
       </div>
+      <button class="fs-btn" @click="toggleFullscreen" :title="fullscreen ? 'Quitter' : 'Plein écran'">
+        {{ fullscreen ? '⤓' : '⤢' }}
+      </button>
       <div v-if="!loaded" class="panorama-loading">
         <div class="spinner"></div>
         <p>Chargement de la visite 360°…</p>
       </div>
     </template>
-
     <template v-else-if="virtualTourUrl">
       <iframe
         :src="virtualTourUrl"
@@ -138,15 +122,12 @@ watch(() => props.panoramaUrl, () => {
         allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
         :title="title || 'Visite virtuelle'"
       ></iframe>
-      <div class="panorama-overlay">
-        <div class="badge-360">
-          <span class="badge-icon">🎥</span>
-          <span>Visite virtuelle</span>
-        </div>
-        <a :href="virtualTourUrl" target="_blank" rel="noopener" class="fs-btn" title="Ouvrir en plein écran">⤢</a>
+      <div class="badge-360">
+        <span class="badge-icon">🎥</span>
+        <span>Visite virtuelle</span>
       </div>
+      <a :href="virtualTourUrl" target="_blank" rel="noopener" class="fs-btn" title="Ouvrir en plein écran">⤢</a>
     </template>
-
     <div v-else class="no-panorama">
       <span>🌐</span>
       <p>Pas encore de visite virtuelle disponible.</p>
@@ -169,16 +150,9 @@ watch(() => props.panoramaUrl, () => {
   border: none;
   display: block;
 }
-.panorama-overlay {
-  position: absolute;
-  top: 12px; left: 12px; right: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  pointer-events: none;
-  z-index: 10;
-}
 .badge-360 {
+  position: absolute;
+  bottom: 14px; left: 14px;
   background: rgba(10, 31, 46, 0.85);
   color: var(--c-fond);
   padding: 6px 14px;
@@ -191,10 +165,13 @@ watch(() => props.panoramaUrl, () => {
   align-items: center;
   gap: 6px;
   backdrop-filter: blur(8px);
+  z-index: 10;
+  pointer-events: none;
 }
 .badge-icon { font-size: 14px; }
 .fs-btn {
-  pointer-events: auto;
+  position: absolute;
+  bottom: 14px; right: 14px;
   background: rgba(10, 31, 46, 0.85);
   color: var(--c-fond);
   border: none;
@@ -208,6 +185,7 @@ watch(() => props.panoramaUrl, () => {
   text-decoration: none;
   transition: var(--t-base);
   backdrop-filter: blur(8px);
+  z-index: 10;
 }
 .fs-btn:hover { background: var(--c-primaire); transform: scale(1.05); }
 .panorama-loading {
@@ -241,4 +219,4 @@ watch(() => props.panoramaUrl, () => {
   font-style: italic;
 }
 .no-panorama span { font-size: 48px; opacity: 0.4; }
-</style>
+</style>S
