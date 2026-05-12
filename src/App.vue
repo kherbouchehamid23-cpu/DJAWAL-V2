@@ -7,6 +7,7 @@ import AppFooter from '@/components/AppFooter.vue'
 import AIAssistant from '@/components/AIAssistant.vue'
 import OnboardingHint from '@/components/OnboardingHint.vue'
 import InstallPWA from '@/components/InstallPWA.vue'
+import BottomNav from '@/components/BottomNav.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -39,6 +40,7 @@ onMounted(() => {
     <AIAssistant />
     <OnboardingHint />
     <InstallPWA />
+    <BottomNav />
   </v-app>
 </template>
 
