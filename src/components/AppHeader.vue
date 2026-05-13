@@ -20,7 +20,7 @@ const navItems = [
 
 <template>
   <v-app-bar v-if="!isMobile" :elevation="2" color="surface" height="72">
-    <v-container class="d-flex align-center" max-width="1340">
+    <v-container class="header-row" max-width="1340">
       <!-- LOGO -->
       <RouterLink to="/" class="logo-wrap">
         <div class="logo-mark">
@@ -38,10 +38,8 @@ const navItems = [
         </div>
       </RouterLink>
 
-      <v-spacer />
-
       <!-- NAV DESKTOP -->
-      <nav class="nav-desktop d-none d-md-flex">
+      <nav class="nav-desktop">
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
@@ -52,10 +50,8 @@ const navItems = [
         </RouterLink>
       </nav>
 
-      <v-spacer />
-
       <!-- ACTIONS -->
-      <div class="d-flex align-center ga-2">
+      <div class="header-actions">
         <v-btn
           variant="text"
           size="small"
@@ -67,7 +63,7 @@ const navItems = [
         <template v-if="auth.isAuthenticated">
           <v-menu>
             <template #activator="{ props }">
-              <v-btn variant="text" v-bind="props">
+              <v-btn variant="text" v-bind="props" class="account-btn">
                 {{ auth.profile?.display_name || 'Mon compte' }}
               </v-btn>
             </template>
@@ -81,11 +77,9 @@ const navItems = [
           </v-menu>
         </template>
         <template v-else>
-          <v-btn to="/auth/login" variant="text" class="d-none d-sm-inline-flex">Connexion</v-btn>
+          <v-btn to="/auth/login" variant="text" class="login-btn">Connexion</v-btn>
           <v-btn to="/auth/signup" color="primary" variant="flat">Rejoindre</v-btn>
         </template>
-
-        <v-app-bar-nav-icon class="d-md-none" @click="drawer = !drawer" />
       </div>
     </v-container>
   </v-app-bar>
@@ -126,11 +120,19 @@ const navItems = [
 </template>
 
 <style scoped>
+/* Grille header : logo gauche, nav centre, actions droite — zéro chevauchement */
+.header-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+}
 .logo-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
+  flex-shrink: 0;
 }
 .logo-mark {
   width: 44px; height: 44px;
@@ -154,16 +156,38 @@ const navItems = [
   color: var(--c-accent-fort);
   margin-top: -2px;
 }
-.nav-desktop { gap: 32px; }
+.nav-desktop {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .nav-desktop { gap: 18px; }
+}
+@media (max-width: 760px) {
+  .nav-desktop { display: none; }
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .login-btn { display: none; }
+}
 .nav-link {
   color: var(--c-primaire-profond);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 8px 0;
+  padding: 8px 4px;
   position: relative;
   transition: color var(--t-fast);
+  white-space: nowrap;
+  text-decoration: none;
 }
 .nav-link:hover { color: var(--c-cta); }
 .nav-link.router-link-active::after {

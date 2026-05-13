@@ -731,10 +731,12 @@ const quickPrompts = [
   padding: 16px 20px;
   display: flex;
   justify-content: space-around;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 18px 24px;
   border-bottom: 1px solid rgba(10, 31, 46, 0.05);
 }
+.trust-item { flex: 0 0 auto; min-width: 80px; }
 .trust-item {
   text-align: center;
   font-size: 10px;
@@ -775,7 +777,11 @@ const quickPrompts = [
   align-items: flex-end;
   text-align: left;
   max-width: none;
+  gap: 16px;
+  flex-wrap: wrap;
 }
+.section-head-row > div { min-width: 0; }
+.section-head-row .see-all { flex-shrink: 0; }
 .eyebrow {
   display: inline-block;
   font-size: 11px;
@@ -834,12 +840,15 @@ h2 em {
 @media (min-width: 640px) {
   .souffles-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 14px;
     overflow: visible;
     margin: 0;
     padding: 0;
   }
+}
+@media (min-width: 900px) {
+  .souffles-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 .souffle {
@@ -947,9 +956,12 @@ h2 em {
 @media (min-width: 640px) {
   .voyages-list {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 18px;
   }
+}
+@media (min-width: 900px) {
+  .voyages-list { grid-template-columns: repeat(3, 1fr); }
 }
 
 .voy {
@@ -1153,6 +1165,9 @@ h2 em {
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.2s;
+  max-width: 100%;
+  text-align: left;
+  line-height: 1.2;
 }
 .ai-cta:hover { transform: translateY(-2px); }
 .ai-cta svg { width: 16px; height: 16px; }
@@ -1267,7 +1282,10 @@ h2 em {
   margin-top: 24px;
 }
 @media (min-width: 640px) {
-  .quotes { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .quotes { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+}
+@media (min-width: 900px) {
+  .quotes { grid-template-columns: repeat(3, 1fr); }
 }
 
 .quote {
