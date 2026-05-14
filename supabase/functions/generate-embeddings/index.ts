@@ -1,7 +1,7 @@
 // =========================================================
 // DJAWAL V2 — Edge Function : generate-embeddings
 // Utilitaire admin : embed toutes les ressources sans embedding
-// Appelé depuis /admin/ia-logs avec un body { table: 'hotels'|... }
+// Appelé depuis /admin/ia-logs avec un body { table: 'accommodations'|... }
 // =========================================================
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
@@ -22,7 +22,7 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400'
 }
 
-const TABLES = ['destinations', 'hotels', 'sites', 'restaurants', 'trips', 'activities'] as const
+const TABLES = ['destinations', 'accommodations', 'sites', 'restaurants', 'trips', 'activities'] as const
 
 async function embed(text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:embedContent?key=${GEMINI_API_KEY}`
@@ -53,9 +53,14 @@ function buildText(row: any, table: string): string {
   if (table === 'activities') {
     return `${row.name}. ${row.description}. Type: ${row.activity_type || ''}. Difficulté: ${row.difficulty || ''}.`
   }
-  // hotels / sites / restaurants
+  if (table === 'accommodations') {
+    // Hébergements : intégrer le sous-type pour différencier hôtel / gîte / maison d'hôte / etc.
+    const subtype = row.accommodation_type ? `Type: ${row.accommodation_type}.` : ''
+    const amenities = (row.amenities || []).join(', ')
+    return `${row.name}. ${subtype} ${row.description}. ${amenities}`
+  }
+  // sites / restaurants
   const extra = row.cuisine ? row.cuisine.join(', ')
-    : row.amenities ? row.amenities.join(', ')
     : row.category || ''
   return `${row.name}. ${row.description}. ${extra}`
 }
@@ -78,7 +83,7 @@ serve(async (req) => {
     // Sélectionner les colonnes utiles
     let cols = 'id, name, description'
     if (table === 'destinations') cols = 'id, name, wilaya, cultural_theme, description'
-    if (table === 'hotels') cols = 'id, name, description, amenities'
+    if (table === 'accommodations') cols = 'id, name, description, amenities, accommodation_type'
     if (table === 'sites') cols = 'id, name, description, category'
     if (table === 'restaurants') cols = 'id, name, description, cuisine'
     if (table === 'trips') cols = 'id, title, description, tags'

@@ -1,0 +1,11 @@
+-- =========================================================
+-- DJAWAL V2 — Fichier déprécié
+-- =========================================================
+-- Cette migration a été remplacée par 0014_accommodations_enums.sql
+-- et 0015_accommodations_rename.sql, pour contourner l'erreur
+-- PostgreSQL 55P04 (unsafe_new_enum_value_usage).
+--
+-- Ce fichier est conservé vide pour ne pas créer un trou dans la
+-- numérotation. Aucune commande SQL n'est exécutée ici.
+-- =========================================================
+SELECT 1; -- no-op

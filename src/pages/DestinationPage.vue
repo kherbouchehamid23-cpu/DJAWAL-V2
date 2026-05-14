@@ -47,11 +47,11 @@ interface Resource {
 
 const destination = ref<Destination | null>(null)
 const sites = ref<Resource[]>([])
-const hotels = ref<Resource[]>([])
+const accommodations = ref<Resource[]>([])
 const restaurants = ref<Resource[]>([])
 const activities = ref<any[]>([])
 const loading = ref(true)
-const activeTab = ref<'all' | 'sites' | 'hotels' | 'restaurants' | 'activities'>('all')
+const activeTab = ref<'all' | 'sites' | 'accommodations' | 'restaurants' | 'activities'>('all')
 
 // Visite 360 modale
 const panoramaResource = ref<Resource | null>(null)
@@ -81,15 +81,15 @@ async function loadDestination() {
   themeStore.setTheme(dest.cultural_theme)
 
   // Charge les ressources en parallèle
-  const [sitesRes, hotelsRes, restaurantsRes, activitiesRes] = await Promise.all([
+  const [sitesRes, accommodationsRes, restaurantsRes, activitiesRes] = await Promise.all([
     supabase.from('sites').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null),
-    supabase.from('hotels').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null),
+    supabase.from('accommodations').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null),
     supabase.from('restaurants').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null),
     supabase.from('activities').select('*').eq('destination_id', dest.id).not('validated_at', 'is', null)
   ])
 
   sites.value = (sitesRes.data || []) as Resource[]
-  hotels.value = (hotelsRes.data || []) as Resource[]
+  accommodations.value = (accommodationsRes.data || []) as Resource[]
   restaurants.value = (restaurantsRes.data || []) as Resource[]
   activities.value = activitiesRes.data || []
   loading.value = false
@@ -125,10 +125,10 @@ const mapMarkers = computed<MapMarker[]>(() => {
       if (c) list.push({ id: s.id, lat: c.lat, lng: c.lng, title: s.name, subtitle: '🏛️ Site', theme })
     }
   }
-  if (shouldShow('hotels')) {
-    for (const h of hotels.value) {
+  if (shouldShow('accommodations')) {
+    for (const h of accommodations.value) {
       const c = parseCoordinates(h.coordinates)
-      if (c) list.push({ id: h.id, lat: c.lat, lng: c.lng, title: h.name, subtitle: '🏨 Hôtel', theme })
+      if (c) list.push({ id: h.id, lat: c.lat, lng: c.lng, title: h.name, subtitle: '🏨 Hébergement', theme })
     }
   }
   if (shouldShow('restaurants')) {
@@ -147,7 +147,7 @@ const mapMarkers = computed<MapMarker[]>(() => {
 })
 
 const totalResources = computed(() =>
-  sites.value.length + hotels.value.length + restaurants.value.length + activities.value.length
+  sites.value.length + accommodations.value.length + restaurants.value.length + activities.value.length
 )
 
 function parsePriceRange(range: any): string {
@@ -194,8 +194,8 @@ function parsePriceRange(range: any): string {
           <span>site{{ sites.length > 1 ? 's' : '' }} & monument{{ sites.length > 1 ? 's' : '' }}</span>
         </div>
         <div class="stat">
-          <strong>{{ hotels.length }}</strong>
-          <span>hôtel{{ hotels.length > 1 ? 's' : '' }} & maison{{ hotels.length > 1 ? 's' : '' }}</span>
+          <strong>{{ accommodations.length }}</strong>
+          <span>hébergement{{ accommodations.length > 1 ? 's' : '' }}</span>
         </div>
         <div class="stat">
           <strong>{{ restaurants.length }}</strong>
@@ -218,8 +218,8 @@ function parsePriceRange(range: any): string {
           <button class="tab" :class="{ active: activeTab === 'sites' }" @click="activeTab = 'sites'">
             🏛️ Sites ({{ sites.length }})
           </button>
-          <button class="tab" :class="{ active: activeTab === 'hotels' }" @click="activeTab = 'hotels'">
-            🏨 Hôtels ({{ hotels.length }})
+          <button class="tab" :class="{ active: activeTab === 'accommodations' }" @click="activeTab = 'accommodations'">
+            🏨 Hébergements ({{ accommodations.length }})
           </button>
           <button class="tab" :class="{ active: activeTab === 'activities' }" @click="activeTab = 'activities'">
             🥾 Activités ({{ activities.length }})
@@ -263,10 +263,10 @@ function parsePriceRange(range: any): string {
           </article>
 
           <!-- HOTELS -->
-          <article v-if="(activeTab === 'all' || activeTab === 'hotels') && hotels.length > 0" class="resource-group">
-            <h2 class="group-title">🏨 Hôtels & Maisons d'hôtes</h2>
+          <article v-if="(activeTab === 'all' || activeTab === 'accommodations') && accommodations.length > 0" class="resource-group">
+            <h2 class="group-title">🏨 Hébergements</h2>
             <div class="resource-cards">
-              <div v-for="h in hotels" :key="h.id" class="resource-card">
+              <div v-for="h in accommodations" :key="h.id" class="resource-card">
                 <div class="rc-header">
                   <strong>{{ h.name }}</strong>
                   <span v-if="h.star_rating" class="rc-stars">{{ '★'.repeat(h.star_rating) }}</span>

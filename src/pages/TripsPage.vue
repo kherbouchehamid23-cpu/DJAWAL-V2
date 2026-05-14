@@ -10,7 +10,7 @@ const route = useRoute()
 
 useSEO({
   title: 'Toutes les destinations algériennes',
-  description: 'Explorez les destinations d\'Algérie sur la carte interactive — du Tassili au Djurdjura, de la Casbah à Ghardaïa. Hôtels, sites et restaurants signés par nos guides locaux.'
+  description: 'Explorez les destinations d\'Algérie sur la carte interactive — du Tassili au Djurdjura, de la Casbah à Ghardaïa. Hébergements, sites et restaurants signés par nos guides locaux.'
 })
 
 interface Destination {

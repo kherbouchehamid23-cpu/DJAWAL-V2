@@ -6,18 +6,18 @@ import { useGeocode } from '@/composables/useGeocode'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
 
 /**
- * Page admin générique pour hotels, sites, restaurants.
+ * Page admin générique pour accommodations, sites, restaurants, activities.
  * Le type est déterminé par route.params.type.
  */
 const route = useRoute()
-const resourceType = computed(() => route.params.type as 'hotels' | 'sites' | 'restaurants' | 'activities')
+const resourceType = computed(() => route.params.type as 'accommodations' | 'sites' | 'restaurants' | 'activities')
 
 const configs = {
-  hotels: {
-    label: 'Hôtels',
+  accommodations: {
+    label: 'Hébergements',
     icon: '🏨',
-    table: 'hotels',
-    extraFields: ['address', 'star_rating', 'amenities'],
+    table: 'accommodations',
+    extraFields: ['address', 'star_rating', 'amenities', 'accommodation_type'],
     cuisineField: false
   },
   sites: {
@@ -45,6 +45,18 @@ const configs = {
 
 const activityTypes = ['trek', 'plongée', 'artisanat', 'gastronomie', 'culture', '4x4', 'cheval', 'voile', 'photographie', 'famille', 'aventure', 'spiritualité', 'patrimoine', 'détente']
 const difficulties = ['facile', 'modere', 'difficile', 'expert']
+const accommodationTypes = [
+  { value: 'hotel', label: 'Hôtel' },
+  { value: 'gite', label: 'Gîte rural' },
+  { value: 'maison_hote', label: 'Maison d\'hôte' },
+  { value: 'auberge_jeunesse', label: 'Auberge de jeunesse' },
+  { value: 'lodge', label: 'Lodge / Camp saharien' },
+  { value: 'riad', label: 'Riad / Dar traditionnelle' },
+  { value: 'kasbah_stay', label: 'Séjour en kasbah' },
+  { value: 'camping', label: 'Camping' },
+  { value: 'eco_lodge', label: 'Éco-lodge' },
+  { value: 'refuge_montagne', label: 'Refuge de montagne' }
+]
 
 const config = computed(() => configs[resourceType.value])
 
@@ -64,6 +76,7 @@ const form = reactive<any>({
   address: null,
   star_rating: null,
   amenities: [],
+  accommodation_type: 'hotel',
   category: null,
   entry_fee_da: null,
   best_season: [],
@@ -117,7 +130,7 @@ async function loadResources() {
 function resetForm() {
   Object.assign(form, {
     destination_id: '', name: '', name_ar: null, description: '',
-    address: null, star_rating: null, amenities: [],
+    address: null, star_rating: null, amenities: [], accommodation_type: 'hotel',
     category: null, entry_fee_da: null, best_season: [],
     cuisine: [], signature_dishes: [],
     images: [], price_min: null, price_max: null,
@@ -144,6 +157,7 @@ function openEdit(r: any) {
     address: r.address,
     star_rating: r.star_rating,
     amenities: r.amenities || [],
+    accommodation_type: r.accommodation_type ?? 'hotel',
     category: r.category,
     entry_fee_da: r.entry_fee_da,
     best_season: r.best_season || [],
@@ -195,10 +209,11 @@ async function save() {
   }
 
   // Champs spécifiques par type
-  if (resourceType.value === 'hotels') {
+  if (resourceType.value === 'accommodations') {
     payload.address = form.address
     payload.star_rating = form.star_rating
     payload.amenities = form.amenities
+    payload.accommodation_type = form.accommodation_type || 'hotel'
     if (form.price_min != null && form.price_max != null) {
       payload.price_range_da = `[${form.price_min},${form.price_max})`
     }
@@ -333,10 +348,22 @@ async function remove(r: any) {
               <v-textarea v-model="form.description" label="Description *" rows="3" density="comfortable" />
             </v-col>
 
-            <!-- Hôtels -->
-            <template v-if="resourceType === 'hotels'">
+            <!-- Hébergements -->
+            <template v-if="resourceType === 'accommodations'">
+              <v-col cols="12">
+                <v-select
+                  v-model="form.accommodation_type"
+                  :items="accommodationTypes"
+                  item-title="label"
+                  item-value="value"
+                  label="Type d'hébergement *"
+                  density="comfortable"
+                  hint="Hôtel, gîte, maison d'hôte, lodge saharien, riad..."
+                  persistent-hint
+                />
+              </v-col>
               <v-col cols="12"><v-text-field v-model="form.address" label="Adresse" density="comfortable" /></v-col>
-              <v-col cols="6"><v-text-field v-model.number="form.star_rating" label="Étoiles (1-5)" type="number" min="0" max="5" density="comfortable" /></v-col>
+              <v-col cols="6"><v-text-field v-model.number="form.star_rating" label="Étoiles (1-5)" type="number" min="0" max="5" density="comfortable" hint="Si applicable" persistent-hint /></v-col>
               <v-col cols="6">
                 <v-row dense>
                   <v-col cols="6"><v-text-field v-model.number="form.price_min" label="Prix min DA" type="number" density="comfortable" /></v-col>

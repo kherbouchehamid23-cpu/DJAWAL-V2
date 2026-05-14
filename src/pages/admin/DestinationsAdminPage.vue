@@ -141,7 +141,7 @@ async function save() {
 }
 
 async function remove(dest: any) {
-  if (!confirm(`Supprimer "${dest.name}" ?\nTous les hôtels, sites et restaurants associés seront supprimés en cascade.`)) return
+  if (!confirm(`Supprimer "${dest.name}" ?\nTous les hébergements, sites et restaurants associés seront supprimés en cascade.`)) return
   const { error } = await supabase.from('destinations').delete().eq('id', dest.id)
   if (error) { errorMsg.value = error.message; return }
   await loadDestinations()

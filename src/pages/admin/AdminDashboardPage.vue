@@ -97,10 +97,10 @@ onMounted(async () => {
           <h3>Destinations</h3>
           <p>Gérer les villes/wilayas et leur thème culturel pour le miroir dynamique.</p>
         </router-link>
-        <router-link to="/admin/resources/hotels" class="module-card">
+        <router-link to="/admin/resources/accommodations" class="module-card">
           <div class="module-icon">🏨</div>
-          <h3>Hôtels</h3>
-          <p>Catalogue des hôtels et hébergements par destination.</p>
+          <h3>Hébergements</h3>
+          <p>Hôtels, gîtes, maisons d'hôtes, auberges, lodges sahariens, riads, refuges de montagne.</p>
         </router-link>
         <router-link to="/admin/resources/sites" class="module-card">
           <div class="module-icon">🏛️</div>

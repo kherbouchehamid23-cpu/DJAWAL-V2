@@ -9,7 +9,8 @@ export type CulturalTheme = 'saharien' | 'mauresque' | 'aures'
 export type AppRole = 'super_admin' | 'guide_senior' | 'guide_junior' | 'voyageur'
 export type KycStatus = 'not_required' | 'pending' | 'approved' | 'rejected'
 export type TripStatus = 'draft' | 'pending_review' | 'published' | 'rejected'
-export type ResourceType = 'hotel' | 'site' | 'restaurant'
+export type ResourceType = 'accommodation' | 'site' | 'restaurant'
+export type AccommodationType = 'hotel' | 'gite' | 'maison_hote' | 'auberge_jeunesse' | 'lodge' | 'riad' | 'kasbah_stay' | 'camping' | 'eco_lodge' | 'refuge_montagne'
 
 export interface Database {
   public: {
@@ -46,7 +47,7 @@ export interface Database {
         Insert: Partial<Database['public']['Tables']['destinations']['Row']> & { name: string; wilaya: string; cultural_theme: CulturalTheme; description: string }
         Update: Partial<Database['public']['Tables']['destinations']['Row']>
       }
-      // Tables hotels, sites, restaurants ont la même structure de base — voir migration SQL
+      // Tables accommodations (avec accommodation_type), sites, restaurants ont une structure proche — voir migrations 0001 + 0014
       trips: {
         Row: {
           id: string

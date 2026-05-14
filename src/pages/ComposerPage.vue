@@ -110,7 +110,7 @@ function buildQuestion(): string {
   if (note.value.trim()) {
     q += `Note complémentaire : ${note.value.trim()}.`
   }
-  q += ' Propose un programme jour par jour avec sites, hôtels et tables à partir du catalogue Djawal.'
+  q += ' Propose un programme jour par jour avec sites, hébergements et tables à partir du catalogue Djawal.'
   return q
 }
 

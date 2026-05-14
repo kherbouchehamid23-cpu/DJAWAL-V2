@@ -188,6 +188,11 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Destinations — Admin' }
   },
   {
+    // Redirect legacy : /admin/resources/hotels → /admin/resources/accommodations
+    path: '/admin/resources/hotels',
+    redirect: '/admin/resources/accommodations'
+  },
+  {
     path: '/admin/resources/:type',
     name: 'admin-resources',
     component: () => import('@/pages/admin/ResourcesAdminPage.vue'),

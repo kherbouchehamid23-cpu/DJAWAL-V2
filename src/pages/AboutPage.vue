@@ -15,7 +15,7 @@
 
       <h2>Notre démarche</h2>
       <p>
-        Nous croyons que le tourisme local ne se résume pas à un catalogue d'hôtels et de
+        Nous croyons que le tourisme local ne se résume pas à un catalogue d'hébergements et de
         sites — c'est un échange humain, une transmission, une mémoire partagée. Djawal
         réunit trois acteurs : des voyageurs en quête d'authenticité, des guides qui
         connaissent leur région mieux que personne, et une équipe de modération qui

@@ -45,7 +45,7 @@ const lastUpdate = '12 mai 2026'
         <section>
           <h2>3. Propriété intellectuelle</h2>
           <p>L'ensemble du contenu présent sur Djawal (textes, images, logos, design, code) est protégé par le droit de la propriété intellectuelle.</p>
-          <p>Les photographies et descriptions des sites, hôtels et restaurants sont fournies par notre communauté de guides et de voyageurs. Chaque contributeur conserve les droits sur le contenu qu'il publie tout en accordant à Djawal une licence non-exclusive d'utilisation pour la promotion de la plateforme.</p>
+          <p>Les photographies et descriptions des sites, hébergements et restaurants sont fournies par notre communauté de guides et de voyageurs. Chaque contributeur conserve les droits sur le contenu qu'il publie tout en accordant à Djawal une licence non-exclusive d'utilisation pour la promotion de la plateforme.</p>
         </section>
 
         <section>
@@ -108,7 +108,7 @@ const lastUpdate = '12 mai 2026'
 
         <section>
           <h2>5. Recommandations IA</h2>
-          <p>Djawal propose un assistant IA qui s'appuie sur le catalogue communautaire pour suggérer des parcours, hôtels et sites. Ces recommandations sont à titre indicatif. Aucune réservation n'est garantie par l'IA. Vérifiez toujours la disponibilité directement avec le prestataire.</p>
+          <p>Djawal propose Fennec, notre IA, qui s'appuie sur le catalogue communautaire pour suggérer des parcours, hébergements et sites. Ces recommandations sont à titre indicatif. Aucune réservation n'est garantie par Fennec. Vérifiez toujours la disponibilité directement avec le prestataire.</p>
         </section>
 
         <section>

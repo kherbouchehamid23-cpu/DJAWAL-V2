@@ -10,7 +10,7 @@ import ImageUpload from '@/components/admin/ImageUpload.vue'
  * - Métadonnées du voyage (titre, destination, durée, prix, etc.)
  * - Découpage en journées (trip_days)
  * - Pour chaque journée : étapes (trip_steps) puisées dans le catalogue
- *   hôtels / sites / restaurants de la destination.
+ *   hébergements / sites / restaurants / activités de la destination.
  * - Sauvegarde brouillon (status='draft') ou publication (status='published',
  *   le trigger DB rebascule en pending_review pour un guide_junior).
  */
@@ -20,12 +20,12 @@ interface Resource {
   id: string
   name: string
   description: string
-  type: 'hotel' | 'site' | 'restaurant' | 'activity'
+  type: 'accommodation' | 'site' | 'restaurant' | 'activity'
 }
 interface Step {
   id?: string // si existant en base
   tempId: string // identifiant local
-  resource_type: 'hotel' | 'site' | 'restaurant' | 'activity'
+  resource_type: 'accommodation' | 'site' | 'restaurant' | 'activity'
   resource_id: string
   resource_name?: string
   note: string
@@ -69,7 +69,8 @@ const days = ref<Day[]>([])
 
 // Catalogue de la destination sélectionnée
 const catalog = ref<Resource[]>([])
-const catalogTypeFilter = ref<'all' | 'hotel' | 'site' | 'restaurant' | 'activity'>('all')
+const catalogTypeFilter = ref<'all' | 'accommodation' | 'site' | 'restaurant' | 'activity'>('all')
+// Note: 'accommodation' regroupe l'ensemble des hébergements (hôtel, gîte, maison d'hôte, etc.)
 const catalogSearch = ref('')
 
 // === COMPUTED ===
@@ -116,14 +117,14 @@ watch(destinationId, async (newId) => {
 })
 
 async function loadCatalog(destId: string) {
-  const [hotelsRes, sitesRes, restaurantsRes, activitiesRes] = await Promise.all([
-    supabase.from('hotels').select('id, name, description').eq('destination_id', destId),
+  const [accommodationsRes, sitesRes, restaurantsRes, activitiesRes] = await Promise.all([
+    supabase.from('accommodations').select('id, name, description, accommodation_type').eq('destination_id', destId),
     supabase.from('sites').select('id, name, description').eq('destination_id', destId),
     supabase.from('restaurants').select('id, name, description').eq('destination_id', destId),
     supabase.from('activities').select('id, name, description').eq('destination_id', destId)
   ])
   const list: Resource[] = []
-  for (const h of (hotelsRes.data as any[] || [])) list.push({ ...h, type: 'hotel' })
+  for (const h of (accommodationsRes.data as any[] || [])) list.push({ ...h, type: 'accommodation' })
   for (const s of (sitesRes.data as any[] || [])) list.push({ ...s, type: 'site' })
   for (const r of (restaurantsRes.data as any[] || [])) list.push({ ...r, type: 'restaurant' })
   for (const a of (activitiesRes.data as any[] || [])) list.push({ ...a, type: 'activity' })
@@ -159,7 +160,7 @@ function addStep(day: Day, resource: Resource) {
     resource_id: resource.id,
     resource_name: resource.name,
     note: '',
-    duration_minutes: resource.type === 'hotel' ? null : 120
+    duration_minutes: resource.type === 'accommodation' ? null : 120
   })
 }
 
@@ -220,7 +221,7 @@ async function loadTrip(id: string) {
     const resourceNames: Record<string, string> = {}
     if (resourceIds.length > 0) {
       const [h, s, r] = await Promise.all([
-        supabase.from('hotels').select('id, name').in('id', resourceIds),
+        supabase.from('accommodations').select('id, name').in('id', resourceIds),
         supabase.from('sites').select('id, name').in('id', resourceIds),
         supabase.from('restaurants').select('id, name').in('id', resourceIds)
       ])
@@ -352,13 +353,13 @@ async function save(targetStatus: 'draft' | 'published') {
 }
 
 function typeIcon(t: string) {
-  if (t === 'hotel') return '🏨'
+  if (t === 'accommodation') return '🏨'
   if (t === 'restaurant') return '🍴'
   if (t === 'activity') return '🥾'
   return '📍'
 }
 function typeLabel(t: string) {
-  if (t === 'hotel') return 'Hôtel'
+  if (t === 'accommodation') return 'Hébergement'
   if (t === 'restaurant') return 'Restaurant'
   if (t === 'activity') return 'Activité'
   return 'Site'
@@ -614,7 +615,7 @@ function typeLabel(t: string) {
                 <button
                   v-for="t in [
                     { v: 'all', l: 'Tout', i: '✨' },
-                    { v: 'hotel', l: 'Hôtels', i: '🏨' },
+                    { v: 'accommodation', l: 'Hébergements', i: '🏨' },
                     { v: 'site', l: 'Sites', i: '📍' },
                     { v: 'restaurant', l: 'Restos', i: '🍴' },
                     { v: 'activity', l: 'Activités', i: '🥾' }
@@ -779,7 +780,7 @@ function typeLabel(t: string) {
   border-radius: var(--r-sm);
   border-left: 3px solid var(--c-primaire);
 }
-.step-row[data-type="hotel"] { border-left-color: #D4A04F; }
+.step-row[data-type="accommodation"] { border-left-color: #D4A04F; }
 .step-row[data-type="site"] { border-left-color: #1B4965; }
 .step-row[data-type="restaurant"] { border-left-color: #C97050; }
 .step-icon { font-size: 22px; text-align: center; }
@@ -865,7 +866,7 @@ function typeLabel(t: string) {
   padding: var(--space-3);
   border-left: 3px solid var(--c-primaire);
 }
-.cat-item[data-type="hotel"] { border-left-color: #D4A04F; }
+.cat-item[data-type="accommodation"] { border-left-color: #D4A04F; }
 .cat-item[data-type="site"] { border-left-color: #1B4965; }
 .cat-item[data-type="restaurant"] { border-left-color: #C97050; }
 

@@ -30,7 +30,7 @@ interface Trip {
 interface Step {
   id: string
   step_order: number
-  resource_type: 'hotel' | 'site' | 'restaurant'
+  resource_type: 'accommodation' | 'site' | 'restaurant'
   resource_id: string
   resource_name: string
   resource_description: string
@@ -97,7 +97,7 @@ onMounted(async () => {
   const resInfo: Record<string, { name: string; description: string }> = {}
   if (resourceIds.length > 0) {
     const [h, s, r] = await Promise.all([
-      supabase.from('hotels').select('id, name, description').in('id', resourceIds),
+      supabase.from('accommodations').select('id, name, description, accommodation_type').in('id', resourceIds),
       supabase.from('sites').select('id, name, description').in('id', resourceIds),
       supabase.from('restaurants').select('id, name, description').in('id', resourceIds)
     ])
@@ -151,10 +151,10 @@ async function handleToggleFav() {
 const totalSteps = computed(() => days.value.reduce((s, d) => s + d.steps.length, 0))
 
 function typeIcon(t: string) {
-  return t === 'hotel' ? '🏨' : t === 'restaurant' ? '🍴' : '📍'
+  return t === 'accommodation' ? '🏨' : t === 'restaurant' ? '🍴' : '📍'
 }
 function typeLabel(t: string) {
-  return t === 'hotel' ? 'Hôtel' : t === 'restaurant' ? 'Restaurant' : 'Site'
+  return t === 'accommodation' ? 'Hébergement' : t === 'restaurant' ? 'Restaurant' : 'Site'
 }
 function fmtPrice(p: number) {
   return new Intl.NumberFormat('fr-DZ').format(p) + ' DA'
@@ -471,7 +471,7 @@ function difficultyLabel(d: string | null) {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.step-item[data-type="hotel"] .step-bullet { background: rgba(212, 160, 79, 0.15); }
+.step-item[data-type="accommodation"] .step-bullet { background: rgba(212, 160, 79, 0.15); }
 .step-item[data-type="site"] .step-bullet { background: rgba(27, 73, 101, 0.12); }
 .step-item[data-type="restaurant"] .step-bullet { background: rgba(201, 112, 80, 0.15); }
 
