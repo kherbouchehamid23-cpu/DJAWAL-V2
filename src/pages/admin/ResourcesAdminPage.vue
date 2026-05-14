@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useGeocode } from '@/composables/useGeocode'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
+import GalleryUpload from '@/components/admin/GalleryUpload.vue'
 
 /**
  * Page admin générique pour accommodations, sites, restaurants, activities.
@@ -422,6 +423,19 @@ async function remove(r: any) {
                   <v-col cols="6"><v-text-field v-model.number="form.coordinates_lat" label="Latitude" type="number" step="0.0001" density="compact" /></v-col>
                   <v-col cols="6"><v-text-field v-model.number="form.coordinates_lng" label="Longitude" type="number" step="0.0001" density="compact" /></v-col>
                 </v-row>
+              </v-card>
+            </v-col>
+
+            <!-- Galerie photos — applicable à tous les types -->
+            <v-col cols="12">
+              <v-card variant="outlined" class="pa-3">
+                <GalleryUpload
+                  v-model="form.images"
+                  bucket="hero-images"
+                  label="Galerie photos"
+                  hint="La première photo sera utilisée comme image de couverture. Glisser-déposer plusieurs fichiers à la fois fonctionne."
+                  :max="10"
+                />
               </v-card>
             </v-col>
           </v-row>

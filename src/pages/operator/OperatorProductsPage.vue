@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import GalleryUpload from '@/components/admin/GalleryUpload.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,6 +89,7 @@ function resetForm() {
     star_rating: null,
     amenities: [],
     address: '',
+    images: [] as string[],
     submit_for_review: true
   }
 }
@@ -166,10 +168,12 @@ async function submitProduct() {
     payload.address = form.value.address || null
     payload.star_rating = form.value.star_rating || null
     payload.amenities = form.value.amenities || []
+    payload.images = form.value.images || []
     payload.coordinates = 'POINT(3.0 36.75)' // fallback Alger — l'opérateur géolocalisera ensuite
   } else if (tbl === 'restaurants') {
     payload.name = form.value.name.trim()
     payload.cuisine = form.value.cuisine || []
+    payload.images = form.value.images || []
     payload.coordinates = 'POINT(3.0 36.75)'
   } else if (tbl === 'activities') {
     payload.name = form.value.name.trim()
@@ -177,12 +181,17 @@ async function submitProduct() {
     payload.duration_hours = form.value.duration_hours
     payload.price_da = form.value.price_da
     payload.difficulty = form.value.difficulty
+    payload.images = form.value.images || []
   } else if (tbl === 'trips') {
     payload.title = form.value.name.trim()
     payload.duration_days = form.value.duration_hours || 3
     payload.price_da = form.value.price_da
     payload.creator_role = auth.operatorType
     payload.composition_mode = 'agency_package'
+    // Pour trips, on prend la première photo comme cover
+    if (form.value.images && form.value.images.length > 0) {
+      payload.cover_image_url = form.value.images[0]
+    }
   }
 
   try {
@@ -357,6 +366,15 @@ async function deleteProduct(p: any) {
         <v-text-field v-model.number="form.duration_hours" label="Durée (jours)" type="number" density="comfortable" />
         <v-text-field v-model.number="form.price_da" label="Prix DA / personne" type="number" density="comfortable" />
       </template>
+
+      <!-- Galerie photos — bucket operator-gallery (l'opérateur peut uploader dans son propre dossier) -->
+      <GalleryUpload
+        v-model="form.images"
+        bucket="operator-gallery"
+        :label="currentTable === 'trips' ? 'Photos du package (la 1ère sera la couverture)' : 'Photos de la fiche'"
+        hint="Glissez-déposez ou cliquez pour ajouter plusieurs photos. La première sera l'image principale."
+        :max="10"
+      />
 
       <v-switch
         v-model="form.submit_for_review"
