@@ -21,15 +21,23 @@ const navItems = [
 <template>
   <v-app-bar v-if="!isMobile" :elevation="2" color="surface" height="72">
     <v-container class="header-row" max-width="1340">
-      <!-- LOGO -->
+      <!-- LOGO — Fibule de l'Aurès sur Vert Atlas -->
       <RouterLink to="/" class="logo-wrap">
         <div class="logo-mark">
-          <svg viewBox="0 0 32 32" width="24" height="24">
-            <g fill="none" stroke="var(--c-accent)" stroke-width="2">
-              <path d="M16 2 L28 16 L16 30 L4 16 Z" />
-              <circle cx="16" cy="16" r="5" />
-              <circle cx="16" cy="16" r="1.5" fill="var(--c-accent)" />
-            </g>
+          <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+            <!-- chaînette haute -->
+            <line x1="16" y1="1.5" x2="16" y2="5" stroke="#E8B547" stroke-width="1.3"/>
+            <!-- cercle ocre extérieur -->
+            <circle cx="16" cy="16" r="9.5" fill="none" stroke="#E8B547" stroke-width="1.4"/>
+            <!-- triangles berbères latéraux -->
+            <path d="M3 16 L7 13 L7 19 Z" fill="#E8B547"/>
+            <path d="M29 16 L25 13 L25 19 Z" fill="#E8B547"/>
+            <!-- émail rouge central -->
+            <circle cx="16" cy="16" r="3.2" fill="#B8312E"/>
+            <circle cx="16" cy="16" r="1.2" fill="#E8B547"/>
+            <!-- pendentif goutte -->
+            <circle cx="16" cy="29" r="1.4" fill="#E8B547"/>
+            <line x1="16" y1="26" x2="16" y2="28" stroke="#E8B547" stroke-width="1"/>
           </svg>
         </div>
         <div class="logo-text">
@@ -88,9 +96,12 @@ const navItems = [
   <header v-if="isMobile" class="mobile-header">
     <RouterLink to="/" class="mob-logo">
       <div class="mob-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D4A04F" stroke-width="1.6">
-          <path d="M12 3 L21 12 L12 21 L3 12 Z" />
-          <circle cx="12" cy="12" r="3" fill="#D4A04F" />
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="9.5" fill="none" stroke="#E8B547" stroke-width="1.4"/>
+          <path d="M3 16 L7 13 L7 19 Z" fill="#E8B547"/>
+          <path d="M29 16 L25 13 L25 19 Z" fill="#E8B547"/>
+          <circle cx="16" cy="16" r="3.2" fill="#B8312E"/>
+          <circle cx="16" cy="16" r="1.2" fill="#E8B547"/>
         </svg>
       </div>
       <span class="mob-name">Djawal<small class="arabic">جوّال</small></span>
@@ -136,10 +147,10 @@ const navItems = [
 }
 .logo-mark {
   width: 44px; height: 44px;
-  background: var(--c-primaire);
+  background: #2D5A3D; /* Vert Atlas — verrouillé */
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 0 3px var(--c-accent), 0 0 0 5px var(--c-primaire);
+  box-shadow: 0 0 0 2px rgba(232, 181, 71, 0.35);
 }
 .logo-text { line-height: 1; }
 .logo-fr {
@@ -222,15 +233,15 @@ const navItems = [
   text-decoration: none;
 }
 .mob-mark {
-  width: 30px; height: 30px;
-  background: var(--c-primaire, #1B4965);
+  width: 32px; height: 32px;
+  background: #2D5A3D; /* Vert Atlas — verrouillé */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 2px var(--c-accent, #D4A04F);
+  box-shadow: 0 0 0 1.5px rgba(232, 181, 71, 0.35);
 }
-.mob-mark svg { width: 14px; height: 14px; }
+.mob-mark svg { width: 18px; height: 18px; }
 .mob-name {
   font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
   font-size: 20px;

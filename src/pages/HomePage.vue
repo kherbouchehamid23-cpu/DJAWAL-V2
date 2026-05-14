@@ -257,11 +257,17 @@ const quickPrompts = [
         <form @submit.prevent="submitAI" class="ai-hero-card">
           <div class="ai-badge">
             <span class="ai-badge-dot"></span>
-            Djawal IA · en ligne
+            Fennec · en ligne
           </div>
           <div class="ai-input-row">
-            <svg class="ai-input-spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2 L14 9 L21 12 L14 15 L12 22 L10 15 L3 12 L10 9 Z"/>
+            <svg class="ai-input-spark" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
+              <!-- Fennec : mascotte IA -->
+              <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
+              <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
+              <ellipse cx="32" cy="38" rx="13" ry="12"/>
+              <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
+              <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
+              <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
             </svg>
             <input
               v-model="aiInput"
@@ -415,17 +421,23 @@ const quickPrompts = [
     <section class="ai-section">
       <div class="djawal-container ai-inner">
         <div class="ai-left">
-          <div class="eyebrow">Composer avec l'IA Djawal</div>
+          <div class="eyebrow">Composer avec Fennec</div>
           <h2>Décrivez votre rêve.<br><em>On dessine l'itinéraire.</em></h2>
           <p class="lead">
             Notre intelligence puise dans le catalogue de nos guides locaux pour composer un parcours fidèle à
             vos envies — saison, rythme, budget, intentions. Une conversation suffit.
           </p>
           <button class="ai-cta" @click="goToComposer()">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2 L14 9 L21 12 L14 15 L12 22 L10 15 L3 12 L10 9 Z"/>
+            <svg viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
+              <!-- Fennec : mascotte IA -->
+              <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
+              <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
+              <ellipse cx="32" cy="38" rx="13" ry="12"/>
+              <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
+              <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
+              <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
             </svg>
-            Composer mon voyage en 30 secondes
+            Composer avec Fennec
           </button>
           <div class="ai-features">
             <span>Sans inscription</span>
@@ -655,8 +667,8 @@ const quickPrompts = [
   padding: 4px 4px 4px 16px;
 }
 .ai-input-spark {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   color: #B8862E;
   flex-shrink: 0;
 }
@@ -1170,7 +1182,7 @@ h2 em {
   line-height: 1.2;
 }
 .ai-cta:hover { transform: translateY(-2px); }
-.ai-cta svg { width: 16px; height: 16px; }
+.ai-cta svg { width: 20px; height: 20px; }
 
 .ai-features {
   display: flex;
