@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
+
+const route = useRoute()
 
 interface PendingGuide {
   id: string
@@ -17,7 +20,11 @@ const guides = ref<PendingGuide[]>([])
 const loading = ref(true)
 const errorMsg = ref<string | null>(null)
 const expandedId = ref<string | null>(null)
-const filter = ref<'pending' | 'all'>('pending')
+const filter = ref<'pending' | 'promote' | 'all'>(
+  (route.query.filter === 'promote' || route.query.filter === 'all')
+    ? (route.query.filter as 'promote' | 'all')
+    : 'pending'
+)
 
 onMounted(loadGuides)
 
@@ -34,6 +41,9 @@ async function loadGuides() {
 
   if (filter.value === 'pending') {
     query = query.eq('kyc_status', 'pending')
+  } else if (filter.value === 'promote') {
+    // Juniors approuvés prêts à être promus Senior
+    query = query.eq('kyc_status', 'approved').eq('role', 'guide_junior')
   }
 
   const { data, error } = await query.order('id', { ascending: false })
@@ -127,11 +137,12 @@ function roleLabel(role: string): string {
   <div class="djawal-container djawal-section">
     <header class="page-header">
       <div>
-        <div class="section-eyebrow">Administration · KYC</div>
-        <h1>Validation des guides</h1>
+        <div class="section-eyebrow">Administration · Guides</div>
+        <h1>Validation & promotion des guides</h1>
       </div>
       <v-btn-toggle v-model="filter" mandatory @update:model-value="loadGuides">
-        <v-btn value="pending">En attente</v-btn>
+        <v-btn value="pending">KYC en attente</v-btn>
+        <v-btn value="promote">À promouvoir Senior</v-btn>
         <v-btn value="all">Tous</v-btn>
       </v-btn-toggle>
     </header>
@@ -142,7 +153,9 @@ function roleLabel(role: string): string {
 
     <div v-else-if="guides.length === 0" class="empty">
       <div class="empty-icon">✓</div>
-      <p>Aucun dossier KYC {{ filter === 'pending' ? 'en attente' : 'enregistré' }}.</p>
+      <p v-if="filter === 'pending'">Aucun dossier KYC en attente.</p>
+      <p v-else-if="filter === 'promote'">Aucun guide junior prêt à promouvoir Senior.</p>
+      <p v-else>Aucun guide enregistré.</p>
     </div>
 
     <div v-else class="guides-list">

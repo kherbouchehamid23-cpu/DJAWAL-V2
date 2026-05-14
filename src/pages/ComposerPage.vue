@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const route = useRoute()
 
 interface Destination { id: string; name: string; cultural_theme: string }
 
@@ -47,6 +49,12 @@ onMounted(async () => {
     .select('id, name, cultural_theme')
     .order('name')
   destinations.value = (data as Destination[]) || []
+
+  // Pré-remplir depuis ?q=... (quick prompts de la HomePage)
+  const q = route.query.q
+  if (typeof q === 'string' && q.trim()) {
+    note.value = q.trim()
+  }
 })
 
 function toggleInterest(v: string) {
@@ -115,11 +123,11 @@ function reset() {
   <div class="composer-page">
     <header class="hero">
       <div class="djawal-container">
-        <div class="eyebrow">✨ Composer avec l'IA</div>
+        <div class="eyebrow">✦ Composer avec Fennec</div>
         <h1>Votre voyage, façonné par vos envies</h1>
         <p class="lead">
-          Notre assistant IA s'appuie sur le catalogue Djawal et les parcours déjà composés par
-          nos guides locaux pour vous proposer un itinéraire sur mesure.
+          Fennec, notre guide intelligent, s'appuie sur le catalogue Djawal et les parcours déjà
+          composés par nos guides locaux pour vous proposer un itinéraire sur mesure.
         </p>
       </div>
     </header>

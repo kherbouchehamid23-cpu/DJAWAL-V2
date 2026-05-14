@@ -26,8 +26,8 @@
       <p>
         Chaque voyage publié sur Djawal est vérifié. Les guides certifiés (Senior)
         publient directement, les guides débutants (Junior) passent par une validation
-        manuelle. Aucun voyage incomplet ne s'affiche sur la vitrine. L'IA Djawal ne
-        propose que des ressources réellement validées — pas de fantôme, pas
+        manuelle. Aucun voyage incomplet ne s'affiche sur la vitrine. Fennec, notre IA,
+        ne propose que des ressources réellement validées — pas de fantôme, pas
         d'invention.
       </p>
     </div>

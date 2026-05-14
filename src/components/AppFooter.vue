@@ -32,7 +32,7 @@ const year = new Date().getFullYear()
             <li><router-link to="/voyages?theme=saharien">Sahara central</router-link></li>
             <li><router-link to="/voyages?theme=mauresque">Joyaux côtiers</router-link></li>
             <li><router-link to="/voyages?theme=aures">Routes de montagne</router-link></li>
-            <li><router-link to="/temoignages">Guides locaux</router-link></li>
+            <li><router-link to="/temoignages">Souvenirs voyageurs</router-link></li>
           </ul>
         </div>
 
@@ -50,8 +50,8 @@ const year = new Date().getFullYear()
           <h4>Légal</h4>
           <ul>
             <li><router-link to="/mentions-legales">Mentions légales</router-link></li>
-            <li><router-link to="/cgu">Conditions</router-link></li>
-            <li><router-link to="/confidentialite">Confidentialité</router-link></li>
+            <li><router-link to="/cgu">Conditions d'utilisation</router-link></li>
+            <li><router-link to="/mentions-legales#confidentialite">Confidentialité</router-link></li>
           </ul>
         </div>
       </div>

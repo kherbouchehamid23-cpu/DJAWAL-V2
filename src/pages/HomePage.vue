@@ -18,12 +18,13 @@ const aiInput = ref('')
 
 onMounted(async () => {
   // Stats agrégées depuis Supabase (non bloquant)
+  // Le fallback 450 reste tant qu'on n'a pas un nombre significatif de guides validés
   const { count: guidesCount } = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
     .in('role', ['guide_senior', 'guide_junior'])
     .eq('kyc_status', 'approved')
-  if (guidesCount && guidesCount > 0) stats.value.guides = guidesCount
+  if (guidesCount && guidesCount >= 50) stats.value.guides = guidesCount
 })
 
 function goToComposer(prefill?: string) {

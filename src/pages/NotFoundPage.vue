@@ -56,10 +56,10 @@ useSEO({
             </div>
           </router-link>
           <router-link to="/composer" class="suggestion">
-            <span class="icon">✨</span>
+            <span class="icon">✦</span>
             <div>
               <strong>Composer un voyage</strong>
-              <small>L'IA Djawal sur-mesure</small>
+              <small>Fennec, votre guide intelligent</small>
             </div>
           </router-link>
           <router-link to="/temoignages" class="suggestion">

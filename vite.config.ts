@@ -15,9 +15,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
-        name: 'Djawal — Voyager l\'Algérie',
+        name: 'Djawal — L\'Algérie vécue de l\'intérieur',
         short_name: 'Djawal',
-        description: 'Plateforme communautaire de voyages, hôtels, sites et restaurants en Algérie',
+        description: 'Plateforme communautaire de tourisme en Algérie. Voyagez authentique, au plus proche de l\'âme du pays.',
         theme_color: '#1B4965',
         background_color: '#FAF7F2',
         display: 'standalone',

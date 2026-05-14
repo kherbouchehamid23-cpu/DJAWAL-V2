@@ -95,7 +95,7 @@ function mapAuthError(err: string): string {
 
 <template>
   <AuthCard
-    title="Rejoindre Djawal."
+    title="Nous rejoindre."
     subtitle="Créez votre compte en 1 minute pour explorer l'Algérie autrement."
     arabic-tag="انضموا إلينا"
   >
@@ -207,9 +207,9 @@ function mapAuthError(err: string): string {
       >
         <template #label>
           J'accepte les
-          <router-link to="/legal/cgu" class="auth-link" target="_blank">conditions générales</router-link>
+          <router-link to="/cgu" class="auth-link" target="_blank">conditions générales</router-link>
           et la
-          <router-link to="/legal/privacy" class="auth-link" target="_blank">politique de confidentialité</router-link>.
+          <router-link to="/mentions-legales#confidentialite" class="auth-link" target="_blank">politique de confidentialité</router-link>.
         </template>
       </v-checkbox>
 

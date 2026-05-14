@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 
 const stats = ref({
   pendingKyc: 0,
+  pendingPromotions: 0,
   pendingTrips: 0,
   pendingMemories: 0,
   totalGuides: 0,
@@ -14,9 +15,12 @@ const loading = ref(true)
 onMounted(async () => {
   loading.value = true
 
-  const [kyc, trips, memories, guides, voyageurs] = await Promise.all([
+  const [kyc, promotions, trips, memories, guides, voyageurs] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .in('role', ['guide_senior', 'guide_junior']).eq('kyc_status', 'pending'),
+    // Guides juniors approuvés KYC = candidats à la promotion Senior
+    supabase.from('profiles').select('id', { count: 'exact', head: true })
+      .eq('role', 'guide_junior').eq('kyc_status', 'approved'),
     supabase.from('trips').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
     supabase.from('memories').select('id', { count: 'exact', head: true }).eq('published', false),
     supabase.from('profiles').select('id', { count: 'exact', head: true })
@@ -26,6 +30,7 @@ onMounted(async () => {
 
   stats.value = {
     pendingKyc: kyc.count ?? 0,
+    pendingPromotions: promotions.count ?? 0,
     pendingTrips: trips.count ?? 0,
     pendingMemories: memories.count ?? 0,
     totalGuides: guides.count ?? 0,
@@ -46,6 +51,12 @@ onMounted(async () => {
         <div class="stat-icon">📋</div>
         <strong>{{ loading ? '—' : stats.pendingKyc }}</strong>
         <span>KYC en attente</span>
+      </router-link>
+
+      <router-link to="/admin/kyc?filter=promote" class="stat-card alert">
+        <div class="stat-icon">⭐</div>
+        <strong>{{ loading ? '—' : stats.pendingPromotions }}</strong>
+        <span>À promouvoir Senior</span>
       </router-link>
 
       <router-link to="/admin/moderation" class="stat-card alert">

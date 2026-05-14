@@ -12,7 +12,7 @@ const { isMobile } = useBreakpoint()
 
 const navItems = [
   { to: '/voyages', label: 'Destinations' },
-  { to: '/temoignages', label: 'Guides locaux' },
+  { to: '/temoignages', label: 'Souvenirs' },
   { to: '/composer', label: 'Fennec IA', accent: true }
 ]
 </script>
@@ -94,7 +94,7 @@ const navItems = [
         </template>
         <template v-else>
           <v-btn to="/auth/login" variant="text" class="login-btn">Connexion</v-btn>
-          <v-btn to="/auth/signup" color="primary" variant="flat">Devenir guide</v-btn>
+          <v-btn to="/auth/signup" color="primary" variant="flat">Nous rejoindre</v-btn>
         </template>
       </div>
     </v-container>

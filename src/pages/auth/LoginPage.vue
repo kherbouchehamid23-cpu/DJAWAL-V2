@@ -131,7 +131,7 @@ function mapAuthError(err: string): string {
 
     <div class="auth-footer">
       Pas encore de compte ?
-      <router-link to="/auth/signup" class="auth-link-strong">Rejoindre Djawal</router-link>
+      <router-link to="/auth/signup" class="auth-link-strong">Nous rejoindre</router-link>
     </div>
   </AuthCard>
 </template>
