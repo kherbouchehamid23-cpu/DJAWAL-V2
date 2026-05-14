@@ -93,7 +93,9 @@ function fmtPrice(p: number) {
             <div class="fav-meta">
               {{ trip.duration_days }}j · {{ fmtPrice(trip.price_da) }}
             </div>
-            <div class="fav-author">par {{ trip.profiles?.display_name }}</div>
+            <div class="fav-author">
+              Signé <strong>{{ (trip.profiles?.display_name || '').replace(/^./, c => c.toUpperCase()) }}</strong>
+            </div>
           </div>
         </router-link>
         <button class="remove-btn" @click="removeFav(trip.id)" title="Retirer des favoris">

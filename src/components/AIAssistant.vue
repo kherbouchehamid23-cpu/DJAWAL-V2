@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+
+// Masquer le FAB sur les pages où Fennec est déjà visible (homepage + composer)
+// pour éviter la redondance visuelle. Le drawer reste accessible via la nav.
+const hideFab = computed(() => {
+  const p = route.path
+  return p === '/' || p.startsWith('/composer')
+})
 
 interface Message {
   role: 'user' | 'assistant'
@@ -94,9 +102,9 @@ function goToDestination(id: string) {
 </script>
 
 <template>
-  <!-- Bouton flottant -->
+  <!-- Bouton flottant — masqué sur homepage et /composer (Fennec déjà visible) -->
   <button
-    v-if="!isOpen"
+    v-if="!isOpen && !hideFab"
     class="ai-fab"
     @click="isOpen = true"
     title="Demander à Fennec"

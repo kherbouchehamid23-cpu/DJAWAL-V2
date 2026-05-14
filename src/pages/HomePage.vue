@@ -110,7 +110,7 @@ function fmtNumber(n: number) {
 
           <div class="hero-ctas">
             <router-link to="/voyages" class="btn btn-primary">
-              Explorer les expériences
+              Trouver mon voyage en Algérie
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12 L19 12 M13 5 L20 12 L13 19" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </router-link>
             <button class="btn btn-ghost" @click="goToComposer()">
@@ -120,7 +120,7 @@ function fmtNumber(n: number) {
                 <path d="M12 22 L12 15"/>
                 <path d="M9 6 L12 9 L15 6"/>
               </svg>
-              Composer avec Fennec
+              Demander à Fennec (notre IA)
             </button>
           </div>
 
@@ -189,7 +189,10 @@ function fmtNumber(n: number) {
     <section class="categories">
       <div class="djawal-container">
         <header class="cat-head">
-          <h2>L'âme algérienne <em>— que cherchez-vous ?</em></h2>
+          <div>
+            <h2>L'âme algérienne <em>— que cherchez-vous ?</em></h2>
+            <p class="cat-sub">Choisissez l'expérience qui vous appelle — Sahara, patrimoine, tables d'hôtes.</p>
+          </div>
           <router-link to="/voyages" class="cat-link">
             Voir toutes les expériences
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12 L19 12 M13 5 L20 12 L13 19" stroke-linecap="round"/></svg>
@@ -681,6 +684,12 @@ function fmtNumber(n: number) {
   font-style: italic;
   color: var(--c-texte-doux, #6B6B6B);
   font-weight: 500;
+}
+.cat-sub {
+  font-size: 15px;
+  color: var(--c-texte-doux, #6B6B6B);
+  margin: 8px 0 0;
+  max-width: 520px;
 }
 .cat-link {
   display: inline-flex;

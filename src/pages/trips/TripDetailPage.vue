@@ -292,10 +292,10 @@ function difficultyLabel(d: string | null) {
           <div class="card cta-card">
             <div class="cta-price">{{ fmtPrice(trip.price_da) }}</div>
             <div class="cta-sub">par personne · {{ trip.duration_days }} jour{{ trip.duration_days > 1 ? 's' : '' }}</div>
-            <v-btn color="primary" variant="flat" size="large" block class="mt-3" disabled>
-              ✉️ Demander un devis
+            <v-btn color="primary" variant="flat" size="large" block class="mt-3" :href="`mailto:hello@djawal.app?subject=Voyage%20%C2%AB%20${encodeURIComponent(trip.title)}%20%C2%BB&body=Bonjour%2C%0A%0AJe%20suis%20int%C3%A9ress%C3%A9%28e%29%20par%20le%20voyage%20%C2%AB%20${encodeURIComponent(trip.title)}%20%C2%BB%20%E2%80%94%20${trip.duration_days}%20jours%2C%20${fmtPrice(trip.price_da)}.%0A%0AMerci%20de%20me%20recontacter.%0A`">
+              ✉️ Contacter pour réserver
             </v-btn>
-            <p class="cta-hint">La réservation en ligne arrive bientôt.</p>
+            <p class="cta-hint">La réservation en ligne sera bientôt disponible. En attendant, écrivez-nous — nous vous mettons en contact avec le guide sous 48h.</p>
           </div>
 
           <div class="card info-card">

@@ -173,7 +173,7 @@ function themeLabel(theme: string) {
       <div class="showcase-head">
         <div>
           <div class="section-eyebrow">Parcours signés</div>
-          <h2>Voyages proposés par nos guides</h2>
+          <h2>Voyages signés par nos guides locaux</h2>
         </div>
       </div>
       <div class="trip-strip">
@@ -195,7 +195,12 @@ function themeLabel(theme: string) {
             <div class="trip-strip-meta">
               {{ trip.duration_days }}j · {{ fmtPrice(trip.price_da) }}
             </div>
-            <div class="trip-strip-author">par {{ trip.profiles?.display_name }}</div>
+            <div class="trip-strip-author">
+              Signé
+              <strong>{{ (trip.profiles?.display_name || '').replace(/^./, c => c.toUpperCase()) }}</strong>
+              <span v-if="trip.profiles?.role === 'guide_senior'"> · Guide Senior</span>
+              <span v-else-if="trip.profiles?.role === 'guide_junior'"> · Guide Junior</span>
+            </div>
           </div>
         </router-link>
       </div>
@@ -393,6 +398,26 @@ function themeLabel(theme: string) {
   background-size: cover;
   background-position: center;
   position: relative;
+}
+/* Fallback visuel par thème quand pas d'image */
+.dest-card[data-theme="saharien"] .card-image {
+  background: radial-gradient(circle at 70% 30%, #FFD479 0%, #D4A04F 35%, #8B4A2C 100%);
+}
+.dest-card[data-theme="mauresque"] .card-image {
+  background: linear-gradient(160deg, #3D6890 0%, #1B4965 60%, #0A1F2E 100%);
+}
+.dest-card[data-theme="aures"] .card-image {
+  background: linear-gradient(160deg, #6B7A4A 0%, #2D5A3D 60%, #1B3A28 100%);
+}
+/* Pattern décoratif si pas d'image — diamant berbère discret */
+.dest-card .card-image:not([style*="background-image"])::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='none' stroke='%23FAF7F2' stroke-width='1' opacity='0.15'><path d='M30 4 L52 30 L30 56 L8 30 Z'/><path d='M30 14 L42 30 L30 46 L18 30 Z'/></g></svg>");
+  background-repeat: repeat;
+  background-size: 60px 60px;
+  pointer-events: none;
 }
 .theme-badge {
   position: absolute; top: 12px; left: 12px;
