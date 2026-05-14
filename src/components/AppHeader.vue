@@ -11,10 +11,9 @@ const drawer = ref(false)
 const { isMobile } = useBreakpoint()
 
 const navItems = [
-  { to: '/voyages', label: 'Voyages' },
-  { to: '/composer', label: '✨ IA' },
-  { to: '/temoignages', label: 'Souvenirs' },
-  { to: '/about', label: 'À propos' }
+  { to: '/voyages', label: 'Destinations' },
+  { to: '/temoignages', label: 'Guides locaux' },
+  { to: '/composer', label: 'Fennec IA', accent: true }
 ]
 </script>
 
@@ -53,7 +52,16 @@ const navItems = [
           :key="item.to"
           :to="item.to"
           class="nav-link"
+          :class="{ 'nav-link-fennec': item.accent }"
         >
+          <svg v-if="item.accent" class="nav-fennec-icon" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
+            <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
+            <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
+            <ellipse cx="32" cy="38" rx="13" ry="12"/>
+            <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
+            <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
+            <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
+          </svg>
           {{ item.label }}
         </RouterLink>
       </nav>
@@ -86,7 +94,7 @@ const navItems = [
         </template>
         <template v-else>
           <v-btn to="/auth/login" variant="text" class="login-btn">Connexion</v-btn>
-          <v-btn to="/auth/signup" color="primary" variant="flat">Rejoindre</v-btn>
+          <v-btn to="/auth/signup" color="primary" variant="flat">Devenir guide</v-btn>
         </template>
       </div>
     </v-container>
@@ -211,6 +219,19 @@ const navItems = [
   background-repeat: repeat-x;
   background-position: center;
 }
+/* Pill Fennec IA — surligné dans la nav */
+.nav-link-fennec {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px !important;
+  background: linear-gradient(135deg, rgba(212, 160, 79, 0.18), rgba(184, 134, 46, 0.12));
+  color: var(--c-accent-fort, #B8862E) !important;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.nav-link-fennec.router-link-active::after { display: none; }
+.nav-fennec-icon { width: 16px; height: 16px; flex-shrink: 0; }
 
 /* === Mini header mobile === */
 .mobile-header {

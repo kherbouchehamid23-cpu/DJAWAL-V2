@@ -8,38 +8,41 @@ const year = new Date().getFullYear()
       <div class="footer-grid">
         <div class="footer-brand">
           <div class="logo-mark-inline">
-            <svg viewBox="0 0 32 32" width="22" height="22">
-              <g fill="none" stroke="#D4A04F" stroke-width="2">
-                <path d="M16 2 L28 16 L16 30 L4 16 Z" />
-                <circle cx="16" cy="16" r="5" />
-                <circle cx="16" cy="16" r="1.5" fill="#D4A04F" />
-              </g>
-            </svg>
-            <span class="brand-fr">Djawal</span>
+            <div class="footer-logo-circle">
+              <svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
+                <circle cx="16" cy="16" r="9.5" fill="none" stroke="#E8B547" stroke-width="1.4"/>
+                <path d="M3 16 L7 13 L7 19 Z" fill="#E8B547"/>
+                <path d="M29 16 L25 13 L25 19 Z" fill="#E8B547"/>
+                <circle cx="16" cy="16" r="3.2" fill="#B8312E"/>
+                <circle cx="16" cy="16" r="1.2" fill="#E8B547"/>
+              </svg>
+            </div>
+            <span class="brand-fr">Djawal.</span>
             <span class="arabic brand-ar">جوّال</span>
           </div>
           <p>
-            L'Algérie comme une invitation. Plateforme communautaire de voyages,
-            hôtels, restaurants et sites — pensée et faite ici.
+            Première plateforme communautaire de tourisme en Algérie. Voyagez
+            authentique, au plus proche de l'âme du pays.
           </p>
         </div>
 
         <div>
           <h4>Découvrir</h4>
           <ul>
-            <li><router-link to="/voyages">Destinations</router-link></li>
-            <li><router-link to="/composer">✨ Composer avec l'IA</router-link></li>
-            <li><router-link to="/temoignages">Souvenirs voyageurs</router-link></li>
-            <li><router-link to="/about">Notre démarche</router-link></li>
+            <li><router-link to="/voyages?theme=saharien">Sahara central</router-link></li>
+            <li><router-link to="/voyages?theme=mauresque">Joyaux côtiers</router-link></li>
+            <li><router-link to="/voyages?theme=aures">Routes de montagne</router-link></li>
+            <li><router-link to="/temoignages">Guides locaux</router-link></li>
           </ul>
         </div>
 
         <div>
-          <h4>Communauté</h4>
+          <h4>L'initiative</h4>
           <ul>
-            <li><router-link to="/auth/signup">Créer un compte</router-link></li>
             <li><router-link to="/auth/signup?role=guide_junior">Devenir guide</router-link></li>
-            <li><router-link to="/contact">Contact</router-link></li>
+            <li><router-link to="/composer">Fennec, notre IA</router-link></li>
+            <li><router-link to="/about">Notre mission</router-link></li>
+            <li><a href="mailto:hello@djawal.app">Contact</a></li>
           </ul>
         </div>
 
@@ -47,15 +50,21 @@ const year = new Date().getFullYear()
           <h4>Légal</h4>
           <ul>
             <li><router-link to="/mentions-legales">Mentions légales</router-link></li>
-            <li><router-link to="/cgu">Conditions d'utilisation</router-link></li>
-            <li><a href="mailto:hello@djawal.app">hello@djawal.app</a></li>
+            <li><router-link to="/cgu">Conditions</router-link></li>
+            <li><router-link to="/confidentialite">Confidentialité</router-link></li>
           </ul>
         </div>
       </div>
 
       <div class="footer-bottom">
-        <span>© {{ year }} Djawal — Tous droits réservés</span>
-        <span class="locale-note"><span class="arabic">صُنع في الجزائر</span> · Conçu en Algérie 🇩🇿</span>
+        <span>© {{ year }} Djawal · Tous droits réservés</span>
+        <span class="locale-note">
+          Pensé en
+          <span class="locale-flag">français</span>
+          — ouvert au monde
+          <span class="arabic locale-arab">العربية</span>
+          <span class="tif locale-tif">ⵜⵉⵏⵉⵔⵉ</span>
+        </span>
       </div>
     </div>
   </footer>
@@ -85,8 +94,21 @@ const year = new Date().getFullYear()
   color: var(--c-fond);
   font-family: var(--font-display);
 }
+.footer-logo-circle {
+  width: 36px; height: 36px;
+  background: #2D5A3D;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1.5px rgba(232, 181, 71, 0.4);
+}
 .brand-fr { font-size: 24px; font-weight: 600; }
 .brand-ar { color: var(--c-accent); font-size: 16px; }
+.locale-note { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.locale-flag { font-style: italic; }
+.locale-arab { color: var(--c-accent); }
+.locale-tif { font-family: 'Noto Sans Tifinagh', monospace; color: var(--c-accent); font-size: 13px; letter-spacing: 0.12em; }
 .djawal-footer h4 {
   color: var(--c-fond);
   font-family: var(--font-body);
