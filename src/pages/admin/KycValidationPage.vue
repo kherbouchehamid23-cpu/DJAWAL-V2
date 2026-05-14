@@ -13,6 +13,10 @@ interface PendingGuide {
   bio: string | null
   email: string | null
   kyc_status: string
+  operator_type?: string | null
+  company_name?: string | null
+  company_registration?: string | null
+  commercial_register_url?: string | null
   documents: { document_type: string; storage_path: string; signed_url?: string }[]
 }
 
@@ -35,9 +39,10 @@ async function loadGuides() {
     .from('profiles')
     .select(`
       id, display_name, role, region, bio, kyc_status, kyc_reviewed_at,
+      operator_type, company_name, company_registration, commercial_register_url,
       kyc_documents (document_type, storage_path)
     `)
-    .in('role', ['guide_senior', 'guide_junior'])
+    .in('role', ['guide_senior', 'guide_junior', 'tourist_operator'])
 
   if (filter.value === 'pending') {
     query = query.eq('kyc_status', 'pending')
@@ -128,8 +133,19 @@ function docTypeLabel(type: string): string {
   return labels[type] || type
 }
 
-function roleLabel(role: string): string {
-  return role === 'guide_senior' ? '🎒 Senior' : '🎒 Junior'
+function roleLabel(role: string, operatorType?: string | null): string {
+  if (role === 'guide_senior') return '🎒 Senior'
+  if (role === 'guide_junior') return '🎒 Junior'
+  if (role === 'tourist_operator') {
+    const labels: Record<string, string> = {
+      travel_agency: '🧭 Agence',
+      restaurant: '🍽️ Restaurant',
+      accommodation_provider: '🏨 Hébergeur',
+      artisan: '🧶 Artisan'
+    }
+    return operatorType ? labels[operatorType] || '🏛️ Opérateur' : '🏛️ Opérateur'
+  }
+  return role
 }
 </script>
 
@@ -162,10 +178,14 @@ function roleLabel(role: string): string {
       <article v-for="guide in guides" :key="guide.id" class="guide-card">
         <header class="guide-head" @click="expandedId = expandedId === guide.id ? null : guide.id">
           <div class="guide-info">
-            <strong>{{ guide.display_name }}</strong>
+            <strong>{{ guide.company_name || guide.display_name }}</strong>
+            <div v-if="guide.company_name && guide.display_name !== guide.company_name" class="sub-name">
+              Contact : {{ guide.display_name }}
+            </div>
             <div class="guide-meta">
-              <span class="role-tag">{{ roleLabel(guide.role) }}</span>
+              <span class="role-tag">{{ roleLabel(guide.role, guide.operator_type) }}</span>
               <span v-if="guide.region">📍 {{ guide.region }}</span>
+              <span v-if="guide.company_registration" class="rc-tag">RC {{ guide.company_registration }}</span>
               <span class="docs-count">📎 {{ guide.documents.length }} docs</span>
             </div>
           </div>
@@ -187,6 +207,15 @@ function roleLabel(role: string): string {
           <p v-else class="bio-empty">Pas de bio renseignée.</p>
 
           <div class="docs-row">
+            <a
+              v-if="guide.commercial_register_url"
+              :href="guide.commercial_register_url"
+              target="_blank"
+              class="doc-btn"
+            >
+              <span class="doc-icon">📋</span>
+              Registre du commerce
+            </a>
             <button
               v-for="doc in guide.documents"
               :key="doc.document_type"
@@ -271,6 +300,8 @@ h1 { font-size: clamp(28px, 4vw, 40px); }
   font-size: 13px; color: var(--c-texte-doux);
 }
 .role-tag { font-weight: 600; color: var(--c-primaire); }
+.rc-tag { font-family: monospace; font-size: 12px; color: var(--c-accent-fort); }
+.sub-name { font-size: 12px; color: var(--c-texte-doux); margin-top: 2px; }
 .guide-expanded {
   padding: 0 var(--space-4) var(--space-4);
   border-top: 1px solid var(--c-gris-clair);

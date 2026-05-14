@@ -3,8 +3,9 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
-export type AppRole = 'super_admin' | 'guide_senior' | 'guide_junior' | 'voyageur'
+export type AppRole = 'super_admin' | 'guide_senior' | 'guide_junior' | 'voyageur' | 'tourist_operator'
 export type KycStatus = 'not_required' | 'pending' | 'approved' | 'rejected'
+export type OperatorType = 'travel_agency' | 'restaurant' | 'accommodation_provider' | 'artisan'
 
 export interface Profile {
   id: string
@@ -16,14 +17,24 @@ export interface Profile {
   kyc_status: KycStatus
   kyc_reviewed_at: string | null
   is_active: boolean
+  // Champs opérateur touristique (nullable si role !== 'tourist_operator')
+  operator_type: OperatorType | null
+  company_name: string | null
+  company_registration: string | null
+  commercial_register_url: string | null
+  slug: string | null
+  gallery_urls: string[] | null
+  specialties: string[] | null
 }
 
 export interface SignupPayload {
   email: string
   password: string
   display_name: string
-  role: 'voyageur' | 'guide_junior'
+  role: 'voyageur' | 'guide_junior' | 'tourist_operator'
   region?: string
+  operator_type?: OperatorType
+  company_name?: string
 }
 
 /**
@@ -46,10 +57,28 @@ export const useAuthStore = defineStore('auth', () => {
   const isGuideSenior = computed(() => role.value === 'guide_senior')
   const isGuideJunior = computed(() => role.value === 'guide_junior')
   const isVoyageur = computed(() => role.value === 'voyageur')
+  const isOperator = computed(() => role.value === 'tourist_operator')
+  const operatorType = computed<OperatorType | null>(() => profile.value?.operator_type ?? null)
+  const isOperatorArtisan = computed(() => isOperator.value && operatorType.value === 'artisan')
+  const isOperatorRestaurant = computed(() => isOperator.value && operatorType.value === 'restaurant')
+  const isOperatorAccommodation = computed(() => isOperator.value && operatorType.value === 'accommodation_provider')
+  const isOperatorAgency = computed(() => isOperator.value && operatorType.value === 'travel_agency')
+  // KYC requis pour guides ET opérateurs
   const needsKyc = computed(() =>
-    isGuide.value && profile.value?.kyc_status === 'pending'
+    (isGuide.value || isOperator.value) && profile.value?.kyc_status === 'pending'
   )
   const kycRejected = computed(() => profile.value?.kyc_status === 'rejected')
+  const kycApproved = computed(() => profile.value?.kyc_status === 'approved')
+  /** Matrice de capacités — quel produit cet opérateur peut soumettre. */
+  function canSubmit(resourceType: 'accommodation' | 'restaurant' | 'activity' | 'trip'): boolean {
+    if (!isOperator.value || profile.value?.kyc_status !== 'approved') return false
+    const op = operatorType.value
+    if (op === 'accommodation_provider') return ['accommodation', 'restaurant', 'activity', 'trip'].includes(resourceType)
+    if (op === 'artisan') return ['activity', 'accommodation'].includes(resourceType)
+    if (op === 'restaurant') return resourceType === 'restaurant'
+    if (op === 'travel_agency') return resourceType === 'trip'
+    return false
+  }
 
   // === Méthodes ===
 
@@ -96,7 +125,9 @@ export const useAuthStore = defineStore('auth', () => {
         data: {
           display_name: payload.display_name,
           role: payload.role,
-          region: payload.region ?? null
+          region: payload.region ?? null,
+          operator_type: payload.operator_type ?? null,
+          company_name: payload.company_name ?? null
         }
       }
     })
@@ -202,7 +233,11 @@ export const useAuthStore = defineStore('auth', () => {
     user, session, profile, loading, lastError,
     // computed
     isAuthenticated, role, isAdmin, isGuide, isGuideSenior, isGuideJunior, isVoyageur,
-    needsKyc, kycRejected,
+    isOperator, operatorType,
+    isOperatorArtisan, isOperatorRestaurant, isOperatorAccommodation, isOperatorAgency,
+    needsKyc, kycRejected, kycApproved,
+    // helpers
+    canSubmit,
     // methods
     initialize, fetchProfile,
     signupWithEmail, signinWithEmail, signinWithGoogle, signinWithMagicLink,

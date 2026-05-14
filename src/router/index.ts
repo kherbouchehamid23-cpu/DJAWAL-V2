@@ -168,6 +168,47 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresRole: ['guide_senior', 'guide_junior', 'super_admin'], title: 'Modifier voyage — Djawal' }
   },
 
+  // === Espace opérateur touristique ===
+  {
+    path: '/espace-operateur',
+    name: 'operator-dashboard',
+    component: () => import('@/pages/operator/OperatorDashboardPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['tourist_operator', 'super_admin'], title: 'Espace opérateur — Djawal' }
+  },
+  {
+    path: '/espace-operateur/kyc',
+    name: 'operator-kyc',
+    component: () => import('@/pages/operator/OperatorKycPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['tourist_operator'], title: 'Vérification KYC pro — Djawal' }
+  },
+  {
+    path: '/espace-operateur/produits',
+    name: 'operator-products',
+    component: () => import('@/pages/operator/OperatorProductsPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['tourist_operator', 'super_admin'], title: 'Mes produits — Djawal' }
+  },
+  {
+    path: '/espace-operateur/produits/nouveau-package',
+    name: 'operator-package-new',
+    component: () => import('@/pages/operator/OperatorPackageBuilderPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['tourist_operator', 'super_admin'], title: 'Nouveau package — Djawal' }
+  },
+  {
+    path: '/espace-operateur/profil',
+    name: 'operator-profile-edit',
+    component: () => import('@/pages/operator/OperatorProfileEditPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['tourist_operator'], title: 'Mon profil — Djawal' }
+  },
+
+  // === Profil public opérateur ===
+  {
+    path: '/operateurs/:slug',
+    name: 'operator-profile',
+    component: () => import('@/pages/OperatorProfilePage.vue'),
+    props: true,
+    meta: { title: 'Profil opérateur — Djawal' }
+  },
+
   // === Administration (Super Admin uniquement) ===
   {
     path: '/admin',

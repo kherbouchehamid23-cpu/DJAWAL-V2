@@ -84,6 +84,7 @@ const navItems = [
             <v-list>
               <v-list-item to="/mon-espace" title="Mon espace" />
               <v-list-item v-if="auth.isGuide" to="/espace-guide" title="Espace guide" />
+              <v-list-item v-if="auth.isOperator" to="/espace-operateur" title="Espace opérateur" />
               <v-list-item v-if="auth.isAdmin" to="/admin" title="Administration" />
               <v-divider />
               <v-list-item title="Se déconnecter" @click="auth.signOut" />
@@ -117,7 +118,7 @@ const navItems = [
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
       </RouterLink>
       <RouterLink v-if="!auth.isAuthenticated" to="/auth/login" class="mob-btn-cta">Connexion</RouterLink>
-      <RouterLink v-else :to="auth.isAdmin ? '/admin' : auth.isGuide ? '/espace-guide' : '/mon-espace'" class="mob-btn" aria-label="Mon espace">
+      <RouterLink v-else :to="auth.isAdmin ? '/admin' : auth.isGuide ? '/espace-guide' : auth.isOperator ? '/espace-operateur' : '/mon-espace'" class="mob-btn" aria-label="Mon espace">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20 c 0 -5 4 -8 8 -8 s 8 3 8 8"/></svg>
       </RouterLink>
     </div>
