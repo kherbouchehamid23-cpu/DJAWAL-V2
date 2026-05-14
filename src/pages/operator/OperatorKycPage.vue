@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
@@ -27,27 +27,59 @@ const operatorTypeLabel = computed(() =>
   auth.operatorType ? operatorTypeLabels[auth.operatorType] : 'opérateur'
 )
 
+// Validation détaillée — pour aider l'utilisateur à comprendre ce qui manque
+const validation = computed(() => ({
+  company: companyName.value.trim().length >= 2,
+  rc: companyRegistration.value.trim().length >= 4,
+  bio: bio.value.trim().length >= 20, // assoupli de 30 → 20
+  region: region.value.trim().length >= 2,
+  file: !!registerFile.value
+}))
+
 const canSubmit = computed(() =>
-  companyName.value.trim().length >= 2 &&
-  companyRegistration.value.trim().length >= 4 &&
-  bio.value.trim().length >= 30 &&
-  region.value.trim().length >= 2 &&
-  registerFile.value &&
+  validation.value.company &&
+  validation.value.rc &&
+  validation.value.bio &&
+  validation.value.region &&
+  validation.value.file &&
   !uploading.value
 )
 
-onMounted(() => {
-  if (auth.profile) {
-    companyName.value = auth.profile.company_name || ''
-    companyRegistration.value = auth.profile.company_registration || ''
-    bio.value = auth.profile.bio || ''
-    region.value = auth.profile.region || ''
-  }
+// Liste des champs manquants pour feedback utilisateur
+const missingFields = computed(() => {
+  const m: string[] = []
+  if (!validation.value.company) m.push('Nom commercial (≥ 2 caractères)')
+  if (!validation.value.rc) m.push('Numéro RC (≥ 4 caractères)')
+  if (!validation.value.bio) m.push('Présentation (≥ 20 caractères)')
+  if (!validation.value.region) m.push('Région d\'activité')
+  if (!validation.value.file) m.push('Fichier registre du commerce')
+  return m
 })
+
+function fillFromProfile() {
+  if (!auth.profile) return
+  companyName.value = auth.profile.company_name || ''
+  companyRegistration.value = auth.profile.company_registration || ''
+  bio.value = auth.profile.bio || ''
+  region.value = auth.profile.region || ''
+}
+
+// Pré-remplir depuis profile — au mount ET quand le profile arrive plus tard (post-signup)
+onMounted(fillFromProfile)
+watch(() => auth.profile, fillFromProfile, { immediate: false })
 
 function onFileSelected(e: Event) {
   const target = e.target as HTMLInputElement
-  registerFile.value = target.files?.[0] || null
+  const file = target.files?.[0] || null
+  // Validation taille (10 Mo max)
+  if (file && file.size > 10 * 1024 * 1024) {
+    errorMsg.value = 'Fichier trop volumineux (max 10 Mo).'
+    target.value = ''
+    registerFile.value = null
+    return
+  }
+  errorMsg.value = null
+  registerFile.value = file
 }
 
 async function submit() {
@@ -185,6 +217,14 @@ async function submit() {
         </div>
       </fieldset>
 
+      <!-- Feedback champs manquants -->
+      <div v-if="missingFields.length > 0 && !uploading" class="missing-fields">
+        <strong>Pour activer la soumission, complétez :</strong>
+        <ul>
+          <li v-for="f in missingFields" :key="f">{{ f }}</li>
+        </ul>
+      </div>
+
       <div class="actions">
         <v-btn
           type="submit"
@@ -283,4 +323,16 @@ h1 {
   justify-content: flex-end;
   margin-top: var(--space-4);
 }
+.missing-fields {
+  background: rgba(212, 160, 79, 0.1);
+  border-left: 3px solid var(--c-accent);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 4px;
+  margin-bottom: var(--space-3);
+  font-size: 13px;
+  color: var(--c-texte);
+}
+.missing-fields strong { display: block; margin-bottom: 6px; color: var(--c-primaire-profond); }
+.missing-fields ul { margin: 0; padding-left: 18px; }
+.missing-fields li { line-height: 1.6; }
 </style>

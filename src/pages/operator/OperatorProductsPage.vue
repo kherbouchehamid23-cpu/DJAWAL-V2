@@ -27,6 +27,7 @@ const tableLabels: Record<TableName, string> = {
 
 const products = ref<any[]>([])
 const loading = ref(true)
+const submitting = ref(false)
 const destinations = ref<any[]>([])
 const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
@@ -121,61 +122,98 @@ async function loadProducts() {
   loading.value = false
 }
 
+// Validation détaillée pour bloquer la soumission incomplète
+const formValidation = computed(() => ({
+  name: !!form.value.name?.trim(),
+  description: !!form.value.description?.trim() && form.value.description.trim().length >= 10,
+  destination: !!form.value.destination_id
+}))
+
+const formCanSubmit = computed(() =>
+  formValidation.value.name &&
+  formValidation.value.description &&
+  formValidation.value.destination &&
+  !submitting.value
+)
+
+const missingFormFields = computed(() => {
+  const m: string[] = []
+  if (!formValidation.value.name) m.push('Nom / Titre')
+  if (!formValidation.value.description) m.push('Description (≥ 10 caractères)')
+  if (!formValidation.value.destination) m.push('Destination')
+  return m
+})
+
 async function submitProduct() {
-  if (!auth.user) return
+  if (!auth.user || !formCanSubmit.value) return
+  submitting.value = true
   errorMsg.value = null
   successMsg.value = null
 
-  if (!form.value.name || !form.value.description || !form.value.destination_id) {
-    errorMsg.value = 'Nom, description et destination sont requis.'
-    return
-  }
-
   const tbl = currentTable.value
-  const payload: any = {
-    name: form.value.name,
-    description: form.value.description,
+
+  // Build payload propre par type — évite le bug "delete payload.name" précédent
+  let payload: any = {
+    description: form.value.description.trim(),
     destination_id: form.value.destination_id,
     created_by: auth.user.id,
     status: form.value.submit_for_review ? 'pending_review' : 'draft'
   }
 
   if (tbl === 'accommodations') {
+    payload.name = form.value.name.trim()
     payload.accommodation_type = form.value.accommodation_type
     payload.address = form.value.address || null
     payload.star_rating = form.value.star_rating || null
     payload.amenities = form.value.amenities || []
     payload.coordinates = 'POINT(3.0 36.75)' // fallback Alger — l'opérateur géolocalisera ensuite
   } else if (tbl === 'restaurants') {
+    payload.name = form.value.name.trim()
     payload.cuisine = form.value.cuisine || []
     payload.coordinates = 'POINT(3.0 36.75)'
   } else if (tbl === 'activities') {
+    payload.name = form.value.name.trim()
     payload.activity_type = form.value.activity_type
     payload.duration_hours = form.value.duration_hours
     payload.price_da = form.value.price_da
     payload.difficulty = form.value.difficulty
   } else if (tbl === 'trips') {
-    payload.title = form.value.name
+    payload.title = form.value.name.trim()
     payload.duration_days = form.value.duration_hours || 3
     payload.price_da = form.value.price_da
     payload.creator_role = auth.operatorType
-    payload.composition_mode = 'agency_package' // par défaut, on prend le mode package pour ops
-    delete payload.name
+    payload.composition_mode = 'agency_package'
   }
 
-  const { error } = await supabase.from(tbl).insert(payload)
-  if (error) {
-    errorMsg.value = error.message
-    return
-  }
+  try {
+    // INSERT et récupère la row créée pour optimistic update
+    const { data: created, error } = await supabase
+      .from(tbl)
+      .insert(payload)
+      .select('*, destination:destinations(name)')
+      .single()
 
-  successMsg.value = form.value.submit_for_review
-    ? 'Produit soumis pour validation. Un admin va le vérifier.'
-    : 'Brouillon enregistré.'
-  showForm.value = false
-  resetForm()
-  await loadProducts()
-  setTimeout(() => (successMsg.value = null), 4000)
+    if (error) throw error
+
+    // Optimistic update : on ajoute immédiatement au début de la liste
+    if (created) {
+      products.value = [created, ...products.value]
+    }
+
+    successMsg.value = form.value.submit_for_review
+      ? 'Produit soumis pour validation. Un admin va le vérifier.'
+      : 'Brouillon enregistré.'
+    showForm.value = false
+    resetForm()
+
+    // Refresh complet en arrière-plan pour s'assurer de la cohérence
+    loadProducts()
+    setTimeout(() => (successMsg.value = null), 4000)
+  } catch (e: any) {
+    errorMsg.value = e.message || 'Erreur lors de la soumission.'
+  } finally {
+    submitting.value = false
+  }
 }
 
 function changeTab(t: TableName) {
@@ -328,9 +366,23 @@ async function deleteProduct(p: any) {
         inset
       />
 
+      <!-- Feedback champs manquants -->
+      <div v-if="missingFormFields.length > 0" class="missing-fields">
+        <strong>Pour activer le bouton, complétez :</strong>
+        <ul>
+          <li v-for="f in missingFormFields" :key="f">{{ f }}</li>
+        </ul>
+      </div>
+
       <div class="form-actions">
-        <v-btn variant="text" @click="showForm = false">Annuler</v-btn>
-        <v-btn color="primary" variant="flat" @click="submitProduct">
+        <v-btn variant="text" @click="showForm = false" :disabled="submitting">Annuler</v-btn>
+        <v-btn
+          color="primary"
+          variant="flat"
+          :loading="submitting"
+          :disabled="!formCanSubmit"
+          @click="submitProduct"
+        >
           {{ form.submit_for_review ? 'Soumettre' : 'Enregistrer brouillon' }}
         </v-btn>
       </div>
@@ -454,6 +506,18 @@ h2 {
   gap: var(--space-2);
   margin-top: var(--space-3);
 }
+.missing-fields {
+  background: rgba(212, 160, 79, 0.1);
+  border-left: 3px solid var(--c-accent);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 4px;
+  margin-top: var(--space-3);
+  font-size: 13px;
+  color: var(--c-texte);
+}
+.missing-fields strong { display: block; margin-bottom: 6px; color: var(--c-primaire-profond); }
+.missing-fields ul { margin: 0; padding-left: 18px; }
+.missing-fields li { line-height: 1.6; }
 
 /* List */
 .loading, .empty {

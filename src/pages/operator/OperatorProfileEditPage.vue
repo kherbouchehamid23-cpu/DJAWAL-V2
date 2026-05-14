@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 
@@ -36,7 +36,7 @@ const publicProfileUrl = computed(() =>
   slug.value ? `${window.location.origin}/operateurs/${slug.value}` : null
 )
 
-onMounted(() => {
+function fillFromProfile() {
   if (!auth.profile) return
   companyName.value = auth.profile.company_name || ''
   displayName.value = auth.profile.display_name || ''
@@ -46,7 +46,11 @@ onMounted(() => {
   specialties.value = auth.profile.specialties || []
   galleryUrls.value = auth.profile.gallery_urls || []
   avatarUrl.value = auth.profile.avatar_url
-})
+}
+
+onMounted(fillFromProfile)
+// Watcher pour rattraper le profile s'il arrive après le mount (cas post-login direct sur cette page)
+watch(() => auth.profile, fillFromProfile)
 
 function addSpecialty() {
   const t = specialtiesInput.value.trim()

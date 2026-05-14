@@ -104,15 +104,35 @@ function removeExclusion(s: string) {
   exclusions.value = exclusions.value.filter(x => x !== s)
 }
 
+const validation = computed(() => ({
+  title: title.value.trim().length >= 3,
+  description: description.value.trim().length >= 20,
+  destination: !!destinationId.value,
+  duration: durationDays.value >= 1 && durationDays.value <= 30,
+  price: !!priceDa.value && priceDa.value > 0,
+  itinerary: itinerary.value.every(d => d.title.trim().length > 0)
+}))
+
 const canSubmit = computed(() =>
-  title.value.length >= 3 &&
-  description.value.length >= 20 &&
-  destinationId.value &&
-  durationDays.value >= 1 &&
-  priceDa.value && priceDa.value > 0 &&
-  itinerary.value.every(d => d.title.trim().length > 0) &&
+  validation.value.title &&
+  validation.value.description &&
+  validation.value.destination &&
+  validation.value.duration &&
+  validation.value.price &&
+  validation.value.itinerary &&
   !saving.value
 )
+
+const missingFields = computed(() => {
+  const m: string[] = []
+  if (!validation.value.title) m.push('Titre (≥ 3 caractères)')
+  if (!validation.value.description) m.push('Description (≥ 20 caractères)')
+  if (!validation.value.destination) m.push('Destination principale')
+  if (!validation.value.duration) m.push('Durée (entre 1 et 30 jours)')
+  if (!validation.value.price) m.push('Prix par personne')
+  if (!validation.value.itinerary) m.push('Titre de chaque journée du programme')
+  return m
+})
 
 async function save() {
   if (!auth.user) return
@@ -347,8 +367,16 @@ async function save() {
         </p>
       </fieldset>
 
+      <!-- Feedback champs manquants -->
+      <div v-if="missingFields.length > 0 && !saving" class="missing-fields">
+        <strong>Pour activer la soumission, complétez :</strong>
+        <ul>
+          <li v-for="f in missingFields" :key="f">{{ f }}</li>
+        </ul>
+      </div>
+
       <div class="actions">
-        <v-btn variant="text" @click="router.push('/espace-operateur/produits?type=trips')">Annuler</v-btn>
+        <v-btn variant="text" @click="router.push('/espace-operateur/produits?type=trips')" :disabled="saving">Annuler</v-btn>
         <v-btn
           type="submit"
           color="primary"
@@ -500,4 +528,16 @@ legend {
   gap: var(--space-2);
   margin-top: var(--space-4);
 }
+.missing-fields {
+  background: rgba(212, 160, 79, 0.1);
+  border-left: 3px solid var(--c-accent);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 4px;
+  margin-bottom: var(--space-3);
+  font-size: 13px;
+  color: var(--c-texte);
+}
+.missing-fields strong { display: block; margin-bottom: 6px; color: var(--c-primaire-profond); }
+.missing-fields ul { margin: 0; padding-left: 18px; }
+.missing-fields li { line-height: 1.6; }
 </style>
