@@ -20,7 +20,7 @@ const isOpen = ref(false)
 const messages = ref<Message[]>([
   {
     role: 'assistant',
-    text: 'Salam ! Je suis l\'assistant Djawal. Posez-moi une question sur l\'Algérie, suggérez-moi une destination, ou demandez-moi de composer un voyage. Je m\'appuie sur notre catalogue local.'
+    text: 'Salam ! Je suis Fennec, votre guide intelligent. Posez-moi une question sur l\'Algérie, suggérez-moi une destination, ou demandez-moi de composer un voyage. Je m\'appuie sur notre catalogue local.'
   }
 ])
 const input = ref('')
@@ -99,10 +99,19 @@ function goToDestination(id: string) {
     v-if="!isOpen"
     class="ai-fab"
     @click="isOpen = true"
-    title="Demander à l'assistant Djawal"
+    title="Demander à Fennec"
   >
-    <span class="fab-icon">✨</span>
-    <span class="fab-label">Demander à l'IA</span>
+    <span class="fab-icon" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="currentColor">
+        <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
+        <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
+        <ellipse cx="32" cy="38" rx="13" ry="12"/>
+        <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
+        <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
+        <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
+      </svg>
+    </span>
+    <span class="fab-label">Demander à Fennec</span>
   </button>
 
   <!-- Drawer chat -->
@@ -110,10 +119,19 @@ function goToDestination(id: string) {
     <div v-if="isOpen" class="ai-drawer">
       <header class="ai-head">
         <div class="ai-title">
-          <span class="ai-emoji">✨</span>
+          <span class="ai-emoji" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="currentColor">
+              <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
+              <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
+              <ellipse cx="32" cy="38" rx="13" ry="12"/>
+              <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
+              <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
+              <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
+            </svg>
+          </span>
           <div>
-            <strong>Assistant Djawal</strong>
-            <small>Propulsé par Gemini + catalogue Djawal</small>
+            <strong>Fennec</strong>
+            <small>Votre guide intelligent · catalogue Djawal</small>
           </div>
         </div>
         <button class="close-btn" @click="isOpen = false">✕</button>
@@ -221,7 +239,8 @@ function goToDestination(id: string) {
   transform: translateY(-3px);
   box-shadow: 0 12px 32px rgba(10, 31, 46, 0.35);
 }
-.fab-icon { font-size: 18px; }
+.fab-icon { font-size: 18px; display: inline-flex; align-items: center; justify-content: center; }
+.fab-icon svg { width: 22px; height: 22px; }
 
 .ai-drawer {
   position: fixed;
@@ -246,7 +265,8 @@ function goToDestination(id: string) {
   display: flex; justify-content: space-between; align-items: center;
 }
 .ai-title { display: flex; align-items: center; gap: 10px; }
-.ai-emoji { font-size: 24px; }
+.ai-emoji { font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
+.ai-emoji svg { width: 28px; height: 28px; }
 .ai-title strong { display: block; font-size: 15px; }
 .ai-title small { font-size: 11px; opacity: 0.8; }
 .close-btn {
