@@ -223,6 +223,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Validation KYC — Djawal' }
   },
   {
+    path: '/admin/moderation-resources',
+    name: 'admin-moderation-resources',
+    component: () => import('@/pages/admin/AdminResourceModerationPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Modération ressources — Djawal' }
+  },
+  {
     path: '/admin/destinations',
     name: 'admin-destinations',
     component: () => import('@/pages/admin/DestinationsAdminPage.vue'),

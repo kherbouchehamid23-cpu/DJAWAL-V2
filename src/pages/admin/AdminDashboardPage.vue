@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 
 const stats = ref({
@@ -7,7 +7,11 @@ const stats = ref({
   pendingPromotions: 0,
   pendingTrips: 0,
   pendingMemories: 0,
+  pendingAccommodations: 0,
+  pendingRestaurants: 0,
+  pendingActivities: 0,
   totalGuides: 0,
+  totalOperators: 0,
   totalVoyageurs: 0
 })
 const loading = ref(true)
@@ -15,16 +19,27 @@ const loading = ref(true)
 onMounted(async () => {
   loading.value = true
 
-  const [kyc, promotions, trips, memories, guides, voyageurs] = await Promise.all([
+  const [
+    kyc, promotions, trips, memories,
+    accommodations, restaurants, activities,
+    guides, operators, voyageurs
+  ] = await Promise.all([
+    // KYC : guides ET opérateurs en attente
     supabase.from('profiles').select('id', { count: 'exact', head: true })
-      .in('role', ['guide_senior', 'guide_junior']).eq('kyc_status', 'pending'),
+      .in('role', ['guide_senior', 'guide_junior', 'tourist_operator']).eq('kyc_status', 'pending'),
     // Guides juniors approuvés KYC = candidats à la promotion Senior
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .eq('role', 'guide_junior').eq('kyc_status', 'approved'),
     supabase.from('trips').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
     supabase.from('memories').select('id', { count: 'exact', head: true }).eq('published', false),
+    // Ressources opérateurs en attente
+    supabase.from('accommodations').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
+    supabase.from('restaurants').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
+    supabase.from('activities').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
+    // Totaux
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .in('role', ['guide_senior', 'guide_junior']),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'tourist_operator'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'voyageur')
   ])
 
@@ -33,11 +48,19 @@ onMounted(async () => {
     pendingPromotions: promotions.count ?? 0,
     pendingTrips: trips.count ?? 0,
     pendingMemories: memories.count ?? 0,
+    pendingAccommodations: accommodations.count ?? 0,
+    pendingRestaurants: restaurants.count ?? 0,
+    pendingActivities: activities.count ?? 0,
     totalGuides: guides.count ?? 0,
+    totalOperators: operators.count ?? 0,
     totalVoyageurs: voyageurs.count ?? 0
   }
   loading.value = false
 })
+
+const totalPendingResources = computed(() =>
+  stats.value.pendingAccommodations + stats.value.pendingRestaurants + stats.value.pendingActivities
+)
 </script>
 
 <template>
@@ -63,6 +86,12 @@ onMounted(async () => {
         <div class="stat-icon">📝</div>
         <strong>{{ loading ? '—' : stats.pendingTrips }}</strong>
         <span>Parcours à modérer</span>
+      </router-link>
+
+      <router-link to="/admin/moderation-resources" class="stat-card alert">
+        <div class="stat-icon">🏨</div>
+        <strong>{{ loading ? '—' : totalPendingResources }}</strong>
+        <span>Ressources opérateurs à valider</span>
       </router-link>
 
       <router-link to="/admin/memoires" class="stat-card alert">
@@ -121,6 +150,11 @@ onMounted(async () => {
           <div class="module-icon">✓</div>
           <h3>Modération parcours</h3>
           <p>Valider ou refuser les parcours soumis par les guides juniors.</p>
+        </router-link>
+        <router-link to="/admin/moderation-resources" class="module-card">
+          <div class="module-icon">🏛️</div>
+          <h3>Modération ressources opérateurs</h3>
+          <p>Hébergements, restaurants et activités soumis par les opérateurs touristiques en attente de validation.</p>
         </router-link>
         <router-link to="/admin/memoires" class="module-card">
           <div class="module-icon">✨</div>
