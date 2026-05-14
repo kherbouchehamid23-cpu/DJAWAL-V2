@@ -45,14 +45,12 @@ function navigate(to: string) {
           <path d="M21 10 c 0 7 -9 13 -9 13 s -9 -6 -9 -13 a 9 9 0 0 1 18 0 z" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        <svg v-else-if="item.icon === 'sparkles'" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
-          <!-- Fennec : renard du désert, oreilles signatures -->
-          <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
-          <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
-          <ellipse cx="32" cy="38" rx="13" ry="12"/>
-          <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
-          <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
-          <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
+        <svg v-else-if="item.icon === 'sparkles'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <!-- Fennec line-art géométrique -->
+          <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
+          <path d="M5 11 L12 15 L19 11"/>
+          <path d="M12 22 L12 15"/>
+          <path d="M9 6 L12 9 L15 6"/>
         </svg>
         <svg v-else-if="item.icon === 'heart'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />

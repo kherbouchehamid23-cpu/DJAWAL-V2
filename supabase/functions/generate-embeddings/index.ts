@@ -11,6 +11,10 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!
 
+// Modèle d'embeddings — aligné avec ai-assistant (gemini-embedding-001 + 768d)
+const EMBED_MODEL = 'gemini-embedding-001'
+const EMBED_DIM = 768
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -21,16 +25,20 @@ const corsHeaders = {
 const TABLES = ['destinations', 'hotels', 'sites', 'restaurants', 'trips', 'activities'] as const
 
 async function embed(text: string): Promise<number[]> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${GEMINI_API_KEY}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:embedContent?key=${GEMINI_API_KEY}`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'models/text-embedding-004',
-      content: { parts: [{ text }] }
+      model: `models/${EMBED_MODEL}`,
+      content: { parts: [{ text }] },
+      outputDimensionality: EMBED_DIM
     })
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Gemini embed error: ${errText}`)
+  }
   const json = await res.json()
   return json.embedding.values
 }

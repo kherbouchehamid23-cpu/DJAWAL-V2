@@ -18,7 +18,7 @@ export default defineConfig({
         name: 'Djawal — L\'Algérie vécue de l\'intérieur',
         short_name: 'Djawal',
         description: 'Plateforme communautaire de tourisme en Algérie. Voyagez authentique, au plus proche de l\'âme du pays.',
-        theme_color: '#1B4965',
+        theme_color: '#2D5A3D',
         background_color: '#FAF7F2',
         display: 'standalone',
         orientation: 'portrait-primary',

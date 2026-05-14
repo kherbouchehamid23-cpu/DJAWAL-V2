@@ -25,12 +25,12 @@ defineProps<{
       <header class="auth-header">
         <router-link to="/" class="auth-logo">
           <div class="logo-mark">
-            <svg viewBox="0 0 32 32" width="22" height="22">
-              <g fill="none" stroke="var(--c-accent)" stroke-width="2">
-                <path d="M16 2 L28 16 L16 30 L4 16 Z" />
-                <circle cx="16" cy="16" r="5" />
-                <circle cx="16" cy="16" r="1.5" fill="var(--c-accent)" />
-              </g>
+            <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
+              <circle cx="16" cy="16" r="9.5" fill="none" stroke="#E8B547" stroke-width="1.4"/>
+              <path d="M3 16 L7 13 L7 19 Z" fill="#E8B547"/>
+              <path d="M29 16 L25 13 L25 19 Z" fill="#E8B547"/>
+              <circle cx="16" cy="16" r="3.2" fill="#B8312E"/>
+              <circle cx="16" cy="16" r="1.2" fill="#E8B547"/>
             </svg>
           </div>
           <span>Djawal</span>
@@ -139,10 +139,10 @@ defineProps<{
 }
 .logo-mark {
   width: 38px; height: 38px;
-  background: var(--c-primaire);
+  background: #2D5A3D; /* Vert Atlas — verrouillé */
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 0 2px var(--c-accent), 0 0 0 4px var(--c-primaire);
+  box-shadow: 0 0 0 1.5px rgba(232, 181, 71, 0.4);
 }
 .auth-card {
   max-width: 460px;

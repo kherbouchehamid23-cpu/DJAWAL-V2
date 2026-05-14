@@ -102,13 +102,11 @@ function goToDestination(id: string) {
     title="Demander à Fennec"
   >
     <span class="fab-icon" aria-hidden="true">
-      <svg viewBox="0 0 64 64" fill="currentColor">
-        <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
-        <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
-        <ellipse cx="32" cy="38" rx="13" ry="12"/>
-        <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
-        <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
-        <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
+        <path d="M5 11 L12 15 L19 11"/>
+        <path d="M12 22 L12 15"/>
+        <path d="M9 6 L12 9 L15 6"/>
       </svg>
     </span>
     <span class="fab-label">Demander à Fennec</span>
@@ -120,13 +118,11 @@ function goToDestination(id: string) {
       <header class="ai-head">
         <div class="ai-title">
           <span class="ai-emoji" aria-hidden="true">
-            <svg viewBox="0 0 64 64" fill="currentColor">
-              <path d="M14 28 C 10 16, 14 4, 20 6 C 22 14, 24 22, 26 28 Z"/>
-              <path d="M50 28 C 54 16, 50 4, 44 6 C 42 14, 40 22, 38 28 Z"/>
-              <ellipse cx="32" cy="38" rx="13" ry="12"/>
-              <circle cx="26" cy="36" r="1.6" fill="#0A1F2E"/>
-              <circle cx="38" cy="36" r="1.6" fill="#0A1F2E"/>
-              <circle cx="32" cy="44" r="1.4" fill="#0A1F2E"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
+              <path d="M5 11 L12 15 L19 11"/>
+              <path d="M12 22 L12 15"/>
+              <path d="M9 6 L12 9 L15 6"/>
             </svg>
           </span>
           <div>
