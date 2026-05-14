@@ -6,6 +6,7 @@ import { parseCoordinates } from '@/lib/geo'
 import { useThemeStore } from '@/stores/theme'
 import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
 import Panorama360 from '@/components/Panorama360.vue'
+import ResourceDetailDialog from '@/components/ResourceDetailDialog.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -57,6 +58,37 @@ const activeTab = ref<'all' | 'sites' | 'accommodations' | 'restaurants' | 'acti
 const panoramaResource = ref<Resource | null>(null)
 function openPanorama(r: Resource) { panoramaResource.value = r }
 function closePanorama() { panoramaResource.value = null }
+
+// === Dialog de détail ressource ===
+type DetailType = 'site' | 'accommodation' | 'restaurant' | 'activity'
+const detailOpen = ref(false)
+const detailResource = ref<any | null>(null)
+const detailType = ref<DetailType | null>(null)
+
+function openDetail(resource: any, type: DetailType) {
+  detailResource.value = resource
+  detailType.value = type
+  detailOpen.value = true
+}
+
+function onPanoramaFromDetail(r: any) {
+  // Reçu du dialog quand l'utilisateur clique sur "Visite 360°"
+  detailOpen.value = false
+  setTimeout(() => openPanorama(r), 250)
+}
+
+// === Click sur un marker de la carte → ouvre le détail correspondant ===
+function onMarkerClick(marker: MapMarker) {
+  // Cherche d'abord dans accommodations, puis sites, restaurants, activities
+  const inAcc = accommodations.value.find(x => x.id === marker.id)
+  if (inAcc) return openDetail(inAcc, 'accommodation')
+  const inSite = sites.value.find(x => x.id === marker.id)
+  if (inSite) return openDetail(inSite, 'site')
+  const inRest = restaurants.value.find(x => x.id === marker.id)
+  if (inRest) return openDetail(inRest, 'restaurant')
+  const inAct = activities.value.find(x => x.id === marker.id)
+  if (inAct) return openDetail(inAct, 'activity')
+}
 function has360(r: Resource): boolean {
   return !!(r.panorama_360_url || r.virtual_tour_url)
 }
@@ -240,25 +272,29 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'sites') && sites.length > 0" class="resource-group">
             <h2 class="group-title">🏛️ Sites & Monuments</h2>
             <div class="resource-cards">
-              <div v-for="s in sites" :key="s.id" class="resource-card">
-                <div class="rc-header">
-                  <strong>{{ s.name }}</strong>
-                  <span v-if="s.category" class="rc-tag">{{ s.category }}</span>
+              <button v-for="s in sites" :key="s.id" type="button" class="resource-card clickable" @click="openDetail(s, 'site')">
+                <span v-if="s.images && s.images.length > 0" class="rc-cover" :style="`background-image: url(${s.images[0]})`"></span>
+                <div class="rc-content">
+                  <div class="rc-header">
+                    <strong>{{ s.name }}</strong>
+                    <span v-if="s.category" class="rc-tag">{{ s.category }}</span>
+                  </div>
+                  <div v-if="s.name_ar" class="rc-arabic arabic">{{ s.name_ar }}</div>
+                  <p class="rc-desc">{{ s.description }}</p>
+                  <div class="rc-meta">
+                    <span v-if="s.entry_fee_da !== null && s.entry_fee_da !== undefined">
+                      {{ s.entry_fee_da === 0 ? 'Entrée libre' : s.entry_fee_da + ' DA' }}
+                    </span>
+                    <span v-if="s.best_season?.length">
+                      {{ s.best_season.join(', ') }}
+                    </span>
+                  </div>
+                  <div class="rc-actions">
+                    <span class="rc-cta">Voir le détail →</span>
+                    <span v-if="has360(s)" class="rc-badge-360" @click.stop="openPanorama(s)">🌐 360°</span>
+                  </div>
                 </div>
-                <div v-if="s.name_ar" class="rc-arabic arabic">{{ s.name_ar }}</div>
-                <p class="rc-desc">{{ s.description }}</p>
-                <div class="rc-meta">
-                  <span v-if="s.entry_fee_da !== null && s.entry_fee_da !== undefined">
-                    {{ s.entry_fee_da === 0 ? 'Entrée libre' : s.entry_fee_da + ' DA' }}
-                  </span>
-                  <span v-if="s.best_season?.length">
-                    {{ s.best_season.join(', ') }}
-                  </span>
-                </div>
-                <button v-if="has360(s)" class="badge-360-btn" @click="openPanorama(s)">
-                  🌐 Visite 360°
-                </button>
-              </div>
+              </button>
             </div>
           </article>
 
@@ -266,24 +302,28 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'accommodations') && accommodations.length > 0" class="resource-group">
             <h2 class="group-title">🏨 Hébergements</h2>
             <div class="resource-cards">
-              <div v-for="h in accommodations" :key="h.id" class="resource-card">
-                <div class="rc-header">
-                  <strong>{{ h.name }}</strong>
-                  <span v-if="h.star_rating" class="rc-stars">{{ '★'.repeat(h.star_rating) }}</span>
+              <button v-for="h in accommodations" :key="h.id" type="button" class="resource-card clickable" @click="openDetail(h, 'accommodation')">
+                <span v-if="h.images && h.images.length > 0" class="rc-cover" :style="`background-image: url(${h.images[0]})`"></span>
+                <div class="rc-content">
+                  <div class="rc-header">
+                    <strong>{{ h.name }}</strong>
+                    <span v-if="h.star_rating" class="rc-stars">{{ '★'.repeat(h.star_rating) }}</span>
+                  </div>
+                  <div v-if="h.name_ar" class="rc-arabic arabic">{{ h.name_ar }}</div>
+                  <p class="rc-desc">{{ h.description }}</p>
+                  <div class="rc-meta">
+                    <span v-if="h.address" class="rc-address">📍 {{ h.address }}</span>
+                    <span v-if="parsePriceRange(h.price_range_da)">{{ parsePriceRange(h.price_range_da) }}</span>
+                  </div>
+                  <div v-if="h.amenities?.length" class="rc-amenities">
+                    <span v-for="a in h.amenities" :key="a" class="amenity">{{ a }}</span>
+                  </div>
+                  <div class="rc-actions">
+                    <span class="rc-cta">Voir le détail →</span>
+                    <span v-if="has360(h)" class="rc-badge-360" @click.stop="openPanorama(h)">🌐 360°</span>
+                  </div>
                 </div>
-                <div v-if="h.name_ar" class="rc-arabic arabic">{{ h.name_ar }}</div>
-                <p class="rc-desc">{{ h.description }}</p>
-                <div class="rc-meta">
-                  <span v-if="h.address" class="rc-address">📍 {{ h.address }}</span>
-                  <span v-if="parsePriceRange(h.price_range_da)">{{ parsePriceRange(h.price_range_da) }}</span>
-                </div>
-                <div v-if="h.amenities?.length" class="rc-amenities">
-                  <span v-for="a in h.amenities" :key="a" class="amenity">{{ a }}</span>
-                </div>
-                <button v-if="has360(h)" class="badge-360-btn" @click="openPanorama(h)">
-                  🌐 Visite 360°
-                </button>
-              </div>
+              </button>
             </div>
           </article>
 
@@ -291,23 +331,27 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'restaurants') && restaurants.length > 0" class="resource-group">
             <h2 class="group-title">🍽️ Restaurants</h2>
             <div class="resource-cards">
-              <div v-for="r in restaurants" :key="r.id" class="resource-card">
-                <div class="rc-header">
-                  <strong>{{ r.name }}</strong>
-                  <span v-if="r.cuisine?.length" class="rc-tag">{{ r.cuisine.join(' · ') }}</span>
+              <button v-for="r in restaurants" :key="r.id" type="button" class="resource-card clickable" @click="openDetail(r, 'restaurant')">
+                <span v-if="r.images && r.images.length > 0" class="rc-cover" :style="`background-image: url(${r.images[0]})`"></span>
+                <div class="rc-content">
+                  <div class="rc-header">
+                    <strong>{{ r.name }}</strong>
+                    <span v-if="r.cuisine?.length" class="rc-tag">{{ r.cuisine.join(' · ') }}</span>
+                  </div>
+                  <div v-if="r.name_ar" class="rc-arabic arabic">{{ r.name_ar }}</div>
+                  <p class="rc-desc">{{ r.description }}</p>
+                  <div class="rc-meta">
+                    <span v-if="parsePriceRange(r.price_range_da)">{{ parsePriceRange(r.price_range_da) }}</span>
+                  </div>
+                  <div v-if="r.signature_dishes?.length" class="rc-amenities">
+                    <span v-for="d in r.signature_dishes" :key="d" class="amenity dishes">{{ d }}</span>
+                  </div>
+                  <div class="rc-actions">
+                    <span class="rc-cta">Voir le détail →</span>
+                    <span v-if="has360(r)" class="rc-badge-360" @click.stop="openPanorama(r)">🌐 360°</span>
+                  </div>
                 </div>
-                <div v-if="r.name_ar" class="rc-arabic arabic">{{ r.name_ar }}</div>
-                <p class="rc-desc">{{ r.description }}</p>
-                <div class="rc-meta">
-                  <span v-if="parsePriceRange(r.price_range_da)">{{ parsePriceRange(r.price_range_da) }}</span>
-                </div>
-                <div v-if="r.signature_dishes?.length" class="rc-amenities">
-                  <span v-for="d in r.signature_dishes" :key="d" class="amenity dishes">{{ d }}</span>
-                </div>
-                <button v-if="has360(r)" class="badge-360-btn" @click="openPanorama(r)">
-                  🌐 Visite 360°
-                </button>
-              </div>
+              </button>
             </div>
           </article>
 
@@ -315,30 +359,30 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'activities') && activities.length > 0" class="resource-group">
             <h2 class="group-title">🥾 Activités</h2>
             <div class="resource-cards">
-              <div v-for="a in activities" :key="a.id" class="resource-card">
-                <div class="rc-header">
-                  <strong>{{ a.name }}</strong>
-                  <span v-if="a.activity_type" class="rc-tag">{{ a.activity_type }}</span>
+              <button v-for="a in activities" :key="a.id" type="button" class="resource-card clickable" @click="openDetail(a, 'activity')">
+                <span v-if="a.images && a.images.length > 0" class="rc-cover" :style="`background-image: url(${a.images[0]})`"></span>
+                <div class="rc-content">
+                  <div class="rc-header">
+                    <strong>{{ a.name }}</strong>
+                    <span v-if="a.activity_type" class="rc-tag">{{ a.activity_type }}</span>
+                  </div>
+                  <div v-if="a.name_ar" class="rc-arabic arabic">{{ a.name_ar }}</div>
+                  <p class="rc-desc">{{ a.description }}</p>
+                  <div class="rc-meta">
+                    <span v-if="a.duration_hours">⏱️ {{ a.duration_hours }}h</span>
+                    <span v-if="a.price_da !== null">💵 {{ a.price_da.toLocaleString('fr-FR') }} DA / pers.</span>
+                    <span v-if="a.difficulty">📊 {{ a.difficulty }}</span>
+                    <span v-if="a.min_age">👤 {{ a.min_age }}+ ans</span>
+                  </div>
+                  <div v-if="a.best_season?.length" class="rc-amenities">
+                    <span v-for="s in a.best_season" :key="s" class="amenity">{{ s }}</span>
+                  </div>
+                  <div class="rc-actions">
+                    <span class="rc-cta">Voir le détail →</span>
+                    <span v-if="has360(a)" class="rc-badge-360" @click.stop="openPanorama(a)">🌐 360°</span>
+                  </div>
                 </div>
-                <div v-if="a.name_ar" class="rc-arabic arabic">{{ a.name_ar }}</div>
-                <p class="rc-desc">{{ a.description }}</p>
-                <div class="rc-meta">
-                  <span v-if="a.duration_hours">⏱️ {{ a.duration_hours }}h</span>
-                  <span v-if="a.price_da !== null">💵 {{ a.price_da.toLocaleString('fr-FR') }} DA / pers.</span>
-                  <span v-if="a.difficulty">📊 {{ a.difficulty }}</span>
-                  <span v-if="a.min_age">👤 {{ a.min_age }}+ ans</span>
-                </div>
-                <div v-if="a.best_season?.length" class="rc-amenities">
-                  <span v-for="s in a.best_season" :key="s" class="amenity">{{ s }}</span>
-                </div>
-                <div v-if="a.operator_name" class="rc-operator">
-                  <strong>Opérateur :</strong> {{ a.operator_name }}
-                  <span v-if="a.operator_phone"> · 📞 {{ a.operator_phone }}</span>
-                </div>
-                <button v-if="has360(a)" class="badge-360-btn" @click="openPanorama(a)">
-                  🌐 Visite 360°
-                </button>
-              </div>
+              </button>
             </div>
           </article>
 
@@ -353,10 +397,19 @@ function parsePriceRange(range: any): string {
             :markers="mapMarkers"
             :zoom="12"
             height="calc(100vh - 200px)"
+            @marker-click="onMarkerClick"
           />
         </aside>
       </div>
     </section>
+
+    <!-- Modale détail ressource -->
+    <ResourceDetailDialog
+      v-model="detailOpen"
+      :resource="detailResource"
+      :resource-type="detailType"
+      @open-panorama="onPanoramaFromDetail"
+    />
 
     <!-- Modale visite 360° -->
     <transition name="fade">
@@ -553,10 +606,58 @@ function parsePriceRange(range: any): string {
   box-shadow: var(--ombre-douce);
   transition: var(--t-base);
 }
+.resource-card.clickable {
+  padding: 0;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  display: block;
+  overflow: hidden;
+}
+.resource-card.clickable .rc-content {
+  padding: var(--space-4);
+}
+.rc-cover {
+  display: block;
+  width: 100%;
+  height: 180px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--c-fond-chaud);
+}
 .resource-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--ombre-elevee);
 }
+.rc-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--c-gris-clair);
+}
+.rc-cta {
+  color: var(--c-accent-fort, #B8862E);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.rc-badge-360 {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #D4A04F, #B8862E);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.rc-badge-360:hover { transform: scale(1.05); }
 .rc-header {
   display: flex; justify-content: space-between; align-items: center;
   gap: var(--space-2);
