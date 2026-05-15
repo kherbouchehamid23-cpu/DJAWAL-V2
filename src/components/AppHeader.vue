@@ -41,14 +41,13 @@ const navItems = [
 </script>
 
 <template>
-  <v-app-bar
+  <!-- ===== DESKTOP HEADER (HTML natif, plein contrôle des styles) ===== -->
+  <header
     v-if="!isMobile"
-    :elevation="isHomePage ? 0 : 2"
-    :color="isHomePage ? 'transparent' : 'surface'"
-    :class="{ 'header-overlay': isHomePage }"
-    height="72"
+    class="desktop-header"
+    :class="{ 'header-overlay': isOverlayPage }"
   >
-    <v-container class="header-row" max-width="1340">
+    <div class="header-row djawal-max">
       <!-- LOGO — Djawal officiel (violet + orange + silhouette voyageur) -->
       <RouterLink to="/" class="logo-wrap">
         <img :src="djawalLogoStacked" alt="Djawal" class="logo-img" />
@@ -73,9 +72,10 @@ const navItems = [
         <template v-if="auth.isAuthenticated">
           <v-menu>
             <template #activator="{ props }">
-              <v-btn variant="text" v-bind="props" class="account-btn">
+              <button v-bind="props" class="account-btn-native">
                 {{ auth.profile?.display_name || 'Mon compte' }}
-              </v-btn>
+                <span aria-hidden="true">▾</span>
+              </button>
             </template>
             <v-list>
               <v-list-item to="/mon-espace" title="Mon espace" />
@@ -88,12 +88,12 @@ const navItems = [
           </v-menu>
         </template>
         <template v-else>
-          <v-btn to="/auth/login" variant="text" class="login-btn">Connexion</v-btn>
-          <v-btn to="/auth/signup" color="primary" variant="flat">Nous rejoindre</v-btn>
+          <RouterLink to="/auth/login" class="login-btn-native">Connexion</RouterLink>
+          <RouterLink to="/auth/signup" class="signup-btn-native">Nous rejoindre</RouterLink>
         </template>
       </div>
-    </v-container>
-  </v-app-bar>
+    </div>
+  </header>
 
   <!-- === Mini header mobile === -->
   <header v-if="isMobile" class="mobile-header" :class="{ 'mobile-header-overlay': isOverlayPage }">
@@ -126,12 +126,79 @@ const navItems = [
 </template>
 
 <style scoped>
+/* ===== HEADER DESKTOP NATIF ===== */
+.desktop-header {
+  position: sticky;
+  top: 0;
+  left: 0; right: 0;
+  z-index: 50;
+  height: 72px;
+  background: var(--c-surface, #FFFFFF);
+  border-bottom: 1px solid rgba(10, 31, 46, 0.06);
+  box-shadow: 0 2px 12px rgba(10, 31, 46, 0.04);
+}
+.djawal-max {
+  max-width: 1340px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
 /* Grille header : logo gauche, nav centre, actions droite — zéro chevauchement */
 .header-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 24px;
+  height: 100%;
+}
+
+/* Boutons "Connexion" et "Nous rejoindre" natifs */
+.login-btn-native {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  color: var(--c-primaire-profond, #0A1F2E);
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: background 0.2s, color 0.2s;
+}
+.login-btn-native:hover {
+  background: rgba(10, 31, 46, 0.05);
+}
+.signup-btn-native {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #461464, #5C1E80);
+  color: #FAF7F2;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(70, 20, 100, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.signup-btn-native:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(70, 20, 100, 0.4);
+}
+.account-btn-native {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: transparent;
+  border: 1px solid rgba(10, 31, 46, 0.12);
+  color: var(--c-primaire-profond, #0A1F2E);
+  font-family: inherit;
+  font-size: 13px; font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.account-btn-native:hover {
+  background: rgba(10, 31, 46, 0.04);
 }
 .logo-wrap {
   display: flex;
@@ -301,32 +368,13 @@ const navItems = [
   font-weight: 500;
 }
 
-/* Mode transparent overlay sur toutes les pages publiques V4 (hero image / vert sombre) */
-.header-overlay {
-  position: absolute !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  z-index: 100 !important;
-  pointer-events: auto !important;
-}
-/* Force la transparence sur tous les éléments internes de Vuetify v-app-bar
-   (Vuetify 3 ajoute des classes spécifiques + variables CSS qui peuvent
-   garder un fond clair même avec color="transparent") */
-.header-overlay :deep(.v-toolbar),
-.header-overlay :deep(.v-toolbar__content),
-.header-overlay :deep(.v-app-bar__content),
-.header-overlay :deep(.v-toolbar-title),
-.header-overlay :deep(.v-app-bar) {
-  background: transparent !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  border-bottom: none !important;
-}
-/* Variables CSS Vuetify : forcer surface transparente sur tout le header overlay */
-.header-overlay,
-.header-overlay :deep(*) {
-  --v-theme-surface: transparent !important;
-  --v-theme-overlay-multiplier: 0 !important;
+/* ===== MODE OVERLAY transparent sur toutes les pages publiques V4 ===== */
+/* Header natif : passe en position:absolute + fond transparent */
+.desktop-header.header-overlay {
+  position: absolute;
+  background: transparent;
+  border-bottom: none;
+  box-shadow: none;
 }
 .header-overlay .header-row,
 .header-overlay .nav-desktop,
@@ -353,7 +401,28 @@ const navItems = [
   background: #E8B547 !important;
   color: #0A1F2E !important;
 }
-.header-overlay .login-btn { color: #FAF7F2 !important; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
+/* Boutons natifs en mode overlay : Connexion blanc, Nous rejoindre orange brillant */
+.header-overlay .login-btn-native {
+  color: #FAF7F2 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.header-overlay .login-btn-native:hover {
+  background: rgba(250, 247, 242, 0.12) !important;
+}
+.header-overlay .signup-btn-native {
+  background: linear-gradient(135deg, #FA8214, #C95F00) !important;
+  color: #FAF7F2 !important;
+  box-shadow: 0 4px 14px rgba(250, 130, 20, 0.45) !important;
+}
+.header-overlay .signup-btn-native:hover {
+  box-shadow: 0 8px 24px rgba(250, 130, 20, 0.6) !important;
+}
+.header-overlay .account-btn-native {
+  color: #FAF7F2 !important;
+  border-color: rgba(250, 247, 242, 0.35) !important;
+  background: rgba(15, 36, 25, 0.4) !important;
+  backdrop-filter: blur(8px);
+}
 .header-overlay .logo-img { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)); }
 
 /* === Mode overlay sur mini-header MOBILE (pages V4 vert sombre) === */
