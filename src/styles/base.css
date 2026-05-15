@@ -60,7 +60,11 @@
 
 /* === Reset minimal === */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* Pas de scroll-behavior smooth global :
+   - cause des transitions saccadées sur navigation (anime la page actuelle
+     avant que la nouvelle se monte)
+   - cause des bugs iOS Safari avec le clavier virtuel
+   Le smooth scroll est appliqué uniquement où c'est nécessaire (ancres internes). */
 body {
   margin: 0;
   font-family: var(--font-body);

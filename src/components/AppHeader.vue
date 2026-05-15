@@ -18,8 +18,8 @@ const isHomePage = computed(() => route.path === '/')
 
 const navItems = [
   { to: '/voyages', label: 'Destinations' },
-  { to: '/voyages', label: 'Voyages signés' },
   { to: '/temoignages', label: 'Souvenirs' },
+  { to: '/about', label: 'À propos' },
   { to: '/composer', label: 'Djawal IA', accent: true }
 ]
 </script>

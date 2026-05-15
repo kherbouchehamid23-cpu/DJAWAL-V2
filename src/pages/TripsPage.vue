@@ -220,7 +220,15 @@ function clearAllFilters() {
 
 function selectAutocomplete(dest: Destination) {
   showAutocomplete.value = false
-  router.push(`/destination/${dest.slug}`)
+  // Force le clavier iOS à se fermer AVANT la navigation pour éviter
+  // que le viewport ne se réajuste pendant la transition (effet saccadé).
+  searchInputRef.value?.blur()
+  // Reset la position de scroll en amont pour éviter l'animation visible.
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  // Petit délai pour laisser le clavier se rétracter sur iOS, puis nav.
+  setTimeout(() => {
+    router.push(`/destination/${dest.slug}`)
+  }, 60)
 }
 
 function focusSearch() {
