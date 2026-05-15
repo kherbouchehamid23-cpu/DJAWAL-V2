@@ -127,8 +127,19 @@ function themeLabel(theme: string) {
 
 <template>
   <div class="trips-page">
-    <!-- HERO COMPACT — V4 vert sombre avec image Sahara -->
+    <!-- HERO COMPACT — V4 vert sombre avec vidéo Algérie -->
     <header class="trips-hero">
+      <video
+        class="trips-hero-video"
+        src="/videos/algerie-hero.mp4"
+        poster="/videos/algerie-hero-poster.jpg"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        aria-hidden="true"
+      ></video>
       <div class="trips-hero-overlay"></div>
       <div class="djawal-container hero-content">
         <div class="hero-eyebrow">
@@ -281,22 +292,39 @@ function themeLabel(theme: string) {
 .djawal-container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
 .djawal-section { padding: 80px 0; }
 
-/* === HERO COMPACT V4 === */
+/* === HERO COMPACT V4 + VIDÉO === */
 .trips-hero {
   position: relative;
-  min-height: 52vh;
+  min-height: 56vh;
   display: flex; align-items: center; justify-content: center;
   text-align: center;
   padding: 120px 32px 70px;
   overflow: hidden;
-  background-image: url('https://images.pexels.com/photos/3889855/pexels-photo-3889855.jpeg?auto=compress&cs=tinysrgb&w=1920');
-  background-size: cover;
-  background-position: center;
+  background: #0F2419;
+}
+.trips-hero-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
 }
 .trips-hero-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(15, 36, 25, 0.6) 0%, rgba(15, 36, 25, 0.88) 60%, #0F2419 100%);
+  background: linear-gradient(180deg, rgba(15, 36, 25, 0.55) 0%, rgba(15, 36, 25, 0.85) 60%, #0F2419 100%);
   z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trips-hero-video {
+    /* Affiche uniquement le poster, pas la vidéo animée */
+    display: none;
+  }
+  .trips-hero {
+    background-image: url('/videos/algerie-hero-poster.jpg');
+    background-size: cover;
+    background-position: center;
+  }
 }
 .hero-content { position: relative; z-index: 2; }
 .hero-eyebrow {
