@@ -95,6 +95,38 @@ async function generate(prompt: string): Promise<{ text: string; tokens: number 
   return { text, tokens }
 }
 
+// === Génération JSON strict (pour extraction de critères) ===
+async function generateJson(prompt: string): Promise<any> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_MODEL}:generateContent?key=${GEMINI_API_KEY}`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 512,
+        responseMimeType: 'application/json'
+      }
+    })
+  })
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`Gemini JSON gen error: ${err}`)
+  }
+  const json = await res.json()
+  const text = json.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
+  // En cas où Gemini ajoute du markdown malgré responseMimeType
+  let clean = text.trim()
+  if (clean.startsWith('```')) {
+    clean = clean.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '')
+  }
+  // Extraire le premier objet JSON valide trouvé
+  const match = clean.match(/\{[\s\S]*\}/)
+  if (match) clean = match[0]
+  return JSON.parse(clean)
+}
+
 // === Anti-hallucination : valider que la réponse n'invente pas de noms ===
 function validateAnswer(answer: string, contextNames: string[]): { passed: boolean; notes: string } {
   // Détection grossière : noms propres dans la réponse qui ne sont pas dans le contexte
@@ -144,39 +176,48 @@ interface CriteriaAnalysis {
 }
 
 async function extractCriteria(question: string): Promise<CriteriaAnalysis> {
-  const prompt = `Tu es un analyseur de demandes de voyage. On te donne une demande de voyage en Algérie.
-Tu dois extraire les 4 critères suivants s'ils sont mentionnés, et juger si la demande est trop vague.
+  const prompt = `Analyse cette demande de voyage en Algérie et retourne UN OBJET JSON STRICT.
 
-CRITÈRES :
+Demande utilisateur : "${question}"
+
+Extrais les 4 critères suivants s'ils sont mentionnés :
 1. dates ou durée (mois, saison, dates précises, nombre de jours)
 2. composition du groupe (nombre de personnes, enfants, famille, amis, solo, couple)
-3. activités ou centres d'intérêt (sahara, casbah, aurès, gastronomie, trek, culture, mer, montagne…) — un seul suffit
-4. budget (somme approximative, fourchette, économique/moyen/premium, "pas cher", etc.)
+3. activités ou centres d'intérêt (sahara, casbah, aurès, gastronomie, trek, culture, mer, montagne, 4x4, bivouac…) — un seul suffit
+4. budget (somme approximative, fourchette, économique/moyen/premium)
 
-ISTOO_VAGUE = true UNIQUEMENT si la demande est purement générale comme "voyage en Algérie", "vacances algérie", "découvrir l'Algérie" sans AUCUN autre indice.
+isTooVague = true SEULEMENT si demande purement générale ("voyage en Algérie", "vacances algérie") sans AUCUN autre indice.
 
-Demande : """${question}"""
+Retourne UNIQUEMENT ce JSON, sans markdown, sans texte autour :
+{"hasDates":false,"hasGroup":false,"hasInterests":false,"hasBudget":false,"detected":{"dates":null,"group":null,"interests":null,"budget":null},"isTooVague":false,"reformulated":""}`
 
-Réponds STRICTEMENT en JSON valide, rien d'autre. Format :
-{"hasDates":bool,"hasGroup":bool,"hasInterests":bool,"hasBudget":bool,"detected":{"dates":string|null,"group":string|null,"interests":[string]|null,"budget":string|null},"isTooVague":bool,"reformulated":"phrase claire reformulant le besoin"}`
+  const safeFallback: CriteriaAnalysis = {
+    hasDates: false, hasGroup: false, hasInterests: false, hasBudget: false,
+    detected: { dates: null, group: null, interests: null, budget: null },
+    isTooVague: false,
+    reformulated: question
+  }
 
   try {
-    const { text } = await generate(prompt)
-    // Nettoyer la réponse pour extraire le JSON (Gemini ajoute parfois ```json...```)
-    let clean = text.trim()
-    if (clean.startsWith('```')) {
-      clean = clean.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '')
-    }
-    return JSON.parse(clean) as CriteriaAnalysis
-  } catch (e) {
-    // En cas d'erreur de parsing, on assume que tout est manquant et on continue avec RAG normal
-    console.warn('[extractCriteria] parse failed, fallback to permissive:', e)
+    const parsed = await generateJson(prompt)
+    // Validation defensive : merge avec safeFallback pour éviter undefined
     return {
-      hasDates: false, hasGroup: false, hasInterests: false, hasBudget: false,
-      detected: { dates: null, group: null, interests: null, budget: null },
-      isTooVague: false,
-      reformulated: question
+      hasDates: Boolean(parsed.hasDates),
+      hasGroup: Boolean(parsed.hasGroup),
+      hasInterests: Boolean(parsed.hasInterests),
+      hasBudget: Boolean(parsed.hasBudget),
+      detected: {
+        dates: parsed.detected?.dates ?? null,
+        group: parsed.detected?.group ?? null,
+        interests: Array.isArray(parsed.detected?.interests) ? parsed.detected.interests : null,
+        budget: parsed.detected?.budget ?? null
+      },
+      isTooVague: Boolean(parsed.isTooVague),
+      reformulated: typeof parsed.reformulated === 'string' ? parsed.reformulated : question
     }
+  } catch (e: any) {
+    console.warn('[extractCriteria] failed, falling back to direct RAG:', e?.message || e)
+    return safeFallback
   }
 }
 
@@ -239,31 +280,40 @@ serve(async (req) => {
 
     // === ÉTAPE PRÉLIMINAIRE : analyse des critères (sauf si skip_analysis=true) ===
     if (!skip_analysis) {
-      const criteria = await extractCriteria(question)
-
-      // Cas 1 : demande trop vague → redirection vers formulaire structuré
-      if (criteria.isTooVague) {
-        return new Response(JSON.stringify({
-          mode: 'too-vague',
-          answer: 'Votre demande est très large. Pour vous proposer un voyage qui vous correspond vraiment, je vous invite à utiliser notre composeur de voyage personnalisé qui posera quelques questions précises.',
-          redirect_to: '/composer?from=ai-vague',
-          criteria
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      let criteria: CriteriaAnalysis | null = null
+      try {
+        criteria = await extractCriteria(question)
+      } catch (e: any) {
+        // Si l'analyse plante, on continue le RAG normal au lieu de planter toute la requête
+        console.warn('[ai-assistant] criteria extraction failed, falling through to RAG:', e?.message || e)
+        criteria = null
       }
 
-      // Cas 2 : critères manquants → poser les questions ciblées
-      const allPresent = criteria.hasDates && criteria.hasGroup && criteria.hasInterests && criteria.hasBudget
-      if (!allPresent) {
-        const questions = buildClarificationQuestions(criteria)
-        return new Response(JSON.stringify({
-          mode: 'needs-clarification',
-          answer: `Très bien, j'ai bien noté ${criteria.reformulated ? `« ${criteria.reformulated} »` : 'votre envie'}. Pour vous proposer le voyage parfait, j'ai juste besoin de quelques précisions :`,
-          questions,
-          detected: criteria.detected,
-          original_question: question
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      if (criteria) {
+        // Cas 1 : demande trop vague → redirection vers formulaire structuré
+        if (criteria.isTooVague) {
+          return new Response(JSON.stringify({
+            mode: 'too-vague',
+            answer: 'Votre demande est très large. Pour vous proposer un voyage qui vous correspond vraiment, je vous invite à utiliser notre composeur de voyage personnalisé qui posera quelques questions précises.',
+            redirect_to: '/composer?from=ai-vague',
+            criteria
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
+        // Cas 2 : critères manquants → poser les questions ciblées
+        const allPresent = criteria.hasDates && criteria.hasGroup && criteria.hasInterests && criteria.hasBudget
+        if (!allPresent) {
+          const questions = buildClarificationQuestions(criteria)
+          return new Response(JSON.stringify({
+            mode: 'needs-clarification',
+            answer: `Très bien, j'ai bien noté ${criteria.reformulated ? `« ${criteria.reformulated} »` : 'votre envie'}. Pour vous proposer le voyage parfait, j'ai juste besoin de quelques précisions :`,
+            questions,
+            detected: criteria.detected,
+            original_question: question
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+        // Cas 3 : tout est présent → on continue le RAG normal ci-dessous
       }
-      // Cas 3 : tout est présent → on continue le RAG normal ci-dessous
     }
 
     // 1. Embed la question
@@ -339,8 +389,8 @@ serve(async (req) => {
       }
     }
 
-    // 5. Prompt système strict (anti-hallucination)
-    const prompt = `Tu es Djawal, un guide de voyage algérien chaleureux et passionné. Tu connais ton pays intimement.
+    // 5. Prompt système
+    const prompt = `Tu es Djawal, un guide de voyage algérien chaleureux et passionné.
 
 INFOS INTERNES (NE JAMAIS LES CITER DANS TA RÉPONSE) :
 ${context}
@@ -348,35 +398,19 @@ ${context}
 QUESTION DU VOYAGEUR :
 ${question}
 
-INSTRUCTIONS DE RÉPONSE :
-
-Réponds de manière naturelle, comme un ami qui partage des recommandations autour d'un thé. Tu PEUX mentionner par leur nom les lieux des infos internes ci-dessus si tu les recommandes vraiment, mais tu ne dois en aucun cas :
-- Dire "d'après notre catalogue", "selon les données", "voici ce que j'ai trouvé", "les ressources fournies"
-- Lister mécaniquement plusieurs noms à la suite (l'interface affiche déjà des cartes cliquables sous ta réponse — pas besoin de les répéter en liste)
-- Faire des phrases du genre "il y a aussi X, Y et Z disponibles"
-- Te présenter comme un assistant IA ou parler de toi à la troisième personne
-
-Au contraire :
-- Réponds comme si tu parlais de mémoire à un ami
-- Choisis UNE ou DEUX recommandations pertinentes et raconte-les avec personnalité (anecdote, atmosphère, conseil pratique)
-- Le reste des suggestions sera vu via les cartes en bas — n'aie pas peur de ne pas tout mentionner
-- Si tu n'as vraiment rien de pertinent à recommander dans les infos internes, dis simplement "Je n'ai pas la connaissance précise pour ça, mais je peux te parler de [topic général algérien lié à la question] si tu veux"
-
-STYLE :
-- Français limpide, ton chaleureux mais pas excessif
-- 3-5 phrases au total maximum (sauf si la question demande un développement)
-- Pas de bullet points, pas de titres — du texte fluide
-- Une touche de mots arabes/berbères de temps en temps avec leur sens (medersa = école coranique, kasbah = citadelle, ksour = villages fortifiés)
+INSTRUCTIONS :
+- Réponds comme un ami qui partage des recommandations autour d'un thé
+- Tu peux mentionner les lieux par leur nom si tu les recommandes vraiment
+- Ne dis jamais "d'après notre catalogue", "selon les données"
+- Pas de listes mécaniques (les cartes en bas font le travail)
+- 3-5 phrases max, texte fluide
+- Ton chaleureux mais pas excessif
 
 # TA RÉPONSE :`
 
-    // 6. Génération
     const { text: answer, tokens } = await generate(prompt)
-
-    // 7. Validation
     const validation = validateAnswer(answer, contextNames)
 
-    // 8. Log dans ai_conversations
     const resourceIds = [
       ...resources.map(r => r.resource_id),
       ...destinations.map(d => d.id),

@@ -76,3 +76,7 @@ verify_jwt = true
 
 [functions.kyc-prescreen]
 verify_jwt = true
+
+# IA Djawal : accessible aux visiteurs non connectés (la conversion passe par cette IA)
+[functions.ai-assistant]
+verify_jwt = false
