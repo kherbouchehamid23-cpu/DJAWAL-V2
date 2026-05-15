@@ -312,9 +312,10 @@ function themeLabel(theme: string) {
 }
 .trips-hero-overlay {
   position: absolute; inset: 0;
-  /* Vidéo affichée telle quelle — voile uniquement en bas pour la transition douce vers la page */
-  background: linear-gradient(180deg, transparent 0%, transparent 70%, rgba(15, 36, 25, 0.6) 90%, #0F2419 100%);
+  /* Aucun voile — vidéo brute */
+  background: transparent;
   z-index: 1;
+  pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .trips-hero-video {
