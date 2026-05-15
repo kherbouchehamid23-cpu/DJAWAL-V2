@@ -8,7 +8,7 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-// Masquer le FAB sur les pages où Fennec est déjà visible (homepage + composer)
+// Masquer le FAB sur les pages où Djawal IA est déjà visible (homepage + composer)
 // pour éviter la redondance visuelle. Le drawer reste accessible via la nav.
 const hideFab = computed(() => {
   const p = route.path
@@ -28,7 +28,7 @@ const isOpen = ref(false)
 const messages = ref<Message[]>([
   {
     role: 'assistant',
-    text: 'Salam ! Je suis Fennec, votre guide intelligent. Posez-moi une question sur l\'Algérie, suggérez-moi une destination, ou demandez-moi de composer un voyage. Je m\'appuie sur notre catalogue local.'
+    text: 'Salam ! Je suis Djawal IA, votre guide intelligent. Posez-moi une question sur l\'Algérie, suggérez-moi une destination, ou demandez-moi de composer un voyage. Je m\'appuie sur notre catalogue local.'
   }
 ])
 const input = ref('')
@@ -102,12 +102,12 @@ function goToDestination(id: string) {
 </script>
 
 <template>
-  <!-- Bouton flottant — masqué sur homepage et /composer (Fennec déjà visible) -->
+  <!-- Bouton flottant — masqué sur homepage et /composer (Djawal IA déjà visible) -->
   <button
     v-if="!isOpen && !hideFab"
     class="ai-fab"
     @click="isOpen = true"
-    title="Demander à Fennec"
+    title="Demander à Djawal IA"
   >
     <span class="fab-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -117,7 +117,7 @@ function goToDestination(id: string) {
         <path d="M9 6 L12 9 L15 6"/>
       </svg>
     </span>
-    <span class="fab-label">Demander à Fennec</span>
+    <span class="fab-label">Demander à Djawal IA</span>
   </button>
 
   <!-- Drawer chat -->
@@ -134,7 +134,7 @@ function goToDestination(id: string) {
             </svg>
           </span>
           <div>
-            <strong>Fennec</strong>
+            <strong>Djawal IA</strong>
             <small>Votre guide intelligent · catalogue Djawal</small>
           </div>
         </div>
@@ -452,19 +452,4 @@ function goToDestination(id: string) {
 }
 .footer-link:hover { text-decoration: underline; }
 
-.slide-enter-active, .slide-leave-active { transition: all 0.3s ease; }
-.slide-enter-from, .slide-leave-to { opacity: 0; transform: translateY(40px) scale(0.95); }
-
-@media (max-width: 500px) {
-  .ai-drawer {
-    width: calc(100vw - 24px);
-    height: calc(100vh - 100px);
-    right: 12px; bottom: 12px;
-  }
-  .ai-fab {
-    right: 12px; bottom: 12px;
-  }
-  .fab-label { display: none; }
-  .ai-fab { padding: 14px; }
-}
-</style>
+.slide-enter-active, .slide-leave-ac

@@ -127,38 +127,44 @@ function themeLabel(theme: string) {
 
 <template>
   <div class="trips-page">
-    <!-- HEADER -->
+    <!-- HERO COMPACT — V4 vert sombre avec image Sahara -->
     <header class="trips-hero">
-      <div class="djawal-container">
-        <div class="hero-tag arabic">اكتشف الجزائر</div>
-        <h1>Découvrir les destinations</h1>
+      <div class="trips-hero-overlay"></div>
+      <div class="djawal-container hero-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-line"></span>
+          <span>Découvrir l'Algérie</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h1>Destinations <em>d'Algérie</em></h1>
         <p class="lead">
-          {{ destinations.length }} destinations algériennes — du Tassili au Djurdjura,
+          {{ destinations.length }} territoires à explorer — du Tassili au Djurdjura,
           de la Casbah à Ghardaïa.
         </p>
       </div>
     </header>
 
-    <!-- FILTRES + RECHERCHE -->
+    <!-- FILTRES + RECHERCHE — V4 vert sombre -->
     <section class="filters-bar">
       <div class="djawal-container filters-inner">
-        <v-text-field
-          v-model="searchQuery"
-          density="comfortable"
-          variant="outlined"
-          placeholder="Rechercher : Casbah, Tassili, Béjaïa…"
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          hide-details
-          class="search-field"
-        />
+        <div class="search-wrap">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21 L16 16"/>
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="search"
+            placeholder="Rechercher : Casbah, Tassili, Béjaïa…"
+            class="search-input"
+          />
+        </div>
         <div class="theme-chips">
           <button
             v-for="t in themes"
             :key="t.value"
             class="chip"
             :class="{ active: themeFilter === t.value }"
-            :style="themeFilter === t.value ? `background: ${t.color}; color: var(--c-fond);` : ''"
             @click="themeFilter = t.value as any"
           >
             <span class="chip-icon">{{ t.icon }}</span>
@@ -173,7 +179,7 @@ function themeLabel(theme: string) {
       <div class="showcase-head">
         <div>
           <div class="section-eyebrow">Parcours signés</div>
-          <h2>Voyages signés par nos guides locaux</h2>
+          <h2>Voyages signés par <em>nos guides locaux</em></h2>
         </div>
       </div>
       <div class="trip-strip">
@@ -266,142 +272,207 @@ function themeLabel(theme: string) {
 
 <style scoped>
 .trips-page {
-  background: var(--c-fond);
+  background: linear-gradient(180deg, #0F2419 0%, #1A3A2A 60%, #0F2419 100%);
   min-height: 100vh;
+  color: #FAF7F2;
+  font-family: 'Inter', sans-serif;
 }
 
-/* === HERO === */
+.djawal-container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+.djawal-section { padding: 80px 0; }
+
+/* === HERO COMPACT V4 === */
 .trips-hero {
-  background: var(--c-fond-chaud);
-  padding: var(--space-7) var(--space-5) var(--space-5);
   position: relative;
+  min-height: 52vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 32px 70px;
   overflow: hidden;
+  background-image: url('https://images.pexels.com/photos/3889855/pexels-photo-3889855.jpeg?auto=compress&cs=tinysrgb&w=1920');
+  background-size: cover;
+  background-position: center;
 }
-.trips-hero::before {
-  content: ''; position: absolute; inset: 0;
-  background-image: var(--motif-principal-url);
-  opacity: 0.4;
-  pointer-events: none;
+.trips-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(15, 36, 25, 0.6) 0%, rgba(15, 36, 25, 0.88) 60%, #0F2419 100%);
+  z-index: 1;
 }
-.hero-tag {
-  font-size: 20px;
-  color: var(--c-accent-fort);
-  margin-bottom: 8px;
-  position: relative;
+.hero-content { position: relative; z-index: 2; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 14px;
+  color: #E8B96B;
+  font-size: 11px; letter-spacing: 0.24em;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+.eyebrow-line {
+  width: 36px; height: 1px;
+  background: linear-gradient(90deg, transparent, #D4A844, transparent);
 }
 .trips-hero h1 {
-  font-size: clamp(32px, 4vw, 48px);
-  color: var(--c-primaire-profond);
-  margin-bottom: 8px;
-  position: relative;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 5.5vw, 64px);
+  font-weight: 400; line-height: 1.05;
+  margin-bottom: 18px;
+  color: #FAF7F2;
 }
+.trips-hero h1 em { font-style: italic; color: #E8B96B; }
 .lead {
-  font-size: 17px;
-  color: var(--c-primaire);
-  max-width: 720px;
-  position: relative;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(16px, 2vw, 20px);
+  color: rgba(250, 247, 242, 0.78);
+  max-width: 640px; margin: 0 auto;
+  line-height: 1.5;
 }
 
-/* === FILTRES === */
+/* === FILTRES V4 === */
 .filters-bar {
-  background: var(--c-surface);
-  padding: var(--space-3) var(--space-5);
-  border-bottom: 1px solid var(--c-gris-clair);
+  background: rgba(15, 36, 25, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 20px 32px;
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
   position: sticky;
-  top: 72px;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  top: 0;
+  z-index: 50;
 }
 .filters-inner {
-  display: flex; gap: var(--space-4);
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex; gap: 20px;
   align-items: center;
   flex-wrap: wrap;
 }
-.search-field {
+.search-wrap {
+  position: relative;
   flex: 1;
-  min-width: 280px;
-  max-width: 480px;
+  min-width: 260px;
+  max-width: 460px;
+}
+.search-icon {
+  position: absolute;
+  left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: #E8B96B;
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  background: rgba(250, 247, 242, 0.06);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  color: #FAF7F2;
+  padding: 11px 14px 11px 42px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+.search-input::placeholder { color: rgba(250, 247, 242, 0.45); }
+.search-input:focus {
+  background: rgba(250, 247, 242, 0.12);
+  border-color: #D4A844;
 }
 .theme-chips {
-  display: flex; gap: var(--space-2);
+  display: flex; gap: 8px;
   flex-wrap: wrap;
 }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px;
-  background: var(--c-fond-chaud);
-  border: 1px solid var(--c-gris-clair);
-  border-radius: var(--r-pill);
+  background: rgba(250, 247, 242, 0.06);
+  border: 1px solid rgba(212, 168, 68, 0.25);
+  color: #FAF7F2;
+  border-radius: 999px;
   font-family: inherit;
-  font-size: 13px; font-weight: 600;
-  color: var(--c-primaire-profond);
+  font-size: 13px; font-weight: 500;
   cursor: pointer;
-  transition: var(--t-base);
+  transition: all 0.2s;
 }
-.chip:hover { border-color: var(--c-accent); }
-.chip.active { border-color: transparent; box-shadow: var(--ombre-douce); }
+.chip:hover {
+  background: rgba(212, 168, 68, 0.15);
+  border-color: rgba(212, 168, 68, 0.55);
+}
+.chip.active {
+  background: #D4A844;
+  color: #0F2419;
+  border-color: #D4A844;
+  font-weight: 600;
+}
 .chip-icon { font-size: 14px; }
 
 /* === SPLIT VIEW === */
 .split-view {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  gap: var(--space-5);
+  gap: 32px;
   align-items: start;
 }
 .list-pane {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 18px;
 }
 .map-pane {
   position: sticky;
-  top: 160px;
+  top: 110px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 168, 68, 0.25);
 }
 .results-count {
   font-size: 14px;
-  color: var(--c-texte-doux);
-  margin-bottom: var(--space-2);
+  color: rgba(250, 247, 242, 0.6);
+  margin-bottom: 8px;
 }
 .results-count strong {
-  color: var(--c-primaire);
-  font-family: var(--font-display);
-  font-size: 22px;
+  color: #E8B96B;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 26px;
 }
 .empty-state {
   text-align: center;
-  padding: var(--space-7);
-  color: var(--c-texte-doux);
+  padding: 60px 20px;
+  color: rgba(250, 247, 242, 0.55);
+  background: rgba(31, 74, 54, 0.4);
+  border: 1px dashed rgba(212, 168, 68, 0.25);
+  border-radius: 18px;
 }
 
-/* === DEST CARD === */
+/* === DEST CARD V4 === */
 .dest-card {
   display: grid;
-  grid-template-columns: 200px 1fr;
-  background: var(--c-surface);
-  border-radius: var(--r-lg);
+  grid-template-columns: 220px 1fr;
+  background: rgba(31, 74, 54, 0.5);
+  border: 1px solid rgba(212, 168, 68, 0.18);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: var(--ombre-douce);
   cursor: pointer;
-  transition: var(--t-base);
-  border-left: 4px solid var(--c-primaire);
+  transition: all 0.3s;
+  border-left-width: 3px;
+  border-left-color: #D4A844;
 }
-.dest-card[data-theme="saharien"] { border-left-color: #D4A04F; }
-.dest-card[data-theme="mauresque"] { border-left-color: #1B4965; }
-.dest-card[data-theme="aures"] { border-left-color: #2D5A3D; }
+.dest-card[data-theme="saharien"] { border-left-color: #E8B96B; }
+.dest-card[data-theme="mauresque"] { border-left-color: #6FA8C0; }
+.dest-card[data-theme="aures"] { border-left-color: #A8C76F; }
 .dest-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--ombre-elevee);
+  transform: translateY(-3px);
+  background: rgba(31, 74, 54, 0.7);
+  border-color: rgba(212, 168, 68, 0.5);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
 }
 .card-image {
-  background: linear-gradient(135deg, #D4A04F, #C97050);
   background-size: cover;
   background-position: center;
   position: relative;
+  min-height: 180px;
 }
-/* Fallback visuel par thème quand pas d'image */
+/* Fallback visuel par thème si pas d'image */
 .dest-card[data-theme="saharien"] .card-image {
-  background: radial-gradient(circle at 70% 30%, #FFD479 0%, #D4A04F 35%, #8B4A2C 100%);
+  background: radial-gradient(circle at 70% 30%, #E8B96B 0%, #B8862E 40%, #5C3D1E 100%);
 }
 .dest-card[data-theme="mauresque"] .card-image {
   background: linear-gradient(160deg, #3D6890 0%, #1B4965 60%, #0A1F2E 100%);
@@ -409,52 +480,59 @@ function themeLabel(theme: string) {
 .dest-card[data-theme="aures"] .card-image {
   background: linear-gradient(160deg, #6B7A4A 0%, #2D5A3D 60%, #1B3A28 100%);
 }
-/* Pattern décoratif si pas d'image — diamant berbère discret */
 .dest-card .card-image:not([style*="background-image"])::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='none' stroke='%23FAF7F2' stroke-width='1' opacity='0.15'><path d='M30 4 L52 30 L30 56 L8 30 Z'/><path d='M30 14 L42 30 L30 46 L18 30 Z'/></g></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='none' stroke='%23FAF7F2' stroke-width='1' opacity='0.18'><path d='M30 4 L52 30 L30 56 L8 30 Z'/><path d='M30 14 L42 30 L30 46 L18 30 Z'/></g></svg>");
   background-repeat: repeat;
   background-size: 60px 60px;
   pointer-events: none;
 }
 .theme-badge {
   position: absolute; top: 12px; left: 12px;
-  padding: 4px 10px;
-  border-radius: var(--r-pill);
-  color: var(--c-fond);
-  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(15, 36, 25, 0.88) !important;
+  color: #E8B96B;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border: 1px solid rgba(212, 168, 68, 0.4);
+  backdrop-filter: blur(8px);
 }
 .card-body {
-  padding: var(--space-4);
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
 }
 .card-body h3 {
-  font-family: var(--font-display);
-  font-size: 24px;
-  color: var(--c-primaire-profond);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 500;
+  color: #FAF7F2;
   margin-bottom: 4px;
+  line-height: 1.1;
 }
 .card-arabic {
-  color: var(--c-accent-fort);
-  font-size: 16px;
-  margin-bottom: 6px;
+  color: #E8B96B;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 15px;
+  margin-bottom: 8px;
+  opacity: 0.85;
 }
 .card-meta {
-  font-size: 13px;
-  color: var(--c-texte-doux);
-  margin-bottom: var(--space-2);
+  font-size: 12px;
+  color: rgba(250, 247, 242, 0.55);
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
 }
 .card-desc {
-  font-size: 13px;
-  color: var(--c-texte);
-  line-height: 1.5;
+  font-size: 13.5px;
+  color: rgba(250, 247, 242, 0.72);
+  line-height: 1.55;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -462,110 +540,133 @@ function themeLabel(theme: string) {
   flex: 1;
 }
 .card-cta {
-  margin-top: var(--space-3);
-  color: var(--c-accent-fort);
-  font-weight: 700;
-  font-size: 14px;
+  margin-top: 14px;
+  color: #E8B96B;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  transition: transform 0.2s;
+}
+.dest-card:hover .card-cta { transform: translateX(4px); }
+
+.loading {
+  text-align: center;
+  padding: 80px 20px;
+  color: rgba(250, 247, 242, 0.55);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
 }
 
-.loading { text-align: center; padding: var(--space-8); color: var(--c-texte-doux); }
-
-/* === SHOWCASE VOYAGES === */
+/* === SHOWCASE VOYAGES SIGNÉS V4 === */
 .trips-showcase {
-  background: var(--c-fond-chaud);
-  padding-top: var(--space-6);
-  padding-bottom: var(--space-6);
-  border-radius: var(--r-lg);
-  margin-top: var(--space-4);
+  border-top: 1px solid rgba(212, 168, 68, 0.2);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
+  padding-top: 70px;
+  padding-bottom: 70px;
 }
 .section-eyebrow {
-  color: var(--c-accent-fort);
-  font-size: 13px; font-weight: 700;
-  letter-spacing: 0.2em; text-transform: uppercase;
-  margin-bottom: 4px;
+  color: #E8B96B;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  margin-bottom: 8px;
 }
 .showcase-head {
   display: flex; justify-content: space-between; align-items: flex-end;
-  margin-bottom: var(--space-4);
+  margin-bottom: 30px;
 }
 .showcase-head h2 {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 3vw, 32px);
-  color: var(--c-primaire-profond);
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(28px, 3.5vw, 40px);
+  color: #FAF7F2;
+  line-height: 1.05;
 }
+.showcase-head h2 em { font-style: italic; color: #E8B96B; }
 .trip-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
 }
 .trip-strip-card {
-  background: var(--c-surface);
-  border-radius: var(--r-md);
+  background: rgba(31, 74, 54, 0.5);
+  border: 1px solid rgba(212, 168, 68, 0.2);
+  border-radius: 16px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  box-shadow: var(--ombre-douce);
-  transition: var(--t-base);
+  transition: all 0.3s;
   display: flex;
   flex-direction: column;
 }
 .trip-strip-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--ombre-elevee);
+  transform: translateY(-4px);
+  border-color: rgba(212, 168, 68, 0.55);
+  background: rgba(31, 74, 54, 0.75);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
 }
 .trip-strip-cover {
-  height: 140px;
-  background: linear-gradient(135deg, #D4A04F, #C97050);
+  height: 160px;
+  background: linear-gradient(135deg, #B8862E, #5C3D1E);
   background-size: cover;
   background-position: center;
   position: relative;
 }
 .senior-badge {
-  position: absolute; top: 8px; right: 8px;
-  background: rgba(45, 90, 61, 0.95);
-  color: var(--c-fond);
-  padding: 3px 8px;
-  border-radius: var(--r-pill);
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(15, 36, 25, 0.88);
+  color: #E8B96B;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-}
-.trip-strip-body { padding: var(--space-3); flex: 1; display: flex; flex-direction: column; }
-.trip-strip-dest {
-  font-size: 11px;
-  color: var(--c-texte-doux);
-  text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 4px;
+  border: 1px solid rgba(212, 168, 68, 0.4);
+}
+.trip-strip-body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; }
+.trip-strip-dest {
+  font-size: 10.5px;
+  color: rgba(250, 247, 242, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 6px;
 }
 .trip-strip-body h4 {
-  font-family: var(--font-display);
-  font-size: 16px;
-  color: var(--c-primaire-profond);
-  margin-bottom: 4px;
-  line-height: 1.2;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: 19px;
+  color: #FAF7F2;
+  margin-bottom: 8px;
+  line-height: 1.15;
   flex: 1;
 }
 .trip-strip-meta {
   font-size: 13px;
-  color: var(--c-texte);
+  color: #E8B96B;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
 }
 .trip-strip-author {
   font-size: 11px;
-  color: var(--c-accent-fort);
+  color: rgba(250, 247, 242, 0.6);
   font-style: italic;
 }
+.trip-strip-author strong { color: #E8B96B; font-style: normal; font-weight: 600; }
 
 @media (max-width: 980px) {
   .split-view { grid-template-columns: 1fr; }
   .map-pane { position: static; height: 360px; }
-  .dest-card { grid-template-columns: 140px 1fr; }
+  .dest-card { grid-template-columns: 160px 1fr; }
+  .trips-hero { min-height: 44vh; padding: 100px 20px 50px; }
+  .djawal-section { padding: 50px 0; }
 }
 @media (max-width: 600px) {
   .dest-card { grid-template-columns: 1fr; }
-  .card-image { height: 160px; }
-  .filters-inner { gap: var(--space-2); }
+  .card-image { min-height: 170px; }
+  .filters-inner { gap: 12px; }
+  .djawal-container { padding: 0 20px; }
+  .trips-hero { min-height: 38vh; padding: 90px 20px 40px; }
 }
 </style>

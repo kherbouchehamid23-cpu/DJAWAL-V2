@@ -45,7 +45,7 @@ const navItems = [
           :key="item.to"
           :to="item.to"
           class="nav-link"
-          :class="{ 'nav-link-fennec': item.accent }"
+          :class="{ 'nav-link-ia': item.accent }"
         >
           <img v-if="item.accent" :src="djawalLogoMonogram" alt="" class="nav-djawal-icon" aria-hidden="true" />
           {{ item.label }}
@@ -192,7 +192,7 @@ const navItems = [
   background-position: center;
 }
 /* Pill Djawal IA — surligné dans la nav */
-.nav-link-fennec {
+.nav-link-ia {
   display: inline-flex !important;
   align-items: center;
   gap: 8px;
@@ -203,7 +203,7 @@ const navItems = [
   text-transform: uppercase;
   border: 1px solid rgba(184, 134, 46, 0.35);
 }
-.nav-link-fennec.router-link-active::after { display: none; }
+.nav-link-ia.router-link-active::after { display: none; }
 .nav-djawal-icon {
   width: 24px; height: 24px;
   flex-shrink: 0;
@@ -307,14 +307,14 @@ const navItems = [
 .header-overlay .nav-link:hover { color: #FFD479 !important; }
 .header-overlay .nav-link.router-link-active::after { display: none; }
 /* Pill IA Djawal visible sur fond foncé */
-.header-overlay .nav-link-fennec {
+.header-overlay .nav-link-ia {
   background: rgba(212, 160, 79, 0.95) !important;
   color: #0A1F2E !important;
   border: 1px solid rgba(255, 212, 121, 0.7) !important;
   text-shadow: none !important;
   box-shadow: 0 4px 14px rgba(212, 160, 79, 0.4);
 }
-.header-overlay .nav-link-fennec:hover {
+.header-overlay .nav-link-ia:hover {
   background: #E8B547 !important;
   color: #0A1F2E !important;
 }

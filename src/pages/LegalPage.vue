@@ -19,8 +19,13 @@ const lastUpdate = '12 mai 2026'
 <template>
   <div class="legal-page">
     <header class="page-hero">
-      <div class="djawal-container">
-        <div class="eyebrow">{{ type === 'cgu' ? 'CGU' : 'Mentions légales' }}</div>
+      <div class="hero-overlay"></div>
+      <div class="djawal-container hero-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-line"></span>
+          <span>{{ type === 'cgu' ? 'CGU' : 'Mentions légales' }}</span>
+          <span class="eyebrow-line"></span>
+        </div>
         <h1>{{ type === 'cgu' ? "Conditions générales d'utilisation" : 'Mentions légales' }}</h1>
         <p class="meta">Dernière mise à jour : {{ lastUpdate }}</p>
       </div>
@@ -108,7 +113,7 @@ const lastUpdate = '12 mai 2026'
 
         <section>
           <h2>5. Recommandations IA</h2>
-          <p>Djawal propose Fennec, notre IA, qui s'appuie sur le catalogue communautaire pour suggérer des parcours, hébergements et sites. Ces recommandations sont à titre indicatif. Aucune réservation n'est garantie par Fennec. Vérifiez toujours la disponibilité directement avec le prestataire.</p>
+          <p>Djawal propose Djawal IA, qui s'appuie sur le catalogue communautaire pour suggérer des parcours, hébergements et sites. Ces recommandations sont à titre indicatif. Aucune réservation n'est garantie par Djawal IA. Vérifiez toujours la disponibilité directement avec le prestataire.</p>
         </section>
 
         <section>
@@ -135,88 +140,133 @@ const lastUpdate = '12 mai 2026'
 </template>
 
 <style scoped>
-.legal-page { background: var(--c-fond); min-height: 100vh; }
+.legal-page {
+  background: linear-gradient(180deg, #0F2419 0%, #1A3A2A 60%, #0F2419 100%);
+  min-height: 100vh;
+  color: #FAF7F2;
+  font-family: 'Inter', sans-serif;
+}
+.djawal-container { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+.djawal-section { padding: 70px 0; }
 
+/* === HERO COMPACT V4 === */
 .page-hero {
-  background: var(--c-fond-chaud);
-  padding: var(--space-7) var(--space-5) var(--space-5);
   position: relative;
+  min-height: 38vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 32px 60px;
   overflow: hidden;
+  background: linear-gradient(180deg, #1A3A2A 0%, #0F2419 100%);
 }
-.page-hero::before {
-  content: ''; position: absolute; inset: 0;
-  background-image: var(--motif-principal-url);
-  opacity: 0.3;
+.hero-overlay {
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%23D4A844' stroke-width='0.5' opacity='0.12'><path d='M40 5 L70 40 L40 75 L10 40 Z'/><path d='M40 20 L55 40 L40 60 L25 40 Z'/></g></svg>");
+  background-repeat: repeat;
+  z-index: 1;
+  opacity: 0.6;
 }
-.eyebrow {
-  color: var(--c-accent-fort);
-  font-size: 13px; font-weight: 700;
-  letter-spacing: 0.2em; text-transform: uppercase;
-  margin-bottom: var(--space-2);
-  position: relative;
+.hero-content { position: relative; z-index: 2; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 14px;
+  color: #E8B96B;
+  font-size: 11px; letter-spacing: 0.24em;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+.eyebrow-line {
+  width: 36px; height: 1px;
+  background: linear-gradient(90deg, transparent, #D4A844, transparent);
 }
 .page-hero h1 {
-  font-family: var(--font-display);
-  font-size: clamp(28px, 4vw, 44px);
-  color: var(--c-primaire-profond);
-  margin-bottom: var(--space-2);
-  position: relative;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: #FAF7F2;
+  margin-bottom: 12px;
 }
-.meta { color: var(--c-texte-doux); font-size: 14px; position: relative; }
+.meta {
+  color: rgba(250, 247, 242, 0.55);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 15px;
+}
 
+/* === CONTENT === */
 .legal-content {
-  max-width: 800px;
+  max-width: 820px;
   margin: 0 auto;
-  background: var(--c-surface);
-  padding: var(--space-6);
-  border-radius: var(--r-lg);
-  box-shadow: var(--ombre-douce);
+  background: rgba(31, 74, 54, 0.5);
+  border: 1px solid rgba(212, 168, 68, 0.22);
+  padding: 50px 48px;
+  border-radius: 22px;
 }
-.legal-content section { margin-bottom: var(--space-5); }
+.legal-content section { margin-bottom: 40px; }
+.legal-content section:last-of-type { margin-bottom: 24px; }
 .legal-content h2 {
-  font-family: var(--font-display);
-  font-size: 22px;
-  color: var(--c-primaire-profond);
-  margin-bottom: var(--space-2);
-  padding-bottom: 6px;
-  border-bottom: 2px solid var(--c-fond-chaud);
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: 24px;
+  color: #E8B96B;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(212, 168, 68, 0.25);
 }
 .legal-content p {
   font-size: 15px;
-  line-height: 1.7;
-  color: var(--c-texte);
-  margin-bottom: var(--space-2);
+  line-height: 1.75;
+  color: rgba(250, 247, 242, 0.82);
+  margin-bottom: 12px;
 }
 .legal-content ul {
   list-style: none;
   padding: 0;
-  margin: var(--space-2) 0;
+  margin: 14px 0;
 }
 .legal-content ul li {
-  padding: 6px 0 6px 20px;
+  padding: 7px 0 7px 22px;
   position: relative;
-  color: var(--c-texte);
-  font-size: 14px;
+  color: rgba(250, 247, 242, 0.78);
+  font-size: 14.5px;
   line-height: 1.6;
 }
 .legal-content ul li::before {
   content: '◆';
   position: absolute;
   left: 0;
-  color: var(--c-accent);
+  color: #D4A844;
+  font-size: 11px;
+  top: 11px;
 }
-.legal-content a { color: var(--c-accent-fort); font-weight: 600; }
-.legal-content strong { color: var(--c-primaire-profond); }
+.legal-content a {
+  color: #E8B96B;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(232, 185, 107, 0.4);
+}
+.legal-content a:hover { color: #FAF7F2; }
+.legal-content strong { color: #FAF7F2; font-weight: 600; }
 
 .nav-legal {
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: 2px solid var(--c-fond-chaud);
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(212, 168, 68, 0.22);
 }
 .nav-legal a {
-  color: var(--c-primaire);
-  font-weight: 700;
+  color: #E8B96B;
+  font-weight: 600;
   text-decoration: none;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  transition: color 0.2s;
 }
-.nav-legal a:hover { text-decoration: underline; }
+.nav-legal a:hover { color: #FAF7F2; }
+
+@media (max-width: 700px) {
+  .djawal-container { padding: 0 20px; }
+  .page-hero { min-height: 32vh; padding: 90px 20px 40px; }
+  .djawal-section { padding: 50px 0; }
+  .legal-content { padding: 32px 26px; }
+}
 </style>

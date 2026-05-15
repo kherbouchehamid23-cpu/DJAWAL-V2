@@ -58,11 +58,16 @@ function fmtDate(iso: string) {
 
 <template>
   <div class="memories-page">
-    <!-- HERO -->
+    <!-- HERO COMPACT V4 -->
     <header class="page-hero">
-      <div class="djawal-container">
-        <div class="hero-tag arabic">ذكريات</div>
-        <h1>Le mur des souvenirs</h1>
+      <div class="hero-overlay"></div>
+      <div class="djawal-container hero-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-line"></span>
+          <span>Le mur des souvenirs</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h1>Récits <em>de voyage</em></h1>
         <p class="lead">
           {{ memories.length }} fragments d'expérience partagés par celles et ceux qui ont
           parcouru l'Algérie. Chaque souvenir est un appel au voyage.
@@ -70,39 +75,36 @@ function fmtDate(iso: string) {
       </div>
     </header>
 
-    <!-- FILTRES -->
+    <!-- FILTRES V4 -->
     <section class="filters-bar">
       <div class="djawal-container filters-inner">
-        <v-text-field
-          v-model="search"
-          density="comfortable"
-          variant="outlined"
-          placeholder="Chercher dans les souvenirs…"
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          hide-details
-          class="search-field"
-        />
-        <v-select
-          v-model="destFilter"
-          :items="[{ value: 'all', title: 'Toutes destinations' }, ...destinations.map(d => ({ value: d.id, title: d.name }))]"
-          density="comfortable"
-          variant="outlined"
-          hide-details
-          class="dest-select"
-        />
+        <div class="search-wrap">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21 L16 16"/>
+          </svg>
+          <input
+            v-model="search"
+            type="search"
+            placeholder="Chercher dans les souvenirs…"
+            class="search-input"
+          />
+        </div>
+        <select v-model="destFilter" class="dest-select">
+          <option value="all">Toutes destinations</option>
+          <option v-for="d in destinations" :key="d.id" :value="d.id">{{ d.name }}</option>
+        </select>
         <div class="theme-chips">
           <button
             v-for="t in [
               { v: 'all', l: 'Tous', i: '✨' },
-              { v: 'saharien', l: 'Saharien', i: '🏜️', c: '#D4A04F' },
-              { v: 'mauresque', l: 'Mauresque', i: '🏛️', c: '#1B4965' },
-              { v: 'aures', l: 'Aurès', i: '⛰️', c: '#2D5A3D' }
+              { v: 'saharien', l: 'Saharien', i: '🏜️' },
+              { v: 'mauresque', l: 'Mauresque', i: '🏛️' },
+              { v: 'aures', l: 'Aurès', i: '⛰️' }
             ]"
             :key="t.v"
             class="chip"
             :class="{ active: themeFilter === t.v }"
-            :style="themeFilter === t.v && t.c ? `background: ${t.c}; color: white;` : ''"
             @click="themeFilter = t.v as any"
           >
             {{ t.i }} {{ t.l }}
@@ -156,138 +158,213 @@ function fmtDate(iso: string) {
 </template>
 
 <style scoped>
-.memories-page { background: var(--c-fond); min-height: 100vh; }
+.memories-page {
+  background: linear-gradient(180deg, #0F2419 0%, #1A3A2A 60%, #0F2419 100%);
+  min-height: 100vh;
+  color: #FAF7F2;
+  font-family: 'Inter', sans-serif;
+}
+.djawal-container { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+.djawal-section { padding: 70px 0; }
 
+/* === HERO COMPACT V4 === */
 .page-hero {
-  background: var(--c-fond-chaud);
-  padding: var(--space-7) var(--space-5) var(--space-5);
   position: relative;
+  min-height: 48vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 32px 70px;
   overflow: hidden;
+  background-image: url('https://images.pexels.com/photos/1098460/pexels-photo-1098460.jpeg?auto=compress&cs=tinysrgb&w=1920');
+  background-size: cover;
+  background-position: center;
 }
-.page-hero::before {
-  content: ''; position: absolute; inset: 0;
-  background-image: var(--motif-principal-url);
-  opacity: 0.4; pointer-events: none;
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(15, 36, 25, 0.62) 0%, rgba(15, 36, 25, 0.88) 60%, #0F2419 100%);
+  z-index: 1;
 }
-.hero-tag {
-  font-size: 20px;
-  color: var(--c-accent-fort);
-  margin-bottom: 8px;
-  position: relative;
+.hero-content { position: relative; z-index: 2; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 14px;
+  color: #E8B96B;
+  font-size: 11px; letter-spacing: 0.24em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.eyebrow-line {
+  width: 36px; height: 1px;
+  background: linear-gradient(90deg, transparent, #D4A844, transparent);
 }
 .page-hero h1 {
-  font-size: clamp(32px, 4.5vw, 52px);
-  color: var(--c-primaire-profond);
-  margin-bottom: var(--space-2);
-  position: relative;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 5.5vw, 62px);
+  font-weight: 400; line-height: 1.05;
+  margin-bottom: 18px;
+  color: #FAF7F2;
 }
+.page-hero h1 em { font-style: italic; color: #E8B96B; }
 .lead {
-  font-size: 17px;
-  color: var(--c-primaire);
-  max-width: 720px;
-  position: relative;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(16px, 2vw, 20px);
+  color: rgba(250, 247, 242, 0.78);
+  max-width: 640px;
+  margin: 0 auto;
   line-height: 1.5;
 }
 
+/* === FILTRES V4 === */
 .filters-bar {
-  background: var(--c-surface);
-  padding: var(--space-3) var(--space-5);
-  border-bottom: 1px solid var(--c-gris-clair);
+  background: rgba(15, 36, 25, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 20px 32px;
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
   position: sticky;
-  top: 72px;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  top: 0;
+  z-index: 50;
 }
 .filters-inner {
-  display: flex; gap: var(--space-3);
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex; gap: 16px;
   align-items: center;
   flex-wrap: wrap;
 }
-.search-field { flex: 1; min-width: 240px; max-width: 360px; }
-.dest-select { min-width: 220px; }
+.search-wrap {
+  position: relative;
+  flex: 1; min-width: 240px; max-width: 360px;
+}
+.search-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: #E8B96B; pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  background: rgba(250, 247, 242, 0.06);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  color: #FAF7F2;
+  padding: 11px 14px 11px 42px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+.search-input::placeholder { color: rgba(250, 247, 242, 0.45); }
+.search-input:focus { background: rgba(250, 247, 242, 0.12); border-color: #D4A844; }
+.dest-select {
+  background: rgba(250, 247, 242, 0.06);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  color: #FAF7F2;
+  padding: 11px 16px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 220px;
+  outline: none;
+}
+.dest-select option { background: #1A3A2A; color: #FAF7F2; }
 
-.theme-chips { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.theme-chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 14px;
-  background: var(--c-fond-chaud);
-  border: 1px solid var(--c-gris-clair);
-  border-radius: var(--r-pill);
+  background: rgba(250, 247, 242, 0.06);
+  border: 1px solid rgba(212, 168, 68, 0.25);
+  color: #FAF7F2;
+  border-radius: 999px;
   font-family: inherit;
-  font-size: 13px; font-weight: 600;
-  color: var(--c-primaire-profond);
+  font-size: 13px; font-weight: 500;
   cursor: pointer;
-  transition: var(--t-base);
+  transition: all 0.2s;
 }
-.chip:hover { border-color: var(--c-accent); }
-.chip.active { border-color: transparent; box-shadow: var(--ombre-douce); }
+.chip:hover { background: rgba(212, 168, 68, 0.15); border-color: rgba(212, 168, 68, 0.55); }
+.chip.active { background: #D4A844; color: #0F2419; border-color: #D4A844; font-weight: 600; }
 
 .loading, .empty {
-  text-align: center; padding: var(--space-8);
-  color: var(--c-texte-doux);
+  text-align: center; padding: 80px 20px;
+  color: rgba(250, 247, 242, 0.55);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
 }
 
+/* === MASONRY V4 === */
 .masonry {
   columns: 3;
-  column-gap: var(--space-4);
+  column-gap: 22px;
 }
 @media (max-width: 960px) { .masonry { columns: 2; } }
 @media (max-width: 600px) { .masonry { columns: 1; } }
 
 .mem-card {
   break-inside: avoid;
-  background: var(--c-surface);
-  border-radius: var(--r-lg);
+  background: rgba(31, 74, 54, 0.5);
+  border: 1px solid rgba(212, 168, 68, 0.18);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: var(--ombre-douce);
-  margin-bottom: var(--space-4);
-  border-top: 4px solid var(--c-primaire);
-  transition: var(--t-base);
+  margin-bottom: 22px;
+  border-top: 3px solid #D4A844;
+  transition: all 0.3s;
 }
-.mem-card[data-theme="saharien"] { border-top-color: #D4A04F; }
-.mem-card[data-theme="mauresque"] { border-top-color: #1B4965; }
-.mem-card[data-theme="aures"] { border-top-color: #2D5A3D; }
-
+.mem-card[data-theme="saharien"] { border-top-color: #E8B96B; }
+.mem-card[data-theme="mauresque"] { border-top-color: #6FA8C0; }
+.mem-card[data-theme="aures"] { border-top-color: #A8C76F; }
 .mem-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--ombre-elevee);
+  transform: translateY(-4px);
+  background: rgba(31, 74, 54, 0.75);
+  border-color: rgba(212, 168, 68, 0.5);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
 }
-
 .mem-photo {
   height: 220px;
   background-size: cover;
   background-position: center;
 }
-.mem-body { padding: var(--space-4); }
-
+.mem-body { padding: 22px 24px; }
 .mem-quote {
-  font-family: var(--font-display);
-  font-size: 18px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px;
   font-style: italic;
-  color: var(--c-primaire-profond);
+  color: #FAF7F2;
   line-height: 1.5;
-  margin-bottom: var(--space-3);
+  margin-bottom: 18px;
 }
-.mem-card[data-has-photo="false"] .mem-quote { font-size: 20px; }
-
+.mem-card[data-has-photo="false"] .mem-quote { font-size: 22px; }
 .mem-meta {
   display: flex; justify-content: space-between; align-items: baseline;
   font-size: 13px;
-  border-top: 1px solid var(--c-fond-chaud);
-  padding-top: var(--space-2);
+  border-top: 1px solid rgba(212, 168, 68, 0.2);
+  padding-top: 12px;
 }
-.mem-meta strong { color: var(--c-accent-fort); }
-.mem-date { color: var(--c-texte-doux); font-size: 12px; }
+.mem-meta strong {
+  color: #E8B96B;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+}
+.mem-date { color: rgba(250, 247, 242, 0.5); font-size: 11.5px; letter-spacing: 0.05em; }
 
 .mem-link {
-  margin-top: var(--space-2);
+  margin-top: 10px;
   font-size: 12px;
 }
 .mem-link a {
-  color: var(--c-accent-fort);
+  color: #E8B96B;
   font-weight: 600;
   text-decoration: none;
+  transition: color 0.2s;
 }
-.mem-link a:hover { text-decoration: underline; }
-.mem-link span { color: var(--c-texte-doux); font-style: italic; }
+.mem-link a:hover { color: #FAF7F2; }
+.mem-link span { color: rgba(250, 247, 242, 0.55); font-style: italic; }
+
+@media (max-width: 700px) {
+  .djawal-container { padding: 0 20px; }
+  .page-hero { min-height: 38vh; padding: 90px 20px 50px; }
+  .djawal-section { padding: 50px 0; }
+}
 </style>
