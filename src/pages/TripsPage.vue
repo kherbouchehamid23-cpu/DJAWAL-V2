@@ -62,15 +62,23 @@ const sortOptions = [
   { value: 'wilaya', label: 'Par wilaya' }
 ]
 
+// === Recherche tolérante : retire accents + lowercase
+// "bejaia" matchera "Béjaïa", "tassili" matchera "Tassili n'Ajjer", etc.
+function normalizeSearch(s: string): string {
+  // NFD décompose les caractères accentués (é → e + ◌́),
+  // puis on retire la plage Unicode U+0300–U+036F (combining diacritics).
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
+
 // === Filtres + tri ===
 const filteredDestinations = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim()
+  const q = normalizeSearch(searchQuery.value.trim())
   const filtered = destinations.value.filter(d => {
     if (themeFilter.value !== 'all' && d.cultural_theme !== themeFilter.value) return false
     if (!q) return true
-    return d.name.toLowerCase().includes(q) ||
-           d.wilaya.toLowerCase().includes(q) ||
-           d.description.toLowerCase().includes(q)
+    return normalizeSearch(d.name).includes(q) ||
+           normalizeSearch(d.wilaya).includes(q) ||
+           normalizeSearch(d.description).includes(q)
   })
   // Tri
   return [...filtered].sort((a, b) => {
@@ -94,14 +102,14 @@ const gridDestinations = computed(() => {
   return showFeatured.value ? filteredDestinations.value.slice(1) : filteredDestinations.value
 })
 
-// Autocomplete : top 5 matches
+// Autocomplete : top 5 matches (tolérant aux accents/casse)
 const autocompleteResults = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim()
+  const q = normalizeSearch(searchQuery.value.trim())
   if (!q || q.length < 2) return []
   return destinations.value
     .filter(d =>
-      d.name.toLowerCase().includes(q) ||
-      d.wilaya.toLowerCase().includes(q)
+      normalizeSearch(d.name).includes(q) ||
+      normalizeSearch(d.wilaya).includes(q)
     )
     .slice(0, 5)
 })

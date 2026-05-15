@@ -289,10 +289,18 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
     if (to.hash) return { el: to.hash, behavior: 'smooth' }
-    return { top: 0, behavior: 'smooth' }
+    // Si on reste sur la MÊME route (path identique) et que seul ?query change,
+    // ne pas scroller — évite le bug iOS Safari (scroll erratique sur frappe live
+    // dans une barre de recherche qui sync l'URL via router.replace).
+    if (from && to.path === from.path && to.name === from.name) {
+      return false
+    }
+    // Scroll instant (pas smooth) — sur iOS, behavior:'smooth' peut être interrompu
+    // par le clavier virtuel et provoquer des sauts inattendus.
+    return { top: 0, left: 0 }
   }
 })
 
