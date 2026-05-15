@@ -14,7 +14,23 @@ const drawer = ref(false)
 const { isMobile } = useBreakpoint()
 
 // Transparent overlay sur la HomePage (hero image plein écran)
-const isHomePage = computed(() => route.path === '/')
+// Header transparent en overlay sur toutes les pages publiques au design V4 vert sombre.
+// Le header normal (avec fond clair) reste sur /auth/*, /mon-espace/*, /admin/*, /espace-*.
+const isOverlayPage = computed(() => {
+  const p = route.path
+  if (p === '/') return true
+  if (p.startsWith('/voyages')) return true
+  if (p.startsWith('/destination')) return true
+  if (p.startsWith('/temoignages')) return true
+  if (p.startsWith('/composer')) return true
+  if (p === '/about') return true
+  if (p === '/contact') return true
+  if (p === '/mentions-legales') return true
+  if (p === '/cgu') return true
+  return false
+})
+// Alias pour la compatibilité avec le template existant
+const isHomePage = isOverlayPage
 
 const navItems = [
   { to: '/voyages', label: 'Destinations' },
@@ -80,7 +96,7 @@ const navItems = [
   </v-app-bar>
 
   <!-- === Mini header mobile === -->
-  <header v-if="isMobile" class="mobile-header">
+  <header v-if="isMobile" class="mobile-header" :class="{ 'mobile-header-overlay': isOverlayPage }">
     <RouterLink to="/" class="mob-logo">
       <img :src="djawalLogoMonogram" alt="Djawal" class="mob-logo-img" />
       <span class="mob-name">Djawal</span>
@@ -320,4 +336,36 @@ const navItems = [
 }
 .header-overlay .login-btn { color: #FAF7F2 !important; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
 .header-overlay .logo-img { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)); }
+
+/* === Mode overlay sur mini-header MOBILE (pages V4 vert sombre) === */
+.mobile-header-overlay {
+  position: absolute !important;
+  background: transparent !important;
+  border-bottom: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  z-index: 100;
+  left: 0; right: 0; top: 0;
+}
+.mobile-header-overlay .mob-name {
+  color: #FAF7F2 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.mobile-header-overlay .mob-name small {
+  color: #E8B96B !important;
+}
+.mobile-header-overlay .mob-btn {
+  background: rgba(15, 36, 25, 0.55) !important;
+  border-color: rgba(212, 168, 68, 0.4) !important;
+  color: #FAF7F2 !important;
+  backdrop-filter: blur(8px);
+}
+.mobile-header-overlay .mob-btn-cta {
+  background: linear-gradient(135deg, #D4A844, #B8862E) !important;
+  color: #0F2419 !important;
+  box-shadow: 0 4px 14px rgba(212, 168, 68, 0.4);
+}
+.mobile-header-overlay .mob-logo-img {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+}
 </style>
