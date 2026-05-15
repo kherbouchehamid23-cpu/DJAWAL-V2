@@ -452,4 +452,36 @@ function goToDestination(id: string) {
 }
 .footer-link:hover { text-decoration: underline; }
 
-.slide-enter-active, .slide-leave-ac
+/* === Transition slide (drawer enter/leave) === */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateY(20px);
+  opacity: 0;
+}
+.slide-enter-to,
+.slide-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .ai-fab {
+    bottom: 80px;
+    right: 16px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .ai-fab .fab-label { display: none; }
+  .ai-drawer {
+    bottom: 80px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+</style>
