@@ -52,6 +52,12 @@ const routes: RouteRecordRaw[] = [
     meta: { culturalTheme: 'mauresque', title: 'Composer avec l\'IA — Djawal' }
   },
   {
+    path: '/composer/formulaire',
+    name: 'composer-form',
+    component: () => import('@/pages/ComposerFormPage.vue'),
+    meta: { culturalTheme: 'mauresque', title: 'Composer mon voyage — Djawal' }
+  },
+  {
     path: '/guide/:id',
     name: 'guide-profile',
     component: () => import('@/pages/GuideProfilePage.vue'),

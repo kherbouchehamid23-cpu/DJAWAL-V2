@@ -295,7 +295,7 @@ serve(async (req) => {
           return new Response(JSON.stringify({
             mode: 'too-vague',
             answer: 'Votre demande est très large. Pour vous proposer un voyage qui vous correspond vraiment, je vous invite à utiliser notre composeur de voyage personnalisé qui posera quelques questions précises.',
-            redirect_to: '/composer?from=ai-vague',
+            redirect_to: '/composer/formulaire?from=ai-vague',
             criteria
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
