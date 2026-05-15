@@ -4,7 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useBreakpoint } from '@/composables/useBreakpoint'
-import djawalLogoHorizontal from '@/assets/branding/djawal-horizontal.png'
+import djawalLogoStacked from '@/assets/branding/djawal-stacked.png'
 import djawalLogoMonogram from '@/assets/branding/djawal-monogram.png'
 
 const theme = useThemeStore()
@@ -34,8 +34,7 @@ const navItems = [
     <v-container class="header-row" max-width="1340">
       <!-- LOGO — Djawal officiel (violet + orange + silhouette voyageur) -->
       <RouterLink to="/" class="logo-wrap">
-        <img :src="djawalLogoHorizontal" alt="Djawal" class="logo-img" />
-        <span class="logo-ar arabic">جوّال</span>
+        <img :src="djawalLogoStacked" alt="Djawal" class="logo-img" />
       </RouterLink>
 
       <!-- NAV DESKTOP -->
@@ -59,14 +58,6 @@ const navItems = [
 
       <!-- ACTIONS -->
       <div class="header-actions">
-        <v-btn
-          variant="text"
-          size="small"
-          :icon="theme.ambientSoundEnabled ? 'mdi-volume-high' : 'mdi-volume-off'"
-          :title="theme.ambientSoundEnabled ? 'Couper l\'ambiance' : 'Activer l\'ambiance'"
-          @click="theme.toggleAmbientSound"
-        />
-
         <template v-if="auth.isAuthenticated">
           <v-menu>
             <template #activator="{ props }">
@@ -96,7 +87,7 @@ const navItems = [
   <header v-if="isMobile" class="mobile-header">
     <RouterLink to="/" class="mob-logo">
       <img :src="djawalLogoMonogram" alt="Djawal" class="mob-logo-img" />
-      <span class="mob-name">Djawal<small class="arabic">جوّال</small></span>
+      <span class="mob-name">Djawal</span>
     </RouterLink>
     <div class="mob-actions">
       <RouterLink to="/voyages" class="mob-btn" aria-label="Rechercher">
@@ -144,11 +135,13 @@ const navItems = [
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 0 0 2px rgba(232, 181, 71, 0.35);
 }
-/* Logo image officiel Djawal (violet + orange) */
+/* Logo image officiel Djawal stacked (violet + orange + DJAWAL) */
 .logo-img {
-  height: 44px;
-  width: auto;
+  width: 56px;
+  height: 56px;
   display: block;
+  object-fit: contain;
+  border-radius: 10px;
 }
 .logo-ar {
   font-family: var(--font-arabic);
@@ -295,6 +288,15 @@ const navItems = [
   position: absolute !important;
   background: transparent !important;
   box-shadow: none !important;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+}
+.header-overlay .header-row,
+.header-overlay .nav-desktop,
+.header-overlay .header-actions {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 101;
 }
 .header-overlay .nav-link {
   color: rgba(250, 247, 242, 0.85) !important;

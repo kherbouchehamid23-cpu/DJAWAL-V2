@@ -64,9 +64,9 @@ const heroCards = [
 ]
 
 const signedTrips = [
-  { title: 'Cœur du Hoggar : silence et étoiles', duration: '9 jours · Hiver', desc: "Marche douce dans l'Atakor. Nuit chez les Touaregs. Lever de lune sur l'Assekrem.", guide: 'Yacine', guideRole: 'Touareg du Hoggar', price: '€1 480', img: 'https://images.pexels.com/photos/2382325/pexels-photo-2382325.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { title: "L'Algérie mauresque : Tlemcen, Casbah, Tipaza", duration: '7 jours · Toute saison', desc: 'Trois capitales, trois siècles. Mansourah, Casbah, ruines romaines face à la mer.', guide: 'Lina', guideRole: "Casbah d'Alger", price: '€1 180', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { title: "M'Zab : l'épure pour philosophie", duration: '5 jours · Printemps', desc: "Ghardaïa, Beni Isguen, El Atteuf. La sobriété mozabite comme art de vivre.", guide: 'Hamid', guideRole: "Senior · M'Zab", price: '€890', img: 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&cs=tinysrgb&w=800' }
+  { title: 'Cœur du Hoggar : silence et étoiles', duration: '9 jours · Hiver', desc: "Marche douce dans l'Atakor. Nuit chez les Touaregs. Lever de lune sur l'Assekrem.", guide: 'Yacine', guideRole: 'Touareg du Hoggar', price: '218 000 DA', img: 'https://images.pexels.com/photos/2382325/pexels-photo-2382325.jpeg?auto=compress&cs=tinysrgb&w=800' },
+  { title: "L'Algérie mauresque : Tlemcen, Casbah, Tipaza", duration: '7 jours · Toute saison', desc: 'Trois capitales, trois siècles. Mansourah, Casbah, ruines romaines face à la mer.', guide: 'Lina', guideRole: "Casbah d'Alger", price: '174 000 DA', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800' },
+  { title: "M'Zab : l'épure pour philosophie", duration: '5 jours · Printemps', desc: "Ghardaïa, Beni Isguen, El Atteuf. La sobriété mozabite comme art de vivre.", guide: 'Hamid', guideRole: "Senior · M'Zab", price: '131 000 DA', img: 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&cs=tinysrgb&w=800' }
 ]
 
 const archCarousel = ref<HTMLElement | null>(null)

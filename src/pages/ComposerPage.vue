@@ -50,12 +50,35 @@ onMounted(async () => {
     .order('name')
   destinations.value = (data as Destination[]) || []
 
-  // Pré-remplir depuis ?q=... (quick prompts de la HomePage)
+  // Si on arrive depuis le bandeau IA homepage avec une requête → génération DIRECTE
   const q = route.query.q
   if (typeof q === 'string' && q.trim()) {
     note.value = q.trim()
+    await generateFromPrompt(q.trim())
   }
 })
+
+// Génération libre (sans questionnaire structuré) — directement à partir du texte utilisateur
+async function generateFromPrompt(prompt: string) {
+  error.value = ''
+  generating.value = true
+  response.value = null
+  try {
+    const { data, error: fnErr } = await supabase.functions.invoke('ai-assistant', {
+      body: {
+        question: prompt,
+        user_id: auth.user?.id || null,
+        destination_id: null
+      }
+    })
+    if (fnErr) throw fnErr
+    response.value = data
+  } catch (e: any) {
+    error.value = e.message || 'Erreur lors de la génération.'
+  } finally {
+    generating.value = false
+  }
+}
 
 function toggleInterest(v: string) {
   const idx = interests.value.indexOf(v)
@@ -123,10 +146,10 @@ function reset() {
   <div class="composer-page">
     <header class="hero">
       <div class="djawal-container">
-        <div class="eyebrow">✦ Composer avec Fennec</div>
+        <div class="eyebrow">✦ Composer avec Djawal IA</div>
         <h1>Votre voyage, façonné par vos envies</h1>
         <p class="lead">
-          Fennec, notre guide intelligent, s'appuie sur le catalogue Djawal et les parcours déjà
+          Djawal IA, votre guide intelligent, s'appuie sur le catalogue Djawal et les parcours déjà
           composés par nos guides locaux pour vous proposer un itinéraire sur mesure.
         </p>
       </div>
