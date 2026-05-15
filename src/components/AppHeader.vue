@@ -301,13 +301,32 @@ const navItems = [
   font-weight: 500;
 }
 
-/* Mode transparent overlay sur la HomePage (hero image plein écran) */
+/* Mode transparent overlay sur toutes les pages publiques V4 (hero image / vert sombre) */
 .header-overlay {
   position: absolute !important;
   background: transparent !important;
   box-shadow: none !important;
   z-index: 100 !important;
   pointer-events: auto !important;
+}
+/* Force la transparence sur tous les éléments internes de Vuetify v-app-bar
+   (Vuetify 3 ajoute des classes spécifiques + variables CSS qui peuvent
+   garder un fond clair même avec color="transparent") */
+.header-overlay :deep(.v-toolbar),
+.header-overlay :deep(.v-toolbar__content),
+.header-overlay :deep(.v-app-bar__content),
+.header-overlay :deep(.v-toolbar-title),
+.header-overlay :deep(.v-app-bar) {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-bottom: none !important;
+}
+/* Variables CSS Vuetify : forcer surface transparente sur tout le header overlay */
+.header-overlay,
+.header-overlay :deep(*) {
+  --v-theme-surface: transparent !important;
+  --v-theme-overlay-multiplier: 0 !important;
 }
 .header-overlay .header-row,
 .header-overlay .nav-desktop,

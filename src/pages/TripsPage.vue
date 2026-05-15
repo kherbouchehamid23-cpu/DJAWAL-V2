@@ -879,6 +879,13 @@ function closeMobileMap() {
   font-size: 11px; font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+/* Sur la card vedette, le badge thème passe à DROITE pour éviter le chevauchement avec "Coup de cœur" */
+.dest-card-featured .theme-badge {
+  left: auto;
+  right: 16px;
+  top: 16px;
 }
 .featured-body { padding: 36px 32px; display: flex; flex-direction: column; justify-content: center; }
 .featured-body h3 {
