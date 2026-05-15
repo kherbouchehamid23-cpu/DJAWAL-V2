@@ -129,6 +129,13 @@ function themeLabel(theme: string) {
   <div class="trips-page">
     <!-- HERO COMPACT — V4 vert sombre avec vidéo Algérie -->
     <header class="trips-hero">
+      <!-- Backdrop flouté desktop (remplit les côtés en widescreen) -->
+      <video
+        class="trips-hero-video-backdrop"
+        src="/videos/algerie-hero.mp4"
+        autoplay muted loop playsinline preload="metadata"
+        aria-hidden="true"
+      ></video>
       <!-- Vidéo principale (image entière, sans crop) -->
       <video
         class="trips-hero-video"
@@ -303,12 +310,23 @@ function themeLabel(theme: string) {
   overflow: hidden;
   background: #0F2419;
 }
+.trips-hero-video-backdrop {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+  /* Backdrop bien visible : le mouvement de la vidéo se perçoit clairement */
+  filter: blur(28px) brightness(0.95) saturate(1.2);
+  transform: scale(1.15); /* évite les bords flous qui dépassent */
+}
 .trips-hero-video {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: contain;
   object-position: center;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
 }
 .trips-hero-overlay {
@@ -706,6 +724,14 @@ function themeLabel(theme: string) {
     padding: 90px 16px 40px;
   }
   .trips-hero h1 { text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65); }
+
+  /* Mobile : on retire le backdrop flouté (inutile + lourd GPU) */
+  /* La vidéo principale passe en "cover" pour remplir tout l'écran portrait */
+  .trips-hero-video-backdrop { display: none; }
+  .trips-hero-video {
+    object-fit: cover;
+    object-position: center;
+  }
 
   /* Filtres : search full-width sur sa propre ligne */
   .filters-bar { padding: 14px 16px; }
