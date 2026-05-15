@@ -129,6 +129,14 @@ function themeLabel(theme: string) {
   <div class="trips-page">
     <!-- HERO COMPACT — V4 vert sombre avec vidéo Algérie -->
     <header class="trips-hero">
+      <!-- Backdrop flouté (remplit les côtés en widescreen) -->
+      <video
+        class="trips-hero-video-backdrop"
+        src="/videos/algerie-hero.mp4"
+        autoplay muted loop playsinline preload="metadata"
+        aria-hidden="true"
+      ></video>
+      <!-- Vidéo principale (image entière, sans crop) -->
       <video
         class="trips-hero-video"
         src="/videos/algerie-hero.mp4"
@@ -302,19 +310,29 @@ function themeLabel(theme: string) {
   overflow: hidden;
   background: #0F2419;
 }
-.trips-hero-video {
+.trips-hero-video-backdrop {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;
   object-position: center;
   z-index: 0;
   pointer-events: none;
+  filter: blur(40px) brightness(0.55) saturate(1.1);
+  transform: scale(1.1); /* évite les bords flous qui dépassent */
+}
+.trips-hero-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  object-position: center;
+  z-index: 1;
+  pointer-events: none;
 }
 .trips-hero-overlay {
   position: absolute; inset: 0;
   /* Aucun voile — vidéo brute */
   background: transparent;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -328,7 +346,7 @@ function themeLabel(theme: string) {
     background-position: center;
   }
 }
-.hero-content { position: relative; z-index: 2; }
+.hero-content { position: relative; z-index: 3; }
 .hero-eyebrow {
   display: inline-flex; align-items: center; gap: 14px;
   color: #E8B96B;
