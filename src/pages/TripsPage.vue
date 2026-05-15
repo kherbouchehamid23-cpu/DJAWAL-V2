@@ -317,8 +317,9 @@ function themeLabel(theme: string) {
   object-position: center;
   z-index: 0;
   pointer-events: none;
-  filter: blur(40px) brightness(0.55) saturate(1.1);
-  transform: scale(1.1); /* évite les bords flous qui dépassent */
+  /* Backdrop bien visible : le mouvement de la vidéo se perçoit clairement */
+  filter: blur(28px) brightness(0.95) saturate(1.2);
+  transform: scale(1.15); /* évite les bords flous qui dépassent */
 }
 .trips-hero-video {
   position: absolute; inset: 0;
