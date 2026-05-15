@@ -263,10 +263,19 @@ const lastUpdate = '12 mai 2026'
 }
 .nav-legal a:hover { color: #FAF7F2; }
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
   .djawal-container { padding: 0 20px; }
-  .page-hero { min-height: 32vh; padding: 90px 20px 40px; }
-  .djawal-section { padding: 50px 0; }
-  .legal-content { padding: 32px 26px; }
+  .page-hero { min-height: 30vh; padding: 90px 16px 36px; }
+  .djawal-section { padding: 45px 0; }
+  .legal-content { padding: 28px 22px; }
+  .legal-content h2 { font-size: 21px; }
+  .legal-content p { font-size: 14.5px; }
+  .legal-content ul li {
+    padding: 6px 0 6px 18px;
+    font-size: 14px;
+  }
+}
+@media (max-width: 380px) {
+  .page-hero h1 { font-size: 26px; line-height: 1.15; }
 }
 </style>

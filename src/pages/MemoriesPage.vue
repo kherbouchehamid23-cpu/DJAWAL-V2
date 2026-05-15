@@ -362,9 +362,36 @@ function fmtDate(iso: string) {
 .mem-link a:hover { color: #FAF7F2; }
 .mem-link span { color: rgba(250, 247, 242, 0.55); font-style: italic; }
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
   .djawal-container { padding: 0 20px; }
-  .page-hero { min-height: 38vh; padding: 90px 20px 50px; }
-  .djawal-section { padding: 50px 0; }
+  .page-hero { min-height: 34vh; padding: 90px 16px 40px; }
+  .djawal-section { padding: 45px 0; }
+
+  /* Filtres : search + select chacun en pleine largeur */
+  .filters-bar { padding: 14px 16px; }
+  .filters-inner { gap: 10px; }
+  .search-wrap {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .dest-select {
+    width: 100%;
+    min-width: 0;
+  }
+  .theme-chips { width: 100%; justify-content: flex-start; }
+  .chip { padding: 7px 12px; font-size: 12.5px; }
+
+  /* Masonry : retrait du gap (inutile sur 1 colonne) + cards plus serrées */
+  .masonry { column-gap: 0; }
+  .mem-card { margin-bottom: 16px; }
+  .mem-body { padding: 18px 20px; }
+  .mem-quote { font-size: 17px; }
+  .mem-card[data-has-photo="false"] .mem-quote { font-size: 19px; }
+  .mem-photo { height: 200px; }
+}
+@media (max-width: 380px) {
+  .page-hero h1 { font-size: 30px; line-height: 1.1; }
+  .lead { font-size: 14.5px; }
 }
 </style>

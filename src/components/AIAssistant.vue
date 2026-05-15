@@ -3,6 +3,7 @@ import { ref, nextTick, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
+import djawalMonogram from '@/assets/branding/djawal-monogram.png'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -110,12 +111,7 @@ function goToDestination(id: string) {
     title="Demander à Djawal IA"
   >
     <span class="fab-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
-        <path d="M5 11 L12 15 L19 11"/>
-        <path d="M12 22 L12 15"/>
-        <path d="M9 6 L12 9 L15 6"/>
-      </svg>
+      <img :src="djawalMonogram" alt="" />
     </span>
     <span class="fab-label">Demander à Djawal IA</span>
   </button>
@@ -126,12 +122,7 @@ function goToDestination(id: string) {
       <header class="ai-head">
         <div class="ai-title">
           <span class="ai-emoji" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
-              <path d="M5 11 L12 15 L19 11"/>
-              <path d="M12 22 L12 15"/>
-              <path d="M9 6 L12 9 L15 6"/>
-            </svg>
+            <img :src="djawalMonogram" alt="" />
           </span>
           <div>
             <strong>Djawal IA</strong>
@@ -243,8 +234,14 @@ function goToDestination(id: string) {
   transform: translateY(-3px);
   box-shadow: 0 12px 32px rgba(10, 31, 46, 0.35);
 }
-.fab-icon { font-size: 18px; display: inline-flex; align-items: center; justify-content: center; }
-.fab-icon svg { width: 22px; height: 22px; }
+.fab-icon { display: inline-flex; align-items: center; justify-content: center; }
+.fab-icon img {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: #FAF7F2;
+  padding: 3px;
+  object-fit: contain;
+}
 
 .ai-drawer {
   position: fixed;
@@ -269,8 +266,14 @@ function goToDestination(id: string) {
   display: flex; justify-content: space-between; align-items: center;
 }
 .ai-title { display: flex; align-items: center; gap: 10px; }
-.ai-emoji { font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
-.ai-emoji svg { width: 28px; height: 28px; }
+.ai-emoji { display: inline-flex; align-items: center; justify-content: center; }
+.ai-emoji img {
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  background: #FAF7F2;
+  padding: 4px;
+  object-fit: contain;
+}
 .ai-title strong { display: block; font-size: 15px; }
 .ai-title small { font-size: 11px; opacity: 0.8; }
 .close-btn {

@@ -716,8 +716,39 @@ function themeLabel(theme: string) {
 @media (max-width: 600px) {
   .dest-card { grid-template-columns: 1fr; }
   .card-image { min-height: 170px; }
-  .filters-inner { gap: 12px; }
   .djawal-container { padding: 0 20px; }
-  .trips-hero { min-height: 38vh; padding: 90px 20px 40px; }
+
+  /* Hero : compact + perf vidéo allégée */
+  .trips-hero {
+    min-height: 36vh;
+    padding: 90px 16px 40px;
+  }
+  .trips-hero h1 { text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65); }
+  .trips-hero-video-backdrop {
+    /* Backdrop allégé en mobile pour économiser GPU */
+    filter: blur(14px) brightness(0.9) saturate(1.1);
+    transform: scale(1.08);
+  }
+
+  /* Filtres : search full-width sur sa propre ligne */
+  .filters-bar { padding: 14px 16px; }
+  .filters-inner { gap: 10px; }
+  .search-wrap {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .theme-chips { width: 100%; justify-content: flex-start; }
+  .chip { padding: 7px 12px; font-size: 12.5px; }
+
+  /* Voyages signés : titre + cards plus serrées */
+  .trips-showcase { padding: 50px 0; }
+  .showcase-head { margin-bottom: 22px; }
+  .trip-strip { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .trip-strip-cover { height: 130px; }
+}
+@media (max-width: 380px) {
+  .trips-hero h1 { font-size: 30px; line-height: 1.1; }
+  .lead { font-size: 14.5px; }
 }
 </style>

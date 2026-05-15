@@ -168,7 +168,7 @@ async function send() {
   color: #FAF7F2;
   font-family: 'Inter', sans-serif;
 }
-.djawal-container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.djawal-container { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
 .djawal-section { padding: 80px 0; }
 
 /* === HERO COMPACT V4 === */
