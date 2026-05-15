@@ -1,48 +1,39 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref, computed } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 
 const theme = useThemeStore()
 const auth = useAuthStore()
+const route = useRoute()
 const drawer = ref(false)
 const { isMobile } = useBreakpoint()
+
+// Transparent overlay sur la HomePage (hero image plein écran)
+const isHomePage = computed(() => route.path === '/')
 
 const navItems = [
   { to: '/voyages', label: 'Destinations' },
   { to: '/temoignages', label: 'Souvenirs' },
-  { to: '/composer', label: 'Fennec IA', accent: true }
+  { to: '/composer', label: 'Djawal IA', accent: true }
 ]
 </script>
 
 <template>
-  <v-app-bar v-if="!isMobile" :elevation="2" color="surface" height="72">
+  <v-app-bar
+    v-if="!isMobile"
+    :elevation="isHomePage ? 0 : 2"
+    :color="isHomePage ? 'transparent' : 'surface'"
+    :class="{ 'header-overlay': isHomePage }"
+    height="72"
+  >
     <v-container class="header-row" max-width="1340">
-      <!-- LOGO — Fibule de l'Aurès sur Vert Atlas -->
+      <!-- LOGO — Djawal officiel (violet + orange + silhouette voyageur) -->
       <RouterLink to="/" class="logo-wrap">
-        <div class="logo-mark">
-          <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
-            <!-- chaînette haute -->
-            <line x1="16" y1="1.5" x2="16" y2="5" stroke="#E8B547" stroke-width="1.3"/>
-            <!-- cercle ocre extérieur -->
-            <circle cx="16" cy="16" r="9.5" fill="none" stroke="#E8B547" stroke-width="1.4"/>
-            <!-- triangles berbères latéraux -->
-            <path d="M3 16 L7 13 L7 19 Z" fill="#E8B547"/>
-            <path d="M29 16 L25 13 L25 19 Z" fill="#E8B547"/>
-            <!-- émail rouge central -->
-            <circle cx="16" cy="16" r="3.2" fill="#B8312E"/>
-            <circle cx="16" cy="16" r="1.2" fill="#E8B547"/>
-            <!-- pendentif goutte -->
-            <circle cx="16" cy="29" r="1.4" fill="#E8B547"/>
-            <line x1="16" y1="26" x2="16" y2="28" stroke="#E8B547" stroke-width="1"/>
-          </svg>
-        </div>
-        <div class="logo-text">
-          <span class="logo-fr">Djawal</span>
-          <span class="logo-ar arabic">جوّال</span>
-        </div>
+        <img src="/branding/djawal-horizontal.png" alt="Djawal" class="logo-img" />
+        <span class="logo-ar arabic">جوّال</span>
       </RouterLink>
 
       <!-- NAV DESKTOP -->
@@ -102,15 +93,7 @@ const navItems = [
   <!-- === Mini header mobile === -->
   <header v-if="isMobile" class="mobile-header">
     <RouterLink to="/" class="mob-logo">
-      <div class="mob-mark">
-        <svg viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="16" cy="16" r="9.5" fill="none" stroke="#E8B547" stroke-width="1.4"/>
-          <path d="M3 16 L7 13 L7 19 Z" fill="#E8B547"/>
-          <path d="M29 16 L25 13 L25 19 Z" fill="#E8B547"/>
-          <circle cx="16" cy="16" r="3.2" fill="#B8312E"/>
-          <circle cx="16" cy="16" r="1.2" fill="#E8B547"/>
-        </svg>
-      </div>
+      <img src="/branding/djawal-monogram.png" alt="Djawal" class="mob-logo-img" />
       <span class="mob-name">Djawal<small class="arabic">جوّال</small></span>
     </RouterLink>
     <div class="mob-actions">
@@ -154,25 +137,24 @@ const navItems = [
 }
 .logo-mark {
   width: 44px; height: 44px;
-  background: #2D5A3D; /* Vert Atlas — verrouillé */
+  background: #2D5A3D; /* Vert Atlas — verrouillé (kept for retro-compat) */
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 0 0 2px rgba(232, 181, 71, 0.35);
 }
-.logo-text { line-height: 1; }
-.logo-fr {
+/* Logo image officiel Djawal (violet + orange) */
+.logo-img {
+  height: 44px;
+  width: auto;
   display: block;
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 600;
-  color: var(--c-primaire);
 }
 .logo-ar {
-  display: block;
   font-family: var(--font-arabic);
-  font-size: 13px;
+  font-size: 18px;
   color: var(--c-accent-fort);
-  margin-top: -2px;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
 }
 .nav-desktop {
   display: flex;
@@ -218,7 +200,7 @@ const navItems = [
   background-repeat: repeat-x;
   background-position: center;
 }
-/* Pill Fennec IA — surligné dans la nav */
+/* Pill Djawal IA — surligné dans la nav */
 .nav-link-fennec {
   display: inline-flex !important;
   align-items: center;
@@ -254,7 +236,7 @@ const navItems = [
 }
 .mob-mark {
   width: 32px; height: 32px;
-  background: #2D5A3D; /* Vert Atlas — verrouillé */
+  background: #2D5A3D; /* Vert Atlas — verrouillé (kept for retro-compat) */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -262,6 +244,13 @@ const navItems = [
   box-shadow: 0 0 0 1.5px rgba(232, 181, 71, 0.35);
 }
 .mob-mark svg { width: 18px; height: 18px; }
+.mob-logo-img {
+  width: 36px;
+  height: 36px;
+  display: block;
+  border-radius: 8px;
+  object-fit: cover;
+}
 .mob-name {
   font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
   font-size: 20px;
@@ -298,4 +287,18 @@ const navItems = [
   font-size: 12px;
   font-weight: 500;
 }
+
+/* Mode transparent overlay sur la HomePage (hero image plein écran) */
+.header-overlay {
+  position: absolute !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.header-overlay .nav-link {
+  color: rgba(250, 247, 242, 0.85) !important;
+}
+.header-overlay .nav-link:hover { color: #FAF7F2 !important; }
+.header-overlay .nav-link.router-link-active::after { display: none; }
+.header-overlay .login-btn { color: rgba(250, 247, 242, 0.85) !important; }
+.header-overlay .logo-img { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)); }
 </style>

@@ -2,23 +2,18 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
-import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSEO } from '@/composables/useSEO'
 
 useSEO({
-  title: 'L\'Algérie, vécue de l\'intérieur',
-  description: 'Du cœur de la Casbah aux dunes du Tassili. Connectez-vous avec les habitants ou laissez Fennec, notre IA, composer votre aventure sur-mesure.'
+  title: "L'Algérie, vécue de l'intérieur",
+  description: "Du cœur de la Casbah aux dunes du Tassili. Connectez-vous avec les habitants ou laissez Djawal IA composer votre aventure sur-mesure."
 })
 
 const router = useRouter()
-const { isMobile } = useBreakpoint()
-
 const stats = ref({ travellers: 12000, guides: 450 })
 const aiInput = ref('')
 
 onMounted(async () => {
-  // Stats agrégées depuis Supabase (non bloquant)
-  // Le fallback 450 reste tant qu'on n'a pas un nombre significatif de guides validés
   const { count: guidesCount } = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
@@ -31,40 +26,20 @@ function goToComposer(prefill?: string) {
   if (prefill) router.push({ path: '/composer', query: { q: prefill } })
   else router.push('/composer')
 }
-
 function submitAI() {
-  const q = aiInput.value.trim()
-  goToComposer(q || undefined)
+  goToComposer(aiInput.value.trim() || undefined)
+}
+function fmtNumber(n: number) {
+  return new Intl.NumberFormat('fr-FR').format(n)
 }
 
 const categories = [
-  {
-    key: 'sahara',
-    title: 'Magie du Sahara',
-    sub: 'Bivouac · 4×4 · Tassili',
-    count: '120+ guides',
-    arab: 'ⵜⵉⵏⵉⵔⵉ',
-    iconPath: 'M4 36 Q 12 28, 20 36 T 36 36 T 52 36 M14 18 a 4 4 0 0 1 8 0 a 4 4 0 0 1 8 0',
-    query: 'theme=saharien'
-  },
-  {
-    key: 'casbah',
-    title: 'Héritage & Casbah',
-    sub: 'Ruelles · histoire · architecture',
-    count: '85+ expériences',
-    arab: 'قصبة',
-    iconPath: 'M8 36 L8 18 L14 18 L14 14 L18 10 L22 14 L22 18 L28 18 L28 36 Z M16 24 L20 24 L20 32 L16 32 Z',
-    query: 'theme=mauresque'
-  },
-  {
-    key: 'saveurs',
-    title: 'Tables algériennes',
-    sub: 'Couscous · thé à la menthe · zaafrane',
-    count: '200+ hôtes',
-    arab: 'مطبخ',
-    iconPath: 'M18 6 L18 14 M14 6 L14 14 M22 6 L22 14 M14 14 L22 14 L22 18 L14 18 Z M14 18 L22 18 L20 32 L16 32 Z',
-    query: 'theme=aures'
-  }
+  { label: 'Sahara', query: '?theme=saharien', icon: 'M2 18 Q 6 14 10 18 T 18 18 T 22 18|M6 9 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0' },
+  { label: 'Casbah', query: '?theme=mauresque', icon: 'M4 20 L4 12 L8 12 L8 8 Q 12 4 16 8 L16 12 L20 12 L20 20 Z' },
+  { label: 'Aurès & Montagnes', query: '?theme=aures', icon: 'M3 20 L9 8 L13 14 L17 6 L21 20 Z' },
+  { label: 'Côte méditerranéenne', query: '?theme=mauresque', icon: 'M2 14 Q 6 10 10 14 T 18 14 T 22 14|M2 18 Q 6 14 10 18 T 18 18 T 22 18' },
+  { label: 'Tables d\'hôtes', query: '?type=table', icon: 'M6 10 L18 10 L17 18 L7 18 Z|M9 6 L9 10|M12 6 L12 10|M15 6 L15 10' },
+  { label: 'Trek & Randonnée', query: '?type=trek', icon: 'M3 20 L8 11 L12 16 L14 14 L21 20 Z|M17 6 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0' }
 ]
 
 const quickPrompts = [
@@ -74,267 +49,166 @@ const quickPrompts = [
   { label: 'Saveurs kabyles', q: 'Voyage gastronomique en Kabylie' }
 ]
 
-function fmtNumber(n: number) {
-  return new Intl.NumberFormat('fr-FR').format(n)
+const heroCards = [
+  { name: 'Tassili n\'Ajjer', sub: 'Saharien · UNESCO', arabic: 'طاسيلي', desc: 'Plateau de l\'art rupestre', img: 'https://images.pexels.com/photos/9351229/pexels-photo-9351229.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'saharien' },
+  { name: 'Casbah d\'Alger', sub: 'Mauresque · UNESCO', arabic: 'القصبة', desc: 'Médina ottomane vivante', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'mauresque' },
+  { name: 'Djurdjura', sub: 'Kabylie', arabic: 'جرجرة', desc: 'Cèdres et sommets de Kabylie', img: 'https://images.pexels.com/photos/14088291/pexels-photo-14088291.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'aures' },
+  { name: 'Ghardaïa', sub: 'Saharien · UNESCO', arabic: 'غرداية', desc: 'Vallée du M\'Zab mozabite', img: 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'saharien' },
+  { name: 'Tipaza', sub: 'Mauresque · UNESCO', arabic: 'تيبازة', desc: 'Ruines romaines face à la mer', img: 'https://images.pexels.com/photos/2901209/pexels-photo-2901209.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'mauresque' },
+  { name: 'Constantine', sub: 'Aurès', arabic: 'قسنطينة', desc: 'La ville des ponts suspendus', img: 'https://images.pexels.com/photos/1591375/pexels-photo-1591375.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'aures' },
+  { name: 'Timimoun', sub: 'Saharien', arabic: 'تيميمون', desc: 'L\'oasis rouge du Gourara', img: 'https://images.pexels.com/photos/2104881/pexels-photo-2104881.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'saharien' },
+  { name: 'Hoggar', sub: 'Saharien', arabic: 'الهقار', desc: 'Massif du Mont Tahat', img: 'https://images.pexels.com/photos/2382325/pexels-photo-2382325.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'saharien' },
+  { name: 'Tlemcen', sub: 'Mauresque', arabic: 'تلمسان', desc: 'Capitale zianide andalouse', img: 'https://images.pexels.com/photos/2335052/pexels-photo-2335052.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'mauresque' },
+  { name: 'Djémila', sub: 'Aurès · UNESCO', arabic: 'جميلة', desc: 'Cité romaine de Cuicul', img: 'https://images.pexels.com/photos/1631181/pexels-photo-1631181.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'aures' }
+]
+
+const signedTrips = [
+  { title: 'Cœur du Hoggar : silence et étoiles', duration: '9 jours · Hiver', desc: "Marche douce dans l'Atakor. Nuit chez les Touaregs. Lever de lune sur l'Assekrem.", guide: 'Yacine', guideRole: 'Touareg du Hoggar', price: '€1 480', img: 'https://images.pexels.com/photos/2382325/pexels-photo-2382325.jpeg?auto=compress&cs=tinysrgb&w=800' },
+  { title: "L'Algérie mauresque : Tlemcen, Casbah, Tipaza", duration: '7 jours · Toute saison', desc: 'Trois capitales, trois siècles. Mansourah, Casbah, ruines romaines face à la mer.', guide: 'Lina', guideRole: "Casbah d'Alger", price: '€1 180', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800' },
+  { title: "M'Zab : l'épure pour philosophie", duration: '5 jours · Printemps', desc: "Ghardaïa, Beni Isguen, El Atteuf. La sobriété mozabite comme art de vivre.", guide: 'Hamid', guideRole: "Senior · M'Zab", price: '€890', img: 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&cs=tinysrgb&w=800' }
+]
+
+const archCarousel = ref<HTMLElement | null>(null)
+function scrollCarousel(dir: 'left' | 'right') {
+  if (!archCarousel.value) return
+  const card = archCarousel.value.querySelector('.dest-card') as HTMLElement | null
+  const cardWidth = card ? card.offsetWidth + 18 : 280
+  archCarousel.value.scrollBy({ left: (dir === 'left' ? -1 : 1) * cardWidth * 3, behavior: 'smooth' })
 }
 </script>
 
 <template>
   <div class="home">
 
-    <!-- ================================================================ -->
-    <!-- HERO — titre éditorial + 3 cards latérales                       -->
-    <!-- ================================================================ -->
+    <!-- HERO image plein écran -->
     <section class="hero">
-      <div class="hero-inner djawal-container">
+      <img class="hero-img"
+           src="https://images.pexels.com/photos/1001435/pexels-photo-1001435.jpeg?auto=compress&cs=tinysrgb&w=1920"
+           alt="Dunes du Sahara algérien" />
+      <div class="hero-overlay"></div>
 
-        <!-- Colonne gauche : texte -->
-        <div class="hero-left">
-          <div class="hero-eyebrow">
-            <span class="eyebrow-spark" aria-hidden="true">✦</span>
-            <span class="arabic">مرحبا بكم</span>
-            <span class="eyebrow-divider">·</span>
-            <span class="eyebrow-text">MARHABA BIKOUM</span>
-          </div>
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="arabic">مرحبا بكم</span> · MARHABA BIKOUM
+        </div>
+        <h1>L'Algérie,<br><em>vécue de l'intérieur.</em></h1>
+        <p>Du cœur de la Casbah aux dunes du Tassili — voyagez aux côtés des Algériens qui racontent leur terre.</p>
 
-          <h1 class="hero-title">
-            L'Algérie,<br>
-            <em>vécue de l'intérieur.</em>
-          </h1>
-
-          <p class="hero-sub">
-            Du cœur de la Casbah aux dunes du Tassili. Connectez-vous
-            avec les habitants ou laissez Fennec, notre IA,
-            composer votre aventure sur-mesure.
-          </p>
-
-          <div class="hero-ctas">
-            <router-link to="/voyages" class="btn btn-primary">
-              Trouver mon voyage en Algérie
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12 L19 12 M13 5 L20 12 L13 19" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </router-link>
-            <button class="btn btn-ghost" @click="goToComposer()">
-              <svg class="fennec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
-                <path d="M5 11 L12 15 L19 11"/>
-                <path d="M12 22 L12 15"/>
-                <path d="M9 6 L12 9 L15 6"/>
-              </svg>
-              Demander à Fennec (notre IA)
+        <!-- BANDEAU IA central -->
+        <div class="hero-ia">
+          <form class="ia-pill" @submit.prevent="submitAI">
+            <div class="ia-mark" aria-hidden="true">
+              <img src="/branding/djawal-monogram.png" alt="" />
+            </div>
+            <input v-model="aiInput" type="text" class="ia-input ia-input-desktop"
+                   placeholder="Racontez-moi votre voyage idéal — Djawal IA compose le reste…"
+                   aria-label="Décrivez votre voyage" />
+            <input v-model="aiInput" type="text" class="ia-input ia-input-mobile"
+                   placeholder="Décrivez votre voyage idéal…"
+                   aria-label="Décrivez votre voyage" />
+            <button type="submit" class="ia-submit">Composer →</button>
+          </form>
+          <div class="ia-prompts">
+            <button v-for="p in quickPrompts" :key="p.label" type="button" class="ia-prompt" @click="goToComposer(p.q)">
+              {{ p.label }}
             </button>
-          </div>
-
-          <div class="hero-stats">
-            <span class="stats-dots" aria-hidden="true">
-              <span class="dot dot-1">A</span>
-              <span class="dot dot-2">Y</span>
-              <span class="dot dot-3">L</span>
-            </span>
-            <span class="stats-num">{{ fmtNumber(stats.travellers) }}+</span> voyageurs
-            <span class="stats-sep">·</span>
-            <span class="stats-num">{{ fmtNumber(stats.guides) }}</span> guides locaux
           </div>
         </div>
 
-        <!-- Colonne droite : 3 cards -->
-        <div class="hero-cards">
-          <article class="hcard hcard-tassili" @click="router.push('/voyages?theme=saharien')">
-            <div class="hcard-tif arabic">ⵜⵉⵏⵉⵔⵉ</div>
-            <svg class="hcard-figures" viewBox="0 0 80 80" fill="rgba(250,247,242,0.85)" aria-hidden="true">
-              <path d="M28 50 L28 32 L26 26 L28 22 L31 22 L33 26 L31 32 L31 50 Z"/>
-              <circle cx="29.5" cy="18" r="3"/>
-              <path d="M48 52 L48 30 L46 24 L48 20 L52 20 L54 24 L52 30 L52 52 Z"/>
-              <circle cx="50" cy="16" r="3"/>
-            </svg>
-            <div class="hcard-body">
-              <div class="hcard-title">Tassili n'Ajjer</div>
-              <div class="hcard-sub">Djanet · <span class="arabic">طاسيلي</span></div>
-              <div class="hcard-foot">
-                <span class="hcard-avatar">A</span>
-                <span>Guide · Aïssa</span>
+        <a href="#destinations" class="hero-cta-secondary">
+          Ou parcourir nos voyages signés <span aria-hidden="true">↓</span>
+        </a>
+
+        <div class="hero-stats">
+          <span class="stats-dots" aria-hidden="true">
+            <span class="dot dot-1">A</span>
+            <span class="dot dot-2">Y</span>
+            <span class="dot dot-3">L</span>
+          </span>
+          <span class="stats-num">{{ fmtNumber(stats.travellers) }}+</span> voyageurs ·
+          <span class="stats-num">{{ fmtNumber(stats.guides) }}</span> guides locaux
+        </div>
+      </div>
+    </section>
+
+    <!-- BANDEAU CATÉGORIES -->
+    <nav class="cat-banner" aria-label="Catégories rapides">
+      <div class="cat-banner-inner">
+        <button v-for="c in categories" :key="c.label" class="cat-chip" @click="router.push('/voyages' + c.query)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path v-for="(d, i) in c.icon.split('|')" :key="i" :d="d" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>{{ c.label }}</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- DESTINATIONS CARROUSEL -->
+    <section class="section destinations" id="destinations">
+      <div class="djawal-container">
+        <header class="section-head">
+          <div class="section-eyebrow">— 10 territoires à explorer —</div>
+          <h2>Choisissez <em>votre Algérie</em>.</h2>
+          <p class="section-lede">Chaque destination, une porte ouverte sur un univers.</p>
+        </header>
+
+        <div class="dest-carousel-wrap">
+          <div class="dest-carousel" ref="archCarousel">
+            <button v-for="d in heroCards" :key="d.name" class="dest-card" type="button"
+                    @click="router.push('/voyages?theme=' + d.theme)">
+              <img class="dest-card-img" :src="d.img" :alt="d.name" loading="lazy" />
+              <div class="dest-card-body">
+                <div class="dest-card-theme">— {{ d.sub }} —</div>
+                <div class="dest-card-title">{{ d.name }}<span class="dest-card-arabic arabic">{{ d.arabic }}</span></div>
+                <div class="dest-card-desc">{{ d.desc }}</div>
+              </div>
+            </button>
+          </div>
+          <div class="carousel-nav">
+            <button class="carousel-btn" type="button" @click="scrollCarousel('left')" aria-label="Précédent">←</button>
+            <button class="carousel-btn" type="button" @click="scrollCarousel('right')" aria-label="Suivant">→</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VOYAGES SIGNÉS DJAWAL -->
+    <section class="section signed-trips">
+      <div class="djawal-container">
+        <header class="section-head">
+          <div class="section-eyebrow">— Voyages signés Djawal —</div>
+          <h2>Trois récits, trois <em>quêtes différentes</em>.</h2>
+          <p class="section-lede">Pas un catalogue. Des invitations à vivre — composées par les guides eux-mêmes.</p>
+        </header>
+        <div class="trips-grid">
+          <article v-for="t in signedTrips" :key="t.title" class="trip-card" @click="router.push('/voyages')">
+            <div class="trip-img-wrap">
+              <img :src="t.img" :alt="t.title" loading="lazy" />
+              <span class="trip-duration-badge">{{ t.duration }}</span>
+            </div>
+            <div class="trip-body">
+              <h3 class="trip-title">{{ t.title }}</h3>
+              <p class="trip-desc">{{ t.desc }}</p>
+              <div class="trip-foot">
+                <div class="trip-guide">
+                  <strong>Avec {{ t.guide }}</strong>
+                  {{ t.guideRole }}
+                </div>
+                <div class="trip-price">{{ t.price }}<small>par voyageur</small></div>
               </div>
             </div>
           </article>
-
-          <article class="hcard hcard-casbah" @click="router.push('/voyages?theme=mauresque')">
-            <div class="hcard-badge">UNESCO · 1992</div>
-            <div class="hcard-body">
-              <div class="hcard-title">Casbah<br>d'Alger</div>
-              <div class="hcard-sub arabic">قصبة الجزائر</div>
-            </div>
-          </article>
-
-          <article class="hcard hcard-fennec" @click="goToComposer()">
-            <div class="hcard-fennec-pill">IA</div>
-            <div class="hcard-fennec-mark">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
-                <path d="M5 11 L12 15 L19 11"/>
-                <path d="M12 22 L12 15"/>
-                <path d="M9 6 L12 9 L15 6"/>
-              </svg>
-            </div>
-            <div class="hcard-body">
-              <div class="hcard-title hcard-title-fennec"><em>Fennec,</em><br>votre guide IA</div>
-              <p class="hcard-fennec-text">Décrivez votre mood,<br>il dessine votre voyage.</p>
-            </div>
-          </article>
         </div>
       </div>
     </section>
 
-    <!-- ================================================================ -->
-    <!-- CATÉGORIES — L'âme algérienne                                    -->
-    <!-- ================================================================ -->
-    <section class="categories">
-      <div class="djawal-container">
-        <header class="cat-head">
-          <div>
-            <h2>L'âme algérienne <em>— que cherchez-vous ?</em></h2>
-            <p class="cat-sub">Choisissez l'expérience qui vous appelle — Sahara, patrimoine, tables d'hôtes.</p>
-          </div>
-          <router-link to="/voyages" class="cat-link">
-            Voir toutes les expériences
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12 L19 12 M13 5 L20 12 L13 19" stroke-linecap="round"/></svg>
-          </router-link>
-        </header>
-
-        <div class="cat-grid">
-          <button
-            v-for="c in categories"
-            :key="c.key"
-            class="cat-card"
-            @click="router.push(`/voyages?${c.query}`)"
-          >
-            <div class="cat-icon">
-              <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-                <path :d="c.iconPath" />
-              </svg>
-            </div>
-            <div class="cat-arab arabic">{{ c.arab }}</div>
-            <h3>{{ c.title }}</h3>
-            <p>{{ c.sub }}</p>
-            <span class="cat-count">{{ c.count }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6 L15 12 L9 18" stroke-linecap="round"/></svg></span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================================================================ -->
-    <!-- ÉDITORIAL — Le Sahara, où le silence apprend à parler            -->
-    <!-- ================================================================ -->
-    <section class="editorial">
-      <div class="djawal-container editorial-inner">
-
-        <div class="editorial-text">
-          <div class="editorial-eyebrow">
-            <span class="arabic">ⵜⵉⵏⵉⵔⵉ</span>
-            <span class="editorial-divider"></span>
-            <span>Le désert raconté</span>
-          </div>
-
-          <h2 class="editorial-title">
-            Le Sahara —<br>
-            <em>où le silence apprend à parler.</em>
-          </h2>
-
-          <p>
-            Quarante pour cent du pays sont sable. Le Hoggar, le Tassili, le M'Zab — chacun avec son
-            propre tempo, sa propre cosmologie. Les Touaregs y vivent depuis trois mille ans, gardiens
-            d'un langage que les peintures rupestres murmurent encore.
-          </p>
-          <p>
-            Fennec vous y conduit avec ceux qui en parlent la langue.
-          </p>
-
-          <blockquote class="editorial-quote">
-            « Celui qui marche dans le désert n'avance pas — il se laisse traverser par lui. »
-            <cite>Proverbe touareg · Hoggar</cite>
-          </blockquote>
-        </div>
-
-        <article class="editorial-card">
-          <div class="ec-tif arabic">ⵜⵉⵏⵉⵔⵉ</div>
-          <div class="ec-body">
-            <div class="ec-title">Tassili n'Ajjer</div>
-            <div class="ec-sub">Wilaya d'Illizi</div>
-          </div>
-          <div class="ec-scene" aria-hidden="true">
-            <svg viewBox="0 0 200 120" fill="none">
-              <path d="M0 90 Q 50 70, 100 80 T 200 70 L 200 120 L 0 120 Z" fill="rgba(139, 74, 44, 0.7)"/>
-              <path d="M0 100 Q 60 88, 120 95 T 200 90 L 200 120 L 0 120 Z" fill="rgba(74, 39, 22, 0.8)"/>
-              <g fill="rgba(20, 12, 8, 0.9)">
-                <path d="M88 92 L88 78 L86 72 L88 68 L91 68 L93 72 L91 78 L91 92 Z"/>
-                <circle cx="89.5" cy="64" r="2.5"/>
-                <path d="M108 96 L108 76 L106 70 L108 66 L112 66 L114 70 L112 76 L112 96 Z"/>
-                <circle cx="110" cy="62" r="2.5"/>
-              </g>
-            </svg>
-          </div>
-          <div class="ec-foot">
-            <div class="ec-avatar">AT</div>
-            <div>
-              <strong>Aïssa Touareg</strong>
-              <small>12 ans · Djanet</small>
-            </div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- ================================================================ -->
-    <!-- FENNEC — carte verte avec input                                  -->
-    <!-- ================================================================ -->
-    <section class="fennec-box">
-      <div class="djawal-container">
-        <div class="fb-card">
-          <div class="fb-eyebrow">
-            <span class="fb-divider"></span>
-            VOTRE VOYAGE SUR-MESURE
-            <span class="fb-divider"></span>
-          </div>
-
-          <h2 class="fb-title">
-            <span class="fb-fennec-name">Fennec</span>, à votre écoute.
-          </h2>
-
-          <p class="fb-sub">
-            Décrivez simplement vos envies — « une retraite silencieuse dans le Tassili
-            avec de la gastronomie locale » ou « un road-trip côtier d'Oran à Annaba ».
-            Fennec compose le circuit, choisit les guides, propose le rythme.
-          </p>
-
-          <form class="fb-form" @submit.prevent="submitAI">
-            <span class="fb-input-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
-                <path d="M5 11 L12 15 L19 11"/>
-                <path d="M12 22 L12 15"/>
-                <path d="M9 6 L12 9 L15 6"/>
-              </svg>
-            </span>
-            <input
-              v-model="aiInput"
-              type="text"
-              placeholder="Racontez-moi votre voyage idéal…"
-              aria-label="Décrivez votre voyage"
-            />
-            <button type="submit" class="fb-submit">
-              Générer
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12 L19 12 M13 5 L20 12 L13 19" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </form>
-
-          <div class="fb-prompts">
-            <button
-              v-for="p in quickPrompts"
-              :key="p.label"
-              type="button"
-              class="fb-prompt"
-              @click="goToComposer(p.q)"
-            >{{ p.label }}</button>
-          </div>
-        </div>
+    <!-- TÉMOIGNAGE -->
+    <section class="testimonial">
+      <div class="testimonial-inner">
+        <img src="https://images.pexels.com/photos/2530364/pexels-photo-2530364.jpeg?auto=compress&cs=tinysrgb&w=400"
+             alt="Témoignage Amina" class="testimonial-avatar" loading="lazy" />
+        <p class="testimonial-quote">Un voyage inoubliable au cœur du Sahara. Djawal a su créer une expérience magique, à mille lieues du tourisme classique.</p>
+        <p class="testimonial-name">— AMINA B., PARIS</p>
       </div>
     </section>
 
@@ -343,735 +217,439 @@ function fmtNumber(n: number) {
 
 <style scoped>
 .home {
-  background: var(--c-fond, #FAF7F2);
-  min-height: 100vh;
-  padding-bottom: 80px;
+  background: var(--c-fond, #1A3A2A);
+  color: #FAF7F2;
+  font-family: 'Inter', sans-serif;
 }
-@media (min-width: 640px) {
-  .home { padding-bottom: 0; }
-}
+.arabic { font-family: 'Amiri', serif; }
+.djawal-container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 
-.djawal-container {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-@media (min-width: 640px) {
-  .djawal-container { padding: 0 32px; }
-}
-
-/* =============================================================== */
-/* HERO                                                            */
-/* =============================================================== */
+/* ========== HERO ========== */
 .hero {
-  background: linear-gradient(180deg, #F5EFDF 0%, #FAF7F2 100%);
-  padding: 32px 0 56px;
   position: relative;
+  height: 95vh;
+  min-height: 620px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
-.hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: -10%;
-  width: 70%;
-  height: 100%;
-  background-image: radial-gradient(ellipse at top right, rgba(45, 90, 61, 0.06), transparent 60%);
-  pointer-events: none;
+.hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(15, 36, 25, 0.5) 0%,
+    rgba(26, 58, 42, 0.35) 40%,
+    rgba(26, 58, 42, 0.75) 75%,
+    #1A3A2A 100%);
+  z-index: 1;
 }
-.hero-inner {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 32px;
+.hero-content {
+  position: relative; z-index: 2;
+  text-align: center;
+  max-width: 780px;
+  padding: 90px 32px 32px;
 }
-@media (min-width: 900px) {
-  .hero-inner {
-    grid-template-columns: 1.05fr 1fr;
-    gap: 48px;
-    align-items: center;
-  }
-}
-
 .hero-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 14px;
-  background: rgba(250, 247, 242, 0.7);
-  border: 1px solid rgba(212, 160, 79, 0.3);
+  display: inline-flex; gap: 10px;
+  padding: 7px 18px;
+  background: rgba(212, 168, 68, 0.18);
+  border: 1px solid rgba(212, 168, 68, 0.4);
   border-radius: 999px;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  font-weight: 500;
-  color: var(--c-accent-fort, #B8862E);
+  font-size: 11px; letter-spacing: 0.18em; font-weight: 500;
+  color: #E8B96B;
   margin-bottom: 24px;
+  text-transform: uppercase;
 }
-.eyebrow-spark { color: #D4A04F; font-size: 12px; }
-.eyebrow-divider { opacity: 0.5; }
-
-.hero-title {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: clamp(40px, 7vw, 68px);
-  line-height: 1.02;
-  margin: 0 0 20px;
+.hero h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(38px, 6vw, 70px);
+  line-height: 1.05;
   font-weight: 500;
-  color: var(--c-primaire-profond, #0A1F2E);
-  letter-spacing: -0.02em;
+  color: #FAF7F2;
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
 }
-.hero-title em {
+.hero h1 em { font-style: italic; color: #E8B96B; }
+.hero p {
+  font-family: 'Cormorant Garamond', serif;
   font-style: italic;
-  font-weight: 500;
-  color: var(--c-accent-fort, #B8862E);
+  font-size: 18px;
+  color: rgba(250, 247, 242, 0.78);
+  max-width: 580px;
+  margin: 0 auto 28px;
+  line-height: 1.5;
 }
 
-.hero-sub {
-  font-size: 16px;
-  line-height: 1.65;
-  color: var(--c-texte, #444441);
-  max-width: 480px;
-  margin: 0 0 28px;
-  font-weight: 400;
-}
-@media (min-width: 640px) {
-  .hero-sub { font-size: 17px; }
-}
-
-.hero-ctas {
-  display: flex;
-  flex-wrap: wrap;
+/* Bandeau IA central */
+.hero-ia { max-width: 720px; margin: 0 auto 18px; }
+.ia-pill {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   gap: 12px;
-  margin-bottom: 28px;
-}
-.btn {
-  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 13px 22px;
+  background: rgba(15, 36, 25, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(212, 168, 68, 0.5);
   border-radius: 999px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 10px 12px 10px 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.ia-mark {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: #FAF7F2;
+  padding: 4px;
+  box-shadow: 0 0 0 2.5px rgba(212, 168, 68, 0.55);
+  flex-shrink: 0;
+}
+.ia-mark img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.ia-input {
+  width: 100%; min-width: 0;
+  background: transparent; border: none; outline: none;
+  color: #FAF7F2; font-size: 14px;
+  padding: 10px 8px; font-family: inherit;
+}
+.ia-input::placeholder { color: rgba(250, 247, 242, 0.55); font-style: italic; }
+.ia-input-mobile { display: none; }
+.ia-submit {
+  background: #D4A844; color: #0F2419;
+  border: none; padding: 11px 22px;
+  border-radius: 999px;
+  font-weight: 600; font-size: 13px; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s;
+  box-shadow: 0 8px 20px rgba(212, 168, 68, 0.3);
   font-family: inherit;
-  cursor: pointer;
-  text-decoration: none;
-  border: none;
-  transition: transform 0.15s, box-shadow 0.15s;
 }
-.btn svg { width: 16px; height: 16px; }
-.btn:hover { transform: translateY(-1px); }
-.btn-primary {
-  background: var(--c-primaire-profond, #0A1F2E);
-  color: var(--c-fond, #FAF7F2);
+.ia-submit:hover { background: #E8B96B; transform: translateY(-1px); }
+.ia-prompts {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  justify-content: center; margin-top: 14px;
 }
-.btn-ghost {
-  background: transparent;
-  color: var(--c-primaire-profond, #0A1F2E);
-  border: 1px solid rgba(10, 31, 46, 0.18);
+.ia-prompt {
+  background: rgba(250, 247, 242, 0.08);
+  color: rgba(250, 247, 242, 0.78);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12px; font-family: inherit;
+  cursor: pointer; transition: all 0.2s;
 }
-.btn-ghost .fennec-icon { width: 20px; height: 20px; color: var(--c-accent-fort, #B8862E); }
-.btn-ghost:hover { background: rgba(212, 160, 79, 0.08); }
+.ia-prompt:hover { background: rgba(212, 168, 68, 0.2); border-color: #D4A844; color: #FAF7F2; }
+
+.hero-cta-secondary {
+  display: inline-block;
+  color: #E8B96B;
+  font-size: 13px; text-decoration: none;
+  margin-top: 6px; padding: 8px 14px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+.hero-cta-secondary:hover { color: #D4A844; }
 
 .hero-stats {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.6);
+  margin-top: 24px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  background: rgba(15, 36, 25, 0.5);
+  backdrop-filter: blur(8px);
   border-radius: 999px;
   font-size: 12px;
-  color: var(--c-texte-doux, #6B6B6B);
-  flex-wrap: wrap;
+  color: rgba(250, 247, 242, 0.78);
+  border: 1px solid rgba(232, 185, 107, 0.2);
 }
 .stats-dots { display: inline-flex; margin-right: 4px; }
 .dot {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: 600;
-  color: #fff;
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+  width: 22px; height: 22px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 600; color: #fff;
+  font-family: 'Cormorant Garamond', serif;
 }
-.dot-1 { background: #D4A04F; }
+.dot-1 { background: #D4A844; }
 .dot-2 { background: #2D5A3D; margin-left: -6px; }
-.dot-3 { background: #1B4965; margin-left: -6px; }
-.stats-num {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--c-primaire-profond, #0A1F2E);
-}
-.stats-sep { opacity: 0.4; margin: 0 4px; }
+.dot-3 { background: #C45A2C; margin-left: -6px; }
+.stats-num { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 500; color: #FAF7F2; }
 
-/* === Hero cards === */
-.hero-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
-  gap: 12px;
-}
-@media (min-width: 640px) {
-  .hero-cards { gap: 16px; }
-}
-
-.hcard {
+/* ========== BANDEAU CATÉGORIES ========== */
+.cat-banner {
+  background: rgba(31, 74, 54, 0.55);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(212, 168, 68, 0.18);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.18);
+  padding: 16px 0;
   position: relative;
+  z-index: 5;
+  overflow: hidden;
+}
+.cat-banner::before, .cat-banner::after {
+  content: ''; position: absolute;
+  top: 0; bottom: 0; width: 40px;
+  z-index: 6; pointer-events: none;
+}
+.cat-banner::before { left: 0; background: linear-gradient(to right, #1A3A2A 0%, transparent 100%); }
+.cat-banner::after { right: 0; background: linear-gradient(to left, #1A3A2A 0%, transparent 100%); }
+@media (min-width: 900px) {
+  .cat-banner::before, .cat-banner::after { display: none; }
+}
+.cat-banner-inner {
+  display: flex; gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 0 32px;
+  justify-content: flex-start;
+  -webkit-overflow-scrolling: touch;
+}
+.cat-banner-inner::-webkit-scrollbar { display: none; }
+@media (min-width: 900px) {
+  .cat-banner-inner { justify-content: center; overflow-x: visible; }
+}
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  background: rgba(250, 247, 242, 0.06);
+  border: 1px solid rgba(212, 168, 68, 0.25);
+  border-radius: 999px;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  color: #FAF7F2;
+  cursor: pointer; white-space: nowrap;
+  scroll-snap-align: start; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.cat-chip svg { width: 17px; height: 17px; color: #D4A844; flex-shrink: 0; }
+.cat-chip:hover {
+  background: rgba(212, 168, 68, 0.18);
+  border-color: #D4A844;
+  transform: translateY(-1px);
+}
+
+/* ========== SECTION HEADS ========== */
+.section { padding: 90px 0; position: relative; }
+.section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
+.section-eyebrow {
+  display: inline-block;
+  font-size: 12px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: #D4A844;
+  font-weight: 500; margin-bottom: 16px;
+}
+.section h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(30px, 4.5vw, 46px);
+  font-weight: 500; line-height: 1.1;
+  color: #FAF7F2; letter-spacing: -0.01em;
+  margin-bottom: 16px;
+}
+.section h2 em { font-style: italic; color: #E8B96B; }
+.section-lede {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 17px;
+  color: rgba(250, 247, 242, 0.55);
+  line-height: 1.55; max-width: 580px; margin: 0 auto;
+}
+
+/* ========== DESTINATIONS CARROUSEL ========== */
+.destinations { background: #0F2419; }
+.dest-carousel {
+  display: flex; gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding: 8px 0 24px;
+  -webkit-overflow-scrolling: touch;
+}
+.dest-carousel::-webkit-scrollbar { display: none; }
+.dest-card {
+  position: relative;
+  background: #2D5A3D;
   border-radius: 20px;
-  padding: 18px;
+  overflow: hidden;
   cursor: pointer;
+  flex: 0 0 calc((100% - 36px) / 3);
+  scroll-snap-align: start;
+  transition: transform 0.3s, box-shadow 0.3s;
   border: none;
+  padding: 0;
   text-align: left;
   font-family: inherit;
-  overflow: hidden;
-  transition: transform 0.25s;
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
+  color: inherit;
 }
-.hcard:hover { transform: translateY(-3px); }
-
-/* Tassili — ocre */
-.hcard-tassili {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  background: linear-gradient(165deg, #D4A04F 0%, #B8862E 50%, #8B4A2C 100%);
-  color: #FAF7F2;
-  min-height: 360px;
+.dest-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35); }
+.dest-card-img {
+  width: 100%; height: 240px;
+  object-fit: cover; display: block;
+  transition: transform 0.5s;
 }
-.hcard-tif {
-  position: absolute;
-  top: 14px; left: 14px;
-  font-family: 'Noto Sans Tifinagh', 'Amiri', serif;
-  font-size: 14px;
-  letter-spacing: 0.18em;
-  color: rgba(250, 247, 242, 0.55);
+.dest-card:hover .dest-card-img { transform: scale(1.06); }
+.dest-card-body { padding: 18px 20px 22px; }
+.dest-card-theme {
+  font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: #D4A844;
+  margin-bottom: 6px; font-weight: 500;
 }
-.hcard-figures {
-  position: absolute;
-  top: 38%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 60%;
-  opacity: 0.85;
-}
-.hcard-body { margin-top: auto; position: relative; z-index: 2; }
-.hcard-title {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.1;
+.dest-card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 500;
+  color: #FAF7F2; line-height: 1.1;
   margin-bottom: 4px;
 }
-.hcard-sub {
-  font-size: 11px;
-  opacity: 0.85;
-  margin-bottom: 12px;
-  letter-spacing: 0.02em;
+.dest-card-arabic {
+  font-size: 13px; color: #E8B96B;
+  opacity: 0.85; margin-left: 8px;
 }
-.hcard-foot {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  opacity: 0.95;
-  padding-top: 10px;
-  border-top: 1px solid rgba(250, 247, 242, 0.18);
-}
-.hcard-avatar {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: #FAF7F2;
-  color: var(--c-primaire-profond, #0A1F2E);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-}
-
-/* Casbah — navy */
-.hcard-casbah {
-  background: linear-gradient(165deg, #1B4965 0%, #0A1F2E 100%);
-  color: #FAF7F2;
-}
-.hcard-badge {
-  display: inline-block;
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  padding: 4px 9px;
-  background: rgba(212, 160, 79, 0.22);
-  color: #FFD479;
-  border-radius: 999px;
-  font-weight: 500;
-  align-self: flex-start;
-  margin-bottom: auto;
-}
-.hcard-casbah .hcard-title { font-size: 20px; }
-
-/* Fennec — blanc */
-.hcard-fennec {
-  background: #FFFFFF;
-  color: var(--c-primaire-profond, #0A1F2E);
-  border: 1px solid rgba(10, 31, 46, 0.06);
-}
-.hcard-fennec-pill {
-  position: absolute;
-  top: 14px; right: 14px;
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: #2D5A3D;
-  color: #E8B547;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-.hcard-fennec-mark {
-  width: 38px; height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FAF7F2, #F1ECE0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 14px;
-  color: var(--c-accent-fort, #B8862E);
-}
-.hcard-fennec-mark svg { width: 24px; height: 24px; }
-.hcard-title-fennec { font-size: 18px; }
-.hcard-title-fennec em {
-  font-style: italic;
-  color: var(--c-accent-fort, #B8862E);
-}
-.hcard-fennec-text {
-  font-size: 12px;
-  color: var(--c-texte, #444441);
-  margin: 6px 0 0;
-  line-height: 1.5;
-}
-
-/* =============================================================== */
-/* CATÉGORIES                                                      */
-/* =============================================================== */
-.categories {
-  background: var(--c-fond, #FAF7F2);
-  padding: 56px 0;
-}
-@media (min-width: 640px) { .categories { padding: 80px 0; } }
-
-.cat-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
-}
-.cat-head h2 {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: clamp(26px, 4.5vw, 38px);
-  line-height: 1.1;
-  font-weight: 500;
-  color: var(--c-primaire-profond, #0A1F2E);
-  margin: 0;
-  max-width: 700px;
-}
-.cat-head h2 em {
-  font-style: italic;
-  color: var(--c-texte-doux, #6B6B6B);
-  font-weight: 500;
-}
-.cat-sub {
-  font-size: 15px;
-  color: var(--c-texte-doux, #6B6B6B);
-  margin: 8px 0 0;
-  max-width: 520px;
-}
-.cat-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--c-accent-fort, #B8862E);
-  text-decoration: none;
-}
-.cat-link svg { width: 14px; height: 14px; }
-
-.cat-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-@media (min-width: 640px) {
-  .cat-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
-}
-
-.cat-card {
-  background: #FFFFFF;
-  border: 1px solid rgba(10, 31, 46, 0.06);
-  border-radius: 18px;
-  padding: 24px;
-  text-align: left;
-  font-family: inherit;
-  cursor: pointer;
-  position: relative;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-}
-.cat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 32px rgba(10, 31, 46, 0.07);
-  border-color: rgba(212, 160, 79, 0.3);
-}
-.cat-icon {
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  background: rgba(212, 160, 79, 0.1);
-  color: var(--c-accent-fort, #B8862E);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 18px;
-}
-.cat-icon svg { width: 28px; height: 28px; }
-.cat-arab {
-  font-family: 'Noto Sans Tifinagh', 'Amiri', serif;
-  font-size: 11px;
-  color: var(--c-accent-fort, #B8862E);
-  letter-spacing: 0.18em;
-  margin-bottom: 6px;
-  opacity: 0.7;
-}
-.cat-card h3 {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: 22px;
-  font-weight: 500;
-  color: var(--c-primaire-profond, #0A1F2E);
-  margin: 0 0 6px;
-  line-height: 1.15;
-}
-.cat-card p {
-  font-size: 13px;
-  color: var(--c-texte, #444441);
-  margin: 0 0 14px;
-  line-height: 1.5;
-}
-.cat-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--c-accent-fort, #B8862E);
-  letter-spacing: 0.02em;
-}
-.cat-count svg { width: 12px; height: 12px; }
-
-/* =============================================================== */
-/* ÉDITORIAL                                                       */
-/* =============================================================== */
-.editorial {
-  background: #F5EFE2;
-  padding: 64px 0;
-  position: relative;
-}
-@media (min-width: 640px) { .editorial { padding: 96px 0; } }
-
-.editorial-inner {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 36px;
-  align-items: start;
-}
-@media (min-width: 900px) {
-  .editorial-inner { grid-template-columns: 1.05fr 1fr; gap: 56px; }
-}
-
-.editorial-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  color: var(--c-accent-fort, #B8862E);
-  font-weight: 500;
-  margin-bottom: 18px;
-  text-transform: uppercase;
-}
-.editorial-divider {
-  width: 24px;
-  height: 1px;
-  background: var(--c-accent-fort, #B8862E);
-  opacity: 0.5;
-}
-.editorial-title {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: clamp(30px, 5vw, 46px);
-  line-height: 1.05;
-  font-weight: 500;
-  margin: 0 0 24px;
-  color: var(--c-primaire-profond, #0A1F2E);
-  letter-spacing: -0.015em;
-}
-.editorial-title em {
-  font-style: italic;
-  color: var(--c-accent-fort, #B8862E);
-  font-weight: 500;
-}
-.editorial-text p {
-  font-size: 15px;
-  line-height: 1.75;
-  color: var(--c-texte, #444441);
-  margin: 0 0 16px;
-}
-.editorial-quote {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-style: italic;
-  font-size: 17px;
-  line-height: 1.5;
-  color: var(--c-primaire-profond, #0A1F2E);
-  border-left: 2px solid var(--c-accent, #D4A04F);
-  padding: 8px 0 8px 20px;
-  margin: 24px 0 0;
-}
-.editorial-quote cite {
-  display: block;
-  font-style: normal;
-  font-family: 'Inter', sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  color: var(--c-accent-fort, #B8862E);
-  margin-top: 10px;
-  text-transform: uppercase;
-}
-
-.editorial-card {
-  background: linear-gradient(180deg, #F5BD7C 0%, #D4A04F 40%, #8B4A2C 100%);
-  border-radius: 24px;
-  overflow: hidden;
-  position: relative;
-  min-height: 480px;
-  display: flex;
-  flex-direction: column;
-}
-.ec-tif {
-  position: absolute;
-  top: 18px;
-  left: 18px;
-  font-family: 'Noto Sans Tifinagh', 'Amiri', serif;
-  font-size: 13px;
-  letter-spacing: 0.18em;
-  color: rgba(250, 247, 242, 0.7);
-}
-.ec-body {
-  padding: 56px 24px 0;
-  color: #FAF7F2;
-}
-.ec-title {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: 28px;
-  font-weight: 500;
-  line-height: 1;
-}
-.ec-sub {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  opacity: 0.85;
-  margin-top: 6px;
-  text-transform: uppercase;
-}
-.ec-scene {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  margin: 24px -8px 0;
-}
-.ec-scene svg { width: 100%; }
-.ec-foot {
-  background: rgba(10, 31, 46, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: 12px 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #FAF7F2;
-}
-.ec-avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  background: rgba(250, 247, 242, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-}
-.ec-foot strong {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-.ec-foot small {
-  font-size: 10px;
-  opacity: 0.85;
-  letter-spacing: 0.04em;
-}
-
-/* =============================================================== */
-/* FENNEC BOX                                                      */
-/* =============================================================== */
-.fennec-box {
-  padding: 64px 0;
-  background: var(--c-fond, #FAF7F2);
-}
-@media (min-width: 640px) { .fennec-box { padding: 96px 0 80px; } }
-
-.fb-card {
-  background: linear-gradient(165deg, #1B3A28 0%, #2D5A3D 60%, #1B3A28 100%);
-  border-radius: 28px;
-  padding: 48px 28px;
-  color: #FAF7F2;
-  position: relative;
-  overflow: hidden;
-}
-.fb-card::before {
-  content: '';
-  position: absolute;
-  top: -120px; right: -120px;
-  width: 380px; height: 380px;
-  background: radial-gradient(circle, rgba(212, 160, 79, 0.18) 0%, transparent 60%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-@media (min-width: 640px) { .fb-card { padding: 64px 56px; } }
-
-.fb-eyebrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  color: rgba(232, 181, 71, 0.85);
-  margin-bottom: 18px;
-  font-weight: 500;
-}
-.fb-divider {
-  width: 28px;
-  height: 1px;
-  background: rgba(232, 181, 71, 0.4);
-}
-
-.fb-title {
-  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
-  font-size: clamp(28px, 5vw, 44px);
-  line-height: 1.1;
-  text-align: center;
-  font-weight: 500;
-  margin: 0 0 18px;
-  letter-spacing: -0.015em;
-}
-.fb-fennec-name {
-  font-style: italic;
-  color: #E8B547;
-}
-
-.fb-sub {
-  text-align: center;
-  font-size: 15px;
-  line-height: 1.65;
-  color: rgba(250, 247, 242, 0.82);
-  max-width: 640px;
-  margin: 0 auto 28px;
-}
-
-.fb-form {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.dest-card-desc { font-size: 13px; color: rgba(250, 247, 242, 0.55); line-height: 1.5; }
+.carousel-nav { display: flex; justify-content: center; gap: 12px; margin-top: 28px; }
+.carousel-btn {
+  width: 48px; height: 48px; border-radius: 50%;
   background: rgba(250, 247, 242, 0.08);
-  border: 1px solid rgba(232, 181, 71, 0.3);
-  border-radius: 999px;
-  padding: 4px 4px 4px 18px;
-  max-width: 580px;
-  margin: 0 auto 18px;
-  position: relative;
-  z-index: 2;
-}
-.fb-input-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #E8B547;
-  flex-shrink: 0;
-}
-.fb-input-icon svg { width: 22px; height: 22px; }
-
-.fb-form input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #FAF7F2;
-  font-size: 14px;
-  font-family: inherit;
-  padding: 12px 8px;
-  min-width: 0;
-}
-.fb-form input::placeholder {
-  color: rgba(250, 247, 242, 0.5);
-  font-style: italic;
-}
-
-.fb-submit {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  background: linear-gradient(135deg, #E8B547, #B8862E);
-  color: var(--c-primaire-profond, #0A1F2E);
-  border: none;
-  border-radius: 999px;
-  font-weight: 500;
-  font-size: 13px;
-  font-family: inherit;
+  border: 1px solid rgba(212, 168, 68, 0.4);
+  color: #FAF7F2; font-size: 20px; font-weight: 600;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: transform 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-family: inherit;
 }
-.fb-submit:hover { transform: scale(1.03); }
-.fb-submit svg { width: 14px; height: 14px; }
+.carousel-btn:hover { background: #D4A844; color: #0F2419; border-color: #D4A844; transform: scale(1.06); }
 
-.fb-prompts {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  max-width: 580px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 2;
-}
-.fb-prompt {
-  background: rgba(250, 247, 242, 0.06);
-  border: 1px solid rgba(250, 247, 242, 0.14);
-  color: rgba(250, 247, 242, 0.9);
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-family: inherit;
+/* ========== VOYAGES SIGNÉS ========== */
+.signed-trips { background: #1A3A2A; }
+.trips-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.trip-card {
+  background: #2D5A3D;
+  border-radius: 20px;
+  overflow: hidden;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex; flex-direction: column;
 }
-.fb-prompt:hover {
-  background: rgba(232, 181, 71, 0.15);
-  border-color: rgba(232, 181, 71, 0.4);
+.trip-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35); }
+.trip-img-wrap { position: relative; height: 220px; overflow: hidden; }
+.trip-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+.trip-card:hover .trip-img-wrap img { transform: scale(1.06); }
+.trip-duration-badge {
+  position: absolute; top: 14px; left: 14px;
+  background: rgba(15, 36, 25, 0.85);
+  color: #E8B96B;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; font-weight: 500;
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+}
+.trip-body { padding: 20px 22px 22px; flex: 1; display: flex; flex-direction: column; }
+.trip-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 500;
+  color: #FAF7F2; line-height: 1.15;
+  margin-bottom: 10px;
+}
+.trip-desc { font-size: 14px; color: rgba(250, 247, 242, 0.55); line-height: 1.55; margin-bottom: 18px; flex: 1; }
+.trip-foot {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid rgba(212, 168, 68, 0.18);
+}
+.trip-guide { font-size: 12px; color: rgba(250, 247, 242, 0.55); }
+.trip-guide strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-weight: 500;
+  font-size: 15px; color: #E8B96B;
+  margin-bottom: 2px;
+}
+.trip-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 500;
+  color: #D4A844; text-align: right; line-height: 1;
+}
+.trip-price small {
+  display: block; font-style: italic;
+  font-size: 10px; color: rgba(250, 247, 242, 0.55);
+  margin-top: 4px; letter-spacing: 0.06em;
+}
+
+/* ========== TÉMOIGNAGE ========== */
+.testimonial { background: #0F2419; padding: 80px 32px; text-align: center; }
+.testimonial-inner { max-width: 680px; margin: 0 auto; }
+.testimonial-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  object-fit: cover; margin: 0 auto 24px;
+  border: 3px solid #D4A844;
+  display: block;
+}
+.testimonial-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 22px;
+  color: #FAF7F2; line-height: 1.45;
+  margin-bottom: 18px;
+}
+.testimonial-quote::before { content: '« '; color: #D4A844; }
+.testimonial-quote::after { content: ' »'; color: #D4A844; }
+.testimonial-name { font-size: 13px; color: #E8B96B; letter-spacing: 0.08em; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 900px) {
+  .hero { height: auto; min-height: 100vh; padding: 0; }
+  .hero-content { padding: 100px 20px 40px; }
+  .hero h1 { font-size: 42px; }
+  .hero p { font-size: 16px; margin-bottom: 24px; }
+  .djawal-container { padding: 0 20px; }
+  .cat-banner-inner { padding: 0 20px; }
+  .trips-grid { grid-template-columns: 1fr; gap: 18px; }
+  .dest-card { flex: 0 0 calc((100% - 24px) / 3); }
+  .dest-card-img { height: 200px; }
+  .dest-card-title { font-size: 18px; }
+  .section { padding: 70px 0; }
+}
+@media (max-width: 600px) {
+  .hero-content { padding: 88px 16px 32px; }
+  .hero h1 { font-size: 32px; line-height: 1.1; }
+  .hero p { font-size: 15px; margin-bottom: 20px; }
+  .hero-eyebrow { font-size: 10px; padding: 6px 14px; margin-bottom: 20px; }
+  .hero-stats { font-size: 11px; padding: 7px 14px; flex-wrap: wrap; justify-content: center; }
+  .hero-cta-secondary { font-size: 12px; }
+
+  /* Bandeau IA mobile : compact horizontal */
+  .hero-ia { max-width: 100%; margin: 0 auto 14px; padding: 0 4px; }
+  .ia-pill { grid-template-columns: 40px 1fr auto; padding: 6px 8px; gap: 8px; }
+  .ia-mark { width: 40px; height: 40px; padding: 3px; }
+  .ia-input { padding: 10px 4px; font-size: 13px; }
+  .ia-input-desktop { display: none; }
+  .ia-input-mobile { display: block; }
+  .ia-submit { padding: 9px 14px; font-size: 12px; }
+  .ia-prompts { gap: 6px; margin-top: 10px; }
+  .ia-prompt { font-size: 11px; padding: 6px 12px; }
+
+  .dest-card { flex: 0 0 calc((100% - 16px) / 3); }
+  .dest-card-img { height: 140px; }
+  .dest-card-title { font-size: 14px; }
+  .dest-card-desc { font-size: 11px; }
+  .dest-card-arabic { display: none; }
+  .dest-card-body { padding: 12px 14px 14px; }
+  .dest-card-theme { font-size: 9px; margin-bottom: 4px; }
+
+  .section { padding: 56px 0; }
+  .section h2 { font-size: 26px; }
+  .section-eyebrow { font-size: 11px; }
+  .section-lede { font-size: 15px; }
+  .trip-img-wrap { height: 180px; }
+  .trip-title { font-size: 19px; }
+  .testimonial { padding: 60px 16px; }
+  .testimonial-quote { font-size: 18px; }
+  .cat-chip { padding: 9px 14px; font-size: 12px; }
+  .cat-chip svg { width: 15px; height: 15px; }
+  .carousel-btn { width: 42px; height: 42px; font-size: 18px; }
+}
+@media (max-width: 380px) {
+  .hero h1 { font-size: 28px; }
+  .ia-pill { grid-template-columns: 36px 1fr auto; padding: 5px 6px; gap: 6px; }
+  .ia-mark { width: 36px; height: 36px; padding: 2px; }
+  .ia-input { font-size: 12px; padding: 8px 2px; }
+  .ia-submit { padding: 8px 12px; font-size: 11px; }
+  .ia-prompt { font-size: 10px; padding: 5px 10px; }
+  .dest-card { flex: 0 0 calc((100% - 16px) / 2); }
 }
 </style>
