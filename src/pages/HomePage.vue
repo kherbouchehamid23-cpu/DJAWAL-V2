@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useSEO } from '@/composables/useSEO'
+import djawalMonogram from '@/assets/branding/djawal-monogram.png'
 
 useSEO({
   title: "L'Algérie, vécue de l'intérieur",
@@ -98,7 +99,7 @@ function scrollCarousel(dir: 'left' | 'right') {
         <div class="hero-ia">
           <form class="ia-pill" @submit.prevent="submitAI">
             <div class="ia-mark" aria-hidden="true">
-              <img src="/branding/djawal-monogram.png" alt="" />
+              <img :src="djawalMonogram" alt="" />
             </div>
             <input v-model="aiInput" type="text" class="ia-input ia-input-desktop"
                    placeholder="Racontez-moi votre voyage idéal — Djawal IA compose le reste…"

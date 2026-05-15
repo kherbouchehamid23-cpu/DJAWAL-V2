@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import djawalLogoStacked from '@/assets/branding/djawal-stacked.png'
 const year = new Date().getFullYear()
 </script>
 
@@ -8,16 +9,7 @@ const year = new Date().getFullYear()
       <div class="footer-grid">
         <div class="footer-brand">
           <div class="logo-mark-inline">
-            <div class="footer-logo-circle">
-              <svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
-                <circle cx="16" cy="16" r="9.5" fill="none" stroke="#E8B547" stroke-width="1.4"/>
-                <path d="M3 16 L7 13 L7 19 Z" fill="#E8B547"/>
-                <path d="M29 16 L25 13 L25 19 Z" fill="#E8B547"/>
-                <circle cx="16" cy="16" r="3.2" fill="#B8312E"/>
-                <circle cx="16" cy="16" r="1.2" fill="#E8B547"/>
-              </svg>
-            </div>
-            <span class="brand-fr">Djawal.</span>
+            <img :src="djawalLogoStacked" alt="Djawal" class="footer-logo-img" />
             <span class="arabic brand-ar">جوّال</span>
           </div>
           <p>
@@ -40,7 +32,7 @@ const year = new Date().getFullYear()
           <h4>L'initiative</h4>
           <ul>
             <li><router-link to="/auth/signup?role=guide_junior">Devenir guide</router-link></li>
-            <li><router-link to="/composer">Fennec, notre IA</router-link></li>
+            <li><router-link to="/composer">Djawal IA</router-link></li>
             <li><router-link to="/about">Notre mission</router-link></li>
             <li><a href="mailto:hello@djawal.app">Contact</a></li>
           </ul>
@@ -94,17 +86,13 @@ const year = new Date().getFullYear()
   color: var(--c-fond);
   font-family: var(--font-display);
 }
-.footer-logo-circle {
-  width: 36px; height: 36px;
-  background: #2D5A3D;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 1.5px rgba(232, 181, 71, 0.4);
+.footer-logo-img {
+  height: 72px;
+  width: auto;
+  display: block;
+  border-radius: 12px;
 }
-.brand-fr { font-size: 24px; font-weight: 600; }
-.brand-ar { color: var(--c-accent); font-size: 16px; }
+.brand-ar { color: var(--c-accent); font-size: 18px; margin-left: 4px; }
 .locale-note { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .locale-flag { font-style: italic; }
 .locale-arab { color: var(--c-accent); }

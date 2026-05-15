@@ -4,6 +4,8 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import djawalLogoHorizontal from '@/assets/branding/djawal-horizontal.png'
+import djawalLogoMonogram from '@/assets/branding/djawal-monogram.png'
 
 const theme = useThemeStore()
 const auth = useAuthStore()
@@ -32,7 +34,7 @@ const navItems = [
     <v-container class="header-row" max-width="1340">
       <!-- LOGO — Djawal officiel (violet + orange + silhouette voyageur) -->
       <RouterLink to="/" class="logo-wrap">
-        <img src="/branding/djawal-horizontal.png" alt="Djawal" class="logo-img" />
+        <img :src="djawalLogoHorizontal" alt="Djawal" class="logo-img" />
         <span class="logo-ar arabic">جوّال</span>
       </RouterLink>
 
@@ -93,7 +95,7 @@ const navItems = [
   <!-- === Mini header mobile === -->
   <header v-if="isMobile" class="mobile-header">
     <RouterLink to="/" class="mob-logo">
-      <img src="/branding/djawal-monogram.png" alt="Djawal" class="mob-logo-img" />
+      <img :src="djawalLogoMonogram" alt="Djawal" class="mob-logo-img" />
       <span class="mob-name">Djawal<small class="arabic">جوّال</small></span>
     </RouterLink>
     <div class="mob-actions">
