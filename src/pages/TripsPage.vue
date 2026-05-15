@@ -312,7 +312,8 @@ function themeLabel(theme: string) {
 }
 .trips-hero-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(15, 36, 25, 0.55) 0%, rgba(15, 36, 25, 0.85) 60%, #0F2419 100%);
+  /* Vidéo affichée telle quelle — voile uniquement en bas pour la transition douce vers la page */
+  background: linear-gradient(180deg, transparent 0%, transparent 70%, rgba(15, 36, 25, 0.6) 90%, #0F2419 100%);
   z-index: 1;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -344,15 +345,17 @@ function themeLabel(theme: string) {
   font-weight: 400; line-height: 1.05;
   margin-bottom: 18px;
   color: #FAF7F2;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
 }
 .trips-hero h1 em { font-style: italic; color: #E8B96B; }
 .lead {
   font-family: 'Cormorant Garamond', serif;
   font-style: italic;
   font-size: clamp(16px, 2vw, 20px);
-  color: rgba(250, 247, 242, 0.78);
+  color: rgba(250, 247, 242, 0.88);
   max-width: 640px; margin: 0 auto;
   line-height: 1.5;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
 /* === FILTRES V4 === */
