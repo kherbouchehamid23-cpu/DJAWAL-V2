@@ -124,6 +124,96 @@ function validateAnswer(answer: string, contextNames: string[]): { passed: boole
   return { passed: true, notes: '' }
 }
 
+// =========================================================
+// ANALYSE DES CRITÈRES — extrait les 4 prérequis depuis le prompt utilisateur
+// 1. dates/durée  2. composition groupe  3. centres d'intérêt  4. budget
+// =========================================================
+interface CriteriaAnalysis {
+  hasDates: boolean
+  hasGroup: boolean
+  hasInterests: boolean
+  hasBudget: boolean
+  detected: {
+    dates: string | null
+    group: string | null
+    interests: string[] | null
+    budget: string | null
+  }
+  isTooVague: boolean
+  reformulated: string  // version reformulée propre du besoin
+}
+
+async function extractCriteria(question: string): Promise<CriteriaAnalysis> {
+  const prompt = `Tu es un analyseur de demandes de voyage. On te donne une demande de voyage en Algérie.
+Tu dois extraire les 4 critères suivants s'ils sont mentionnés, et juger si la demande est trop vague.
+
+CRITÈRES :
+1. dates ou durée (mois, saison, dates précises, nombre de jours)
+2. composition du groupe (nombre de personnes, enfants, famille, amis, solo, couple)
+3. activités ou centres d'intérêt (sahara, casbah, aurès, gastronomie, trek, culture, mer, montagne…) — un seul suffit
+4. budget (somme approximative, fourchette, économique/moyen/premium, "pas cher", etc.)
+
+ISTOO_VAGUE = true UNIQUEMENT si la demande est purement générale comme "voyage en Algérie", "vacances algérie", "découvrir l'Algérie" sans AUCUN autre indice.
+
+Demande : """${question}"""
+
+Réponds STRICTEMENT en JSON valide, rien d'autre. Format :
+{"hasDates":bool,"hasGroup":bool,"hasInterests":bool,"hasBudget":bool,"detected":{"dates":string|null,"group":string|null,"interests":[string]|null,"budget":string|null},"isTooVague":bool,"reformulated":"phrase claire reformulant le besoin"}`
+
+  try {
+    const { text } = await generate(prompt)
+    // Nettoyer la réponse pour extraire le JSON (Gemini ajoute parfois ```json...```)
+    let clean = text.trim()
+    if (clean.startsWith('```')) {
+      clean = clean.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '')
+    }
+    return JSON.parse(clean) as CriteriaAnalysis
+  } catch (e) {
+    // En cas d'erreur de parsing, on assume que tout est manquant et on continue avec RAG normal
+    console.warn('[extractCriteria] parse failed, fallback to permissive:', e)
+    return {
+      hasDates: false, hasGroup: false, hasInterests: false, hasBudget: false,
+      detected: { dates: null, group: null, interests: null, budget: null },
+      isTooVague: false,
+      reformulated: question
+    }
+  }
+}
+
+// Construire les questions à poser pour les critères manquants
+function buildClarificationQuestions(criteria: CriteriaAnalysis): { key: string; question: string; suggestions: string[] }[] {
+  const questions = []
+  if (!criteria.hasDates) {
+    questions.push({
+      key: 'dates',
+      question: 'Quand souhaitez-vous voyager ?',
+      suggestions: ['Printemps (mars-mai)', 'Été (juin-août)', 'Automne (sept-nov)', 'Hiver (déc-fév)', '1 semaine', '2 semaines', '10 jours']
+    })
+  }
+  if (!criteria.hasGroup) {
+    questions.push({
+      key: 'group',
+      question: 'Vous voyagez en combien et avec qui ?',
+      suggestions: ['Solo', 'Couple (2 personnes)', 'En famille avec enfants', 'Entre amis (3-4)', 'Grand groupe (5+)']
+    })
+  }
+  if (!criteria.hasInterests) {
+    questions.push({
+      key: 'interests',
+      question: "Qu'est-ce qui vous tente ?",
+      suggestions: ['Sahara & désert', 'Casbah & médinas', 'Aurès & montagnes', 'Côte méditerranéenne', 'Gastronomie', 'Trek & randonnée', 'Sites archéologiques']
+    })
+  }
+  if (!criteria.hasBudget) {
+    questions.push({
+      key: 'budget',
+      question: 'Quel est votre budget approximatif par personne ?',
+      suggestions: ['< 50 000 DA (économique)', '50 000 - 150 000 DA (moyen)', '150 000 - 300 000 DA (confort)', '> 300 000 DA (premium)']
+    })
+  }
+  return questions
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -132,7 +222,7 @@ serve(async (req) => {
   const startTime = Date.now()
 
   try {
-    const { question, user_id, destination_id } = await req.json()
+    const { question, user_id, destination_id, skip_analysis } = await req.json()
 
     if (!question || typeof question !== 'string' || question.length < 3) {
       return new Response(JSON.stringify({ error: 'Question requise (min. 3 caractères).' }), {
@@ -146,6 +236,35 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    // === ÉTAPE PRÉLIMINAIRE : analyse des critères (sauf si skip_analysis=true) ===
+    if (!skip_analysis) {
+      const criteria = await extractCriteria(question)
+
+      // Cas 1 : demande trop vague → redirection vers formulaire structuré
+      if (criteria.isTooVague) {
+        return new Response(JSON.stringify({
+          mode: 'too-vague',
+          answer: 'Votre demande est très large. Pour vous proposer un voyage qui vous correspond vraiment, je vous invite à utiliser notre composeur de voyage personnalisé qui posera quelques questions précises.',
+          redirect_to: '/composer?from=ai-vague',
+          criteria
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+
+      // Cas 2 : critères manquants → poser les questions ciblées
+      const allPresent = criteria.hasDates && criteria.hasGroup && criteria.hasInterests && criteria.hasBudget
+      if (!allPresent) {
+        const questions = buildClarificationQuestions(criteria)
+        return new Response(JSON.stringify({
+          mode: 'needs-clarification',
+          answer: `Très bien, j'ai bien noté ${criteria.reformulated ? `« ${criteria.reformulated} »` : 'votre envie'}. Pour vous proposer le voyage parfait, j'ai juste besoin de quelques précisions :`,
+          questions,
+          detected: criteria.detected,
+          original_question: question
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+      // Cas 3 : tout est présent → on continue le RAG normal ci-dessous
+    }
 
     // 1. Embed la question
     const queryEmbedding = await embed(question)

@@ -1,75 +1,63 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { useSEO } from '@/composables/useSEO'
+import djawalMonogram from '@/assets/branding/djawal-monogram.png'
+
+useSEO({ title: 'Djawal IA — Composer votre voyage en Algérie' })
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 
-interface Destination { id: string; name: string; cultural_theme: string }
-
-const destinations = ref<Destination[]>([])
-
-// Préférences
-const interests = ref<string[]>([])
-const duration = ref(5)
-const budget = ref<'eco' | 'medium' | 'premium'>('medium')
-const season = ref('printemps')
-const mobility = ref<'easy' | 'normal' | 'sport'>('normal')
-const destinationId = ref<string | null>(null)
-const note = ref('')
-
-const generating = ref(false)
-const response = ref<{ answer: string; resources: any[]; destinations: any[]; trips: any[] } | null>(null)
-const error = ref('')
-
-const interestsList = [
-  { v: 'desert', l: '🏜️ Désert' },
-  { v: 'mediterranee', l: '🌊 Méditerranée' },
-  { v: 'montagne', l: '⛰️ Montagne' },
-  { v: 'patrimoine', l: '🏛️ Patrimoine' },
-  { v: 'gastronomie', l: '🍴 Gastronomie' },
-  { v: 'spiritualite', l: '🌙 Spiritualité' },
-  { v: 'artisanat', l: '🧶 Artisanat' },
-  { v: 'aventure', l: '🥾 Aventure' },
-  { v: 'famille', l: '👨‍👩‍👧 Famille' },
-  { v: 'photo', l: '📸 Photo' }
-]
-
-const budgetLabels = {
-  eco: 'Économique (< 30 000 DA/p)',
-  medium: 'Moyen (30 000 - 80 000 DA/p)',
-  premium: 'Premium (> 80 000 DA/p)'
+interface Question {
+  key: string
+  question: string
+  suggestions: string[]
+}
+interface AIResponse {
+  mode?: 'too-vague' | 'needs-clarification' | undefined
+  answer?: string
+  questions?: Question[]
+  redirect_to?: string
+  resources?: any[]
+  destinations?: any[]
+  trips?: any[]
+  detected?: Record<string, any>
 }
 
-onMounted(async () => {
-  const { data } = await supabase
-    .from('destinations')
-    .select('id, name, cultural_theme')
-    .order('name')
-  destinations.value = (data as Destination[]) || []
+const aiInput = ref('')
+const generating = ref(false)
+const error = ref('')
+const response = ref<AIResponse | null>(null)
 
-  // Si on arrive depuis le bandeau IA homepage avec une requête → génération DIRECTE
+// Pile des réponses de l'utilisateur aux questions de clarification
+// + question originale qu'on accumule pour reformer le prompt complet
+const baseQuestion = ref('')
+const clarifications = ref<Record<string, string>>({})
+
+onMounted(async () => {
   const q = route.query.q
   if (typeof q === 'string' && q.trim()) {
-    note.value = q.trim()
-    await generateFromPrompt(q.trim())
+    aiInput.value = q.trim()
+    await submitInitial()
   }
 })
 
-// Génération libre (sans questionnaire structuré) — directement à partir du texte utilisateur
-async function generateFromPrompt(prompt: string) {
+// === Étape 1 : soumission initiale (analyse + RAG ou questions) ===
+async function submitInitial() {
+  const q = aiInput.value.trim()
+  if (!q) return
+  baseQuestion.value = q
+  clarifications.value = {}
   error.value = ''
   generating.value = true
   response.value = null
   try {
     const { data, error: fnErr } = await supabase.functions.invoke('ai-assistant', {
-      body: {
-        question: prompt,
-        user_id: auth.user?.id || null,
-        destination_id: null
-      }
+      body: { question: q, user_id: auth.user?.id || null }
     })
     if (fnErr) throw fnErr
     response.value = data
@@ -80,466 +68,471 @@ async function generateFromPrompt(prompt: string) {
   }
 }
 
-function toggleInterest(v: string) {
-  const idx = interests.value.indexOf(v)
-  if (idx >= 0) interests.value.splice(idx, 1)
-  else interests.value.push(v)
+// === Étape 2 : l'utilisateur clique sur une suggestion pour une question ===
+function pickSuggestion(key: string, value: string) {
+  clarifications.value[key] = value
 }
 
-async function generate() {
-  error.value = ''
-  if (interests.value.length === 0) {
-    error.value = 'Sélectionnez au moins un centre d\'intérêt.'
-    return
+// === Étape 3 : envoyer le prompt enrichi pour génération finale ===
+async function submitEnriched() {
+  // Construire prompt complet = base + précisions
+  const parts: string[] = [baseQuestion.value]
+  for (const [, v] of Object.entries(clarifications.value)) {
+    if (v) parts.push(v)
   }
-
+  const fullQuestion = parts.join('. ')
+  error.value = ''
   generating.value = true
+  const previousResponse = response.value
   response.value = null
-
-  const question = buildQuestion()
-
   try {
     const { data, error: fnErr } = await supabase.functions.invoke('ai-assistant', {
       body: {
-        question,
+        question: fullQuestion,
         user_id: auth.user?.id || null,
-        destination_id: destinationId.value
+        skip_analysis: true // on contourne l'analyse car on a déjà tout
       }
     })
     if (fnErr) throw fnErr
     response.value = data
   } catch (e: any) {
     error.value = e.message || 'Erreur lors de la génération.'
+    response.value = previousResponse
   } finally {
     generating.value = false
   }
 }
 
-function buildQuestion(): string {
-  const interestLabels = interests.value
-    .map(v => interestsList.find(i => i.v === v)?.l.replace(/^.+ /, ''))
-    .filter(Boolean)
-    .join(', ')
-
-  let q = `Compose-moi un parcours de ${duration.value} jours en Algérie. `
-  q += `Mes centres d'intérêt : ${interestLabels}. `
-  q += `Budget : ${budgetLabels[budget.value]}. `
-  q += `Saison : ${season.value}. `
-  q += `Mobilité : ${mobility.value === 'easy' ? 'facile (peu de marche)' : mobility.value === 'sport' ? 'sportive (trek possible)' : 'normale'}. `
-  if (destinationId.value) {
-    const dest = destinations.value.find(d => d.id === destinationId.value)
-    if (dest) q += `Destination ciblée : ${dest.name}. `
-  }
-  if (note.value.trim()) {
-    q += `Note complémentaire : ${note.value.trim()}.`
-  }
-  q += ' Propose un programme jour par jour avec sites, hébergements et tables à partir du catalogue Djawal.'
-  return q
+function resetAll() {
+  aiInput.value = ''
+  baseQuestion.value = ''
+  clarifications.value = {}
+  response.value = null
+  error.value = ''
 }
 
-function reset() {
-  response.value = null
+function goToStructuredForm() {
+  router.push('/composer/formulaire')
 }
 </script>
 
 <template>
   <div class="composer-page">
-    <header class="hero">
+    <header class="composer-hero">
       <div class="djawal-container">
-        <div class="eyebrow">✦ Composer avec Djawal IA</div>
-        <h1>Votre voyage, façonné par vos envies</h1>
-        <p class="lead">
-          Djawal IA, votre guide intelligent, s'appuie sur le catalogue Djawal et les parcours déjà
-          composés par nos guides locaux pour vous proposer un itinéraire sur mesure.
+        <div class="composer-eyebrow">
+          <img :src="djawalMonogram" alt="" class="composer-logo" />
+          <span>Composer avec Djawal IA</span>
+        </div>
+        <h1>Votre voyage, façonné par <em>vos envies</em></h1>
+        <p class="composer-lead">
+          Racontez-moi simplement ce qui vous tente. Si je manque d'informations,
+          je vous poserai quelques questions pour composer le voyage parfait.
         </p>
       </div>
     </header>
 
-    <div class="djawal-container djawal-section composer-body">
-      <!-- ÉTAT INITIAL : formulaire -->
-      <div v-if="!response" class="form-wrap">
-        <v-alert v-if="error" type="error" variant="tonal" class="mb-3">{{ error }}</v-alert>
-
-        <section class="block">
-          <h2>1. Vos centres d'intérêt</h2>
-          <p class="hint">Plusieurs choix possibles.</p>
-          <div class="interest-grid">
-            <button
-              v-for="i in interestsList"
-              :key="i.v"
-              class="interest-chip"
-              :class="{ active: interests.includes(i.v) }"
-              @click="toggleInterest(i.v)"
-            >
-              {{ i.l }}
-            </button>
-          </div>
-        </section>
-
-        <section class="block">
-          <h2>2. Cadre du voyage</h2>
-          <div class="grid-2">
-            <div class="field">
-              <label>Durée</label>
-              <div class="duration-row">
-                <input
-                  type="range"
-                  min="2"
-                  max="15"
-                  v-model.number="duration"
-                  class="duration-slider"
-                />
-                <span class="duration-value">{{ duration }} jour{{ duration > 1 ? 's' : '' }}</span>
-              </div>
-            </div>
-
-            <div class="field">
-              <label>Budget par personne</label>
-              <v-select
-                v-model="budget"
-                :items="[
-                  { value: 'eco', title: budgetLabels.eco },
-                  { value: 'medium', title: budgetLabels.medium },
-                  { value: 'premium', title: budgetLabels.premium }
-                ]"
-                density="comfortable"
-                variant="outlined"
-                hide-details
-              />
-            </div>
-
-            <div class="field">
-              <label>Saison</label>
-              <v-select
-                v-model="season"
-                :items="['printemps', 'été', 'automne', 'hiver']"
-                density="comfortable"
-                variant="outlined"
-                hide-details
-              />
-            </div>
-
-            <div class="field">
-              <label>Mobilité</label>
-              <v-select
-                v-model="mobility"
-                :items="[
-                  { value: 'easy', title: 'Facile — peu de marche' },
-                  { value: 'normal', title: 'Normale' },
-                  { value: 'sport', title: 'Sportive — trek, 4×4' }
-                ]"
-                density="comfortable"
-                variant="outlined"
-                hide-details
-              />
-            </div>
-          </div>
-
-          <div class="field mt-3">
-            <label>Destination ciblée (optionnel)</label>
-            <v-select
-              v-model="destinationId"
-              :items="[{ value: null, title: 'Toutes destinations' }, ...destinations.map(d => ({ value: d.id, title: d.name }))]"
-              density="comfortable"
-              variant="outlined"
-              hide-details
+    <main class="composer-main">
+      <div class="djawal-container">
+        <!-- Zone de saisie principale -->
+        <form v-if="!response || (!response.mode && !response.answer)" class="composer-input-wrap" @submit.prevent="submitInitial">
+          <div class="composer-input-row">
+            <textarea
+              v-model="aiInput"
+              class="composer-input"
+              rows="3"
+              placeholder="Exemple : Je veux partir en famille avec 2 enfants une semaine dans le Sahara en mars, budget 100 000 DA par personne…"
+              :disabled="generating"
             />
           </div>
-        </section>
+          <button class="composer-submit" type="submit" :disabled="!aiInput.trim() || generating">
+            <span v-if="!generating">Composer mon voyage →</span>
+            <span v-else>Djawal IA réfléchit…</span>
+          </button>
+        </form>
 
-        <section class="block">
-          <h2>3. Vos précisions (optionnel)</h2>
-          <v-textarea
-            v-model="note"
-            placeholder="Ex : Je voyage avec mes enfants de 8 et 12 ans. J'aimerais éviter les zones très chaudes. J'aime la photographie au lever du soleil…"
-            variant="outlined"
-            rows="3"
-            counter
-            maxlength="300"
-          />
-        </section>
+        <!-- Erreur -->
+        <div v-if="error" class="composer-error">⚠️ {{ error }}</div>
 
-        <div class="actions">
-          <v-btn
-            color="primary"
-            variant="flat"
-            size="x-large"
-            :loading="generating"
-            @click="generate"
-          >
-            ✨ Composer mon voyage
-          </v-btn>
-          <p class="ai-hint">L'IA s'appuie uniquement sur les ressources validées du catalogue Djawal.</p>
-        </div>
-      </div>
-
-      <!-- ÉTAT RÉPONSE -->
-      <div v-else class="result-wrap">
-        <div class="result-head">
-          <h2>Votre proposition Djawal</h2>
-          <v-btn variant="outlined" @click="reset">↶ Modifier les critères</v-btn>
+        <!-- MODE 1 : Demande trop vague → redirection -->
+        <div v-if="response?.mode === 'too-vague'" class="composer-vague">
+          <div class="vague-icon">💭</div>
+          <h2>Votre demande est très large</h2>
+          <p>{{ response.answer }}</p>
+          <button class="composer-submit" type="button" @click="goToStructuredForm">
+            Utiliser le composeur structuré →
+          </button>
+          <button class="composer-link" type="button" @click="resetAll">Reformuler ma demande</button>
         </div>
 
-        <article class="result-card">
-          <div class="result-badge">✨ Généré par l'IA — à valider avec un guide</div>
-          <p class="result-text">{{ response.answer }}</p>
-        </article>
-
-        <div v-if="response.trips && response.trips.length > 0" class="result-section">
-          <h3>🗺️ Parcours déjà composés qui pourraient correspondre</h3>
-          <div class="rich-grid">
-            <router-link
-              v-for="t in response.trips"
-              :key="t.id"
-              :to="`/voyages/${t.id}`"
-              class="rich-card"
-            >
-              <strong>{{ t.title }}</strong>
-              <span>{{ t.destination_name }} · {{ t.duration_days }}j · {{ t.price_da }} DA</span>
-            </router-link>
+        <!-- MODE 2 : Critères manquants → questions ciblées -->
+        <div v-if="response?.mode === 'needs-clarification'" class="composer-clarify">
+          <div class="clarify-intro">
+            <img :src="djawalMonogram" alt="" class="clarify-avatar" />
+            <p>{{ response.answer }}</p>
           </div>
-        </div>
 
-        <div v-if="response.destinations && response.destinations.length > 0" class="result-section">
-          <h3>📍 Destinations suggérées</h3>
-          <div class="rich-grid">
-            <router-link
-              v-for="d in response.destinations"
-              :key="d.id"
-              :to="`/destination/${d.id}`"
-              class="rich-card"
-            >
-              <strong>{{ d.name }}</strong>
-              <span>{{ d.wilaya }} · {{ d.cultural_theme }}</span>
-            </router-link>
+          <div class="clarify-recap" v-if="response.detected">
+            <strong>Ce que j'ai compris :</strong>
+            <ul>
+              <li v-if="response.detected.dates"><strong>Quand :</strong> {{ response.detected.dates }}</li>
+              <li v-if="response.detected.group"><strong>Groupe :</strong> {{ response.detected.group }}</li>
+              <li v-if="response.detected.interests && response.detected.interests.length">
+                <strong>Centres d'intérêt :</strong> {{ response.detected.interests.join(', ') }}
+              </li>
+              <li v-if="response.detected.budget"><strong>Budget :</strong> {{ response.detected.budget }}</li>
+            </ul>
           </div>
-        </div>
 
-        <div v-if="response.resources && response.resources.length > 0" class="result-section">
-          <h3>📌 Ressources concrètes</h3>
-          <div class="rich-grid">
-            <div
-              v-for="r in response.resources"
-              :key="r.resource_id"
-              class="rich-card static"
-            >
-              <strong>{{ r.name }}</strong>
-              <span>{{ r.resource_type }} · {{ r.destination_name }}</span>
+          <div v-for="q in response.questions" :key="q.key" class="clarify-question">
+            <h3>{{ q.question }}</h3>
+            <div class="clarify-suggestions">
+              <button
+                v-for="s in q.suggestions"
+                :key="s"
+                type="button"
+                class="clarify-chip"
+                :class="{ active: clarifications[q.key] === s }"
+                @click="pickSuggestion(q.key, s)"
+              >{{ s }}</button>
             </div>
+            <input
+              v-model="clarifications[q.key]"
+              type="text"
+              class="clarify-custom"
+              placeholder="Ou écrivez votre réponse ici…"
+            />
+          </div>
+
+          <div class="clarify-actions">
+            <button
+              class="composer-submit"
+              type="button"
+              :disabled="generating"
+              @click="submitEnriched"
+            >
+              <span v-if="!generating">Composer mon voyage avec ces précisions →</span>
+              <span v-else>Djawal IA compose…</span>
+            </button>
+            <button class="composer-link" type="button" @click="resetAll">Recommencer</button>
+          </div>
+        </div>
+
+        <!-- MODE 3 : Réponse complète de l'IA -->
+        <div v-if="response && response.answer && !response.mode" class="composer-answer">
+          <div class="answer-header">
+            <img :src="djawalMonogram" alt="" class="answer-avatar" />
+            <strong>Djawal IA</strong>
+          </div>
+          <div class="answer-text" v-html="(response.answer).replace(/\n/g, '<br>')"></div>
+
+          <!-- Ressources -->
+          <section v-if="response.destinations?.length" class="answer-section">
+            <h3>Destinations suggérées</h3>
+            <div class="answer-cards">
+              <button v-for="d in response.destinations" :key="d.id" class="answer-card" type="button" @click="router.push('/destination/' + d.id)">
+                <strong>{{ d.name }}</strong>
+                <small>{{ d.wilaya }} · {{ d.cultural_theme }}</small>
+                <p>{{ d.description?.slice(0, 100) }}…</p>
+              </button>
+            </div>
+          </section>
+
+          <section v-if="response.trips?.length" class="answer-section">
+            <h3>Voyages déjà composés</h3>
+            <div class="answer-cards">
+              <button v-for="t in response.trips" :key="t.id" class="answer-card" type="button" @click="router.push('/voyages/' + t.id)">
+                <strong>{{ t.title }}</strong>
+                <small>{{ t.duration_days }} j · {{ Math.round((t.price_da || 0) / 1000) }}K DA</small>
+                <p>{{ t.description?.slice(0, 100) }}…</p>
+              </button>
+            </div>
+          </section>
+
+          <div class="answer-actions">
+            <button class="composer-link" type="button" @click="resetAll">Nouvelle question</button>
+            <router-link to="/voyages" class="composer-link">Voir tous les voyages →</router-link>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.composer-page { background: var(--c-fond); min-height: 100vh; }
+.composer-page {
+  background: linear-gradient(180deg, #0F2419 0%, #1A3A2A 100%);
+  min-height: 100vh;
+  color: #FAF7F2;
+  font-family: 'Inter', sans-serif;
+}
+.djawal-container { max-width: 900px; margin: 0 auto; padding: 0 32px; }
 
-.hero {
-  background: var(--c-fond-chaud);
-  padding: var(--space-7) var(--space-5) var(--space-5);
-  position: relative;
-  overflow: hidden;
-}
-.hero::before {
-  content: ''; position: absolute; inset: 0;
-  background-image: var(--motif-principal-url);
-  opacity: 0.3;
-}
-.eyebrow {
-  color: var(--c-accent-fort);
-  font-size: 13px; font-weight: 700;
-  letter-spacing: 0.2em; text-transform: uppercase;
-  margin-bottom: var(--space-2);
-  position: relative;
-}
-.hero h1 {
-  font-family: var(--font-display);
-  font-size: clamp(32px, 4.5vw, 52px);
-  color: var(--c-primaire-profond);
-  margin-bottom: var(--space-2);
-  position: relative;
-}
-.lead {
-  font-size: 17px;
-  color: var(--c-primaire);
-  max-width: 720px;
-  position: relative;
-  line-height: 1.5;
-}
-
-.composer-body { max-width: 880px; margin: 0 auto; }
-
-.block {
-  background: var(--c-surface);
-  border-radius: var(--r-lg);
-  padding: var(--space-5);
-  margin-bottom: var(--space-4);
-  box-shadow: var(--ombre-douce);
-}
-.block h2 {
-  font-family: var(--font-display);
-  font-size: 22px;
-  color: var(--c-primaire-profond);
-  margin-bottom: 4px;
-}
-.hint { color: var(--c-texte-doux); font-size: 13px; margin-bottom: var(--space-3); }
-
-.interest-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--space-2);
-}
-.interest-chip {
-  background: var(--c-fond-chaud);
-  border: 2px solid transparent;
-  border-radius: var(--r-md);
-  padding: 14px 12px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--c-primaire-profond);
-  cursor: pointer;
-  transition: var(--t-base);
-}
-.interest-chip:hover { border-color: var(--c-accent); }
-.interest-chip.active {
-  background: var(--c-accent);
-  color: var(--c-fond);
-  border-color: var(--c-accent);
-  transform: translateY(-2px);
-  box-shadow: var(--ombre-douce);
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
-}
-@media (max-width: 600px) {
-  .grid-2 { grid-template-columns: 1fr; }
-}
-.field { display: flex; flex-direction: column; gap: 4px; }
-.field label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--c-primaire-profond);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.duration-row { display: flex; align-items: center; gap: var(--space-3); }
-.duration-slider {
-  flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--c-fond-chaud);
-  -webkit-appearance: none;
-  appearance: none;
-}
-.duration-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px; height: 22px;
-  background: var(--c-accent);
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: var(--ombre-douce);
-}
-.duration-value {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--c-accent-fort);
-  min-width: 90px;
-  text-align: right;
-}
-
-.actions {
+.composer-hero {
+  padding: 100px 0 60px;
   text-align: center;
-  margin-top: var(--space-4);
+  position: relative;
 }
-.ai-hint {
-  margin-top: var(--space-2);
-  font-size: 12px;
-  color: var(--c-texte-doux);
+.composer-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><g fill='none' stroke='%23D4A844' stroke-width='0.5' opacity='0.05'><path d='M100 30 L112 70 L152 70 L120 95 L132 135 L100 110 L68 135 L80 95 L48 70 L88 70 Z'/></g></svg>");
+  background-size: 200px 200px;
+  pointer-events: none;
+}
+.composer-hero > * { position: relative; }
+
+.composer-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 18px;
+  background: rgba(212, 168, 68, 0.18);
+  border: 1px solid rgba(212, 168, 68, 0.4);
+  border-radius: 999px;
+  font-size: 11px; letter-spacing: 0.18em;
+  color: #E8B96B;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+}
+.composer-logo {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  object-fit: contain;
+}
+.composer-hero h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: #FAF7F2;
+  margin-bottom: 16px;
+}
+.composer-hero h1 em { font-style: italic; color: #E8B96B; }
+.composer-lead {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: rgba(250, 247, 242, 0.78);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+.composer-main { padding-bottom: 100px; }
+
+.composer-input-wrap {
+  background: rgba(31, 74, 54, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 30px;
+}
+.composer-input {
+  width: 100%;
+  background: rgba(15, 36, 25, 0.4);
+  border: 1px solid rgba(212, 168, 68, 0.2);
+  border-radius: 14px;
+  color: #FAF7F2;
+  padding: 16px 18px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 90px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.composer-input:focus { border-color: #D4A844; }
+.composer-input::placeholder { color: rgba(250, 247, 242, 0.45); font-style: italic; }
+.composer-submit {
+  margin-top: 14px;
+  background: #D4A844;
+  color: #0F2419;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-weight: 600; font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  box-shadow: 0 8px 20px rgba(212, 168, 68, 0.3);
+}
+.composer-submit:hover:not(:disabled) { background: #E8B96B; transform: translateY(-1px); }
+.composer-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+.composer-link {
+  background: transparent;
+  border: none;
+  color: #E8B96B;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 12px;
+  font-family: inherit;
   font-style: italic;
 }
 
-/* === RÉSULTAT === */
-.result-head {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: var(--space-4);
-  flex-wrap: wrap; gap: var(--space-3);
-}
-.result-head h2 {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 3vw, 36px);
-  color: var(--c-primaire-profond);
+.composer-error {
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+  color: #FFB3B3;
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
 }
 
-.result-card {
-  background: var(--c-surface);
-  border-radius: var(--r-lg);
-  padding: var(--space-5);
-  box-shadow: var(--ombre-douce);
-  border-left: 4px solid var(--c-accent);
-  margin-bottom: var(--space-5);
+.composer-vague {
+  text-align: center;
+  padding: 50px 30px;
+  background: rgba(31, 74, 54, 0.4);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  border-radius: 20px;
 }
-.result-badge {
-  display: inline-block;
-  background: rgba(212, 160, 79, 0.15);
-  color: var(--c-accent-fort);
-  padding: 4px 12px;
-  border-radius: var(--r-pill);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: var(--space-3);
+.vague-icon { font-size: 48px; margin-bottom: 14px; }
+.composer-vague h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 500;
+  color: #FAF7F2; margin-bottom: 12px;
 }
-.result-text {
+.composer-vague p {
+  color: rgba(250, 247, 242, 0.78);
+  font-size: 15px; line-height: 1.55;
+  margin-bottom: 24px;
+  max-width: 480px; margin-left: auto; margin-right: auto;
+}
+
+.composer-clarify {
+  background: rgba(31, 74, 54, 0.45);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  border-radius: 20px;
+  padding: 30px;
+}
+.clarify-intro {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
+  margin-bottom: 22px;
+}
+.clarify-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: #FAF7F2;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.clarify-intro p {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 17px;
+  color: #FAF7F2; line-height: 1.5; margin: 0;
+}
+.clarify-recap {
+  background: rgba(212, 168, 68, 0.1);
+  border-left: 3px solid #D4A844;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+.clarify-recap strong { color: #E8B96B; }
+.clarify-recap ul { list-style: none; padding: 0; margin: 8px 0 0; }
+.clarify-recap li { padding: 3px 0; color: rgba(250, 247, 242, 0.85); }
+.clarify-recap li strong { color: #D4A844; }
+
+.clarify-question {
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed rgba(212, 168, 68, 0.15);
+}
+.clarify-question:last-of-type { border-bottom: none; padding-bottom: 0; }
+.clarify-question h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px; font-weight: 500;
+  color: #FAF7F2; margin-bottom: 12px;
+}
+.clarify-suggestions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.clarify-chip {
+  background: rgba(250, 247, 242, 0.08);
+  border: 1px solid rgba(212, 168, 68, 0.35);
+  color: rgba(250, 247, 242, 0.85);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.clarify-chip:hover { background: rgba(212, 168, 68, 0.18); border-color: #D4A844; color: #FAF7F2; }
+.clarify-chip.active { background: #D4A844; border-color: #D4A844; color: #0F2419; font-weight: 600; }
+.clarify-custom {
+  width: 100%;
+  background: rgba(15, 36, 25, 0.4);
+  border: 1px solid rgba(212, 168, 68, 0.2);
+  border-radius: 10px;
+  color: #FAF7F2;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  margin-top: 8px;
+}
+.clarify-custom::placeholder { color: rgba(250, 247, 242, 0.4); font-style: italic; }
+.clarify-actions { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 24px; }
+
+.composer-answer {
+  background: rgba(31, 74, 54, 0.45);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  border-radius: 20px;
+  padding: 30px;
+}
+.answer-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
+}
+.answer-avatar { width: 36px; height: 36px; border-radius: 50%; background: #FAF7F2; padding: 4px; }
+.answer-header strong { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 17px; color: #E8B96B; }
+.answer-text {
   font-size: 16px;
   line-height: 1.7;
-  color: var(--c-texte);
-  white-space: pre-wrap;
+  color: #FAF7F2;
+  margin-bottom: 30px;
 }
-
-.result-section { margin-bottom: var(--space-5); }
-.result-section h3 {
-  font-family: var(--font-display);
-  font-size: 22px;
-  color: var(--c-primaire-profond);
-  margin-bottom: var(--space-3);
+.answer-section { margin-top: 24px; }
+.answer-section h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 500;
+  color: #E8B96B;
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
 }
-.rich-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-2);
-}
-.rich-card {
-  background: var(--c-surface);
-  border-radius: var(--r-md);
-  padding: var(--space-3);
-  box-shadow: var(--ombre-douce);
-  text-decoration: none;
+.answer-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.answer-card {
+  background: rgba(15, 36, 25, 0.5);
+  border: 1px solid rgba(212, 168, 68, 0.18);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
   color: inherit;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: var(--t-base);
 }
-.rich-card:not(.static):hover {
-  transform: translateY(-2px);
-  box-shadow: var(--ombre-elevee);
-}
-.rich-card strong {
-  color: var(--c-primaire-profond);
-  font-size: 14px;
-}
-.rich-card span {
-  color: var(--c-texte-doux);
-  font-size: 12px;
+.answer-card:hover { background: rgba(15, 36, 25, 0.7); border-color: #D4A844; transform: translateY(-2px); }
+.answer-card strong { display: block; color: #FAF7F2; font-family: 'Cormorant Garamond', serif; font-size: 16px; margin-bottom: 4px; }
+.answer-card small { display: block; color: #E8B96B; font-size: 11px; letter-spacing: 0.06em; margin-bottom: 8px; }
+.answer-card p { font-size: 12px; color: rgba(250, 247, 242, 0.65); line-height: 1.45; margin: 0; }
+.answer-actions { margin-top: 28px; display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.answer-actions .composer-link { margin-top: 0; }
+
+@media (max-width: 700px) {
+  .composer-hero { padding: 80px 0 40px; }
+  .composer-hero h1 { font-size: 28px; }
+  .composer-lead { font-size: 16px; }
+  .djawal-container { padding: 0 20px; }
+  .composer-input-wrap, .composer-clarify, .composer-answer { padding: 18px; }
+  .answer-cards { grid-template-columns: 1fr; }
 }
 </style>
