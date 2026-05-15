@@ -18,6 +18,7 @@ const isHomePage = computed(() => route.path === '/')
 
 const navItems = [
   { to: '/voyages', label: 'Destinations' },
+  { to: '/voyages', label: 'Voyages signés' },
   { to: '/temoignages', label: 'Souvenirs' },
   { to: '/composer', label: 'Djawal IA', accent: true }
 ]
@@ -46,12 +47,7 @@ const navItems = [
           class="nav-link"
           :class="{ 'nav-link-fennec': item.accent }"
         >
-          <svg v-if="item.accent" class="nav-fennec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 22 L5 11 L2 2 L9 6 L12 4 L15 6 L22 2 L19 11 Z"/>
-            <path d="M5 11 L12 15 L19 11"/>
-            <path d="M12 22 L12 15"/>
-            <path d="M9 6 L12 9 L15 6"/>
-          </svg>
+          <img v-if="item.accent" :src="djawalLogoMonogram" alt="" class="nav-djawal-icon" aria-hidden="true" />
           {{ item.label }}
         </RouterLink>
       </nav>
@@ -199,15 +195,21 @@ const navItems = [
 .nav-link-fennec {
   display: inline-flex !important;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px !important;
-  background: linear-gradient(135deg, rgba(212, 160, 79, 0.18), rgba(184, 134, 46, 0.12));
+  gap: 8px;
+  padding: 7px 16px 7px 10px !important;
+  background: linear-gradient(135deg, rgba(212, 160, 79, 0.25), rgba(184, 134, 46, 0.18));
   color: var(--c-accent-fort, #B8862E) !important;
   border-radius: 999px;
   text-transform: uppercase;
+  border: 1px solid rgba(184, 134, 46, 0.35);
 }
 .nav-link-fennec.router-link-active::after { display: none; }
-.nav-fennec-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-djawal-icon {
+  width: 24px; height: 24px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: contain;
+}
 
 /* === Mini header mobile === */
 .mobile-header {
@@ -299,10 +301,23 @@ const navItems = [
   z-index: 101;
 }
 .header-overlay .nav-link {
-  color: rgba(250, 247, 242, 0.85) !important;
+  color: #FAF7F2 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
-.header-overlay .nav-link:hover { color: #FAF7F2 !important; }
+.header-overlay .nav-link:hover { color: #FFD479 !important; }
 .header-overlay .nav-link.router-link-active::after { display: none; }
-.header-overlay .login-btn { color: rgba(250, 247, 242, 0.85) !important; }
+/* Pill IA Djawal visible sur fond foncé */
+.header-overlay .nav-link-fennec {
+  background: rgba(212, 160, 79, 0.95) !important;
+  color: #0A1F2E !important;
+  border: 1px solid rgba(255, 212, 121, 0.7) !important;
+  text-shadow: none !important;
+  box-shadow: 0 4px 14px rgba(212, 160, 79, 0.4);
+}
+.header-overlay .nav-link-fennec:hover {
+  background: #E8B547 !important;
+  color: #0A1F2E !important;
+}
+.header-overlay .login-btn { color: #FAF7F2 !important; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
 .header-overlay .logo-img { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)); }
 </style>

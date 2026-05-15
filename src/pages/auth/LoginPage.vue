@@ -33,6 +33,17 @@ async function handleGoogleLogin() {
   // Pas de redirect ici : Supabase redirige vers Google puis vers /auth/callback
 }
 
+// Détection appareil Apple (iOS/macOS)
+const isAppleDevice = /iPad|iPhone|iPod|Mac OS/i.test(
+  typeof navigator !== 'undefined' ? navigator.userAgent : ''
+)
+
+async function handleAppleLogin() {
+  errorMsg.value = null
+  const { error } = await auth.signinWithApple()
+  if (error) errorMsg.value = mapAuthError(error)
+}
+
 function redirectAfterAuth() {
   const target = (route.query.redirect as string) || '/mon-espace'
   router.push(target)
@@ -84,6 +95,8 @@ function mapAuthError(err: string): string {
       </template>
       Continuer avec Google
     </v-btn>
+
+    <!-- Apple OAuth temporairement désactivé — réactiver quand le provider Apple sera configuré dans Supabase -->
 
     <div class="auth-divider"><span>ou avec votre e-mail</span></div>
 
@@ -137,6 +150,12 @@ function mapAuthError(err: string): string {
 </template>
 
 <style scoped>
+.oauth-btn-apple {
+  background: #000 !important;
+  color: #fff !important;
+  border: 1px solid #000 !important;
+}
+.oauth-btn-apple:hover { background: #1a1a1a !important; }
 .oauth-btn {
   letter-spacing: 0.02em;
   text-transform: none !important;

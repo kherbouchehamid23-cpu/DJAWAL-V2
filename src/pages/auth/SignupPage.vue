@@ -116,6 +116,17 @@ async function handleGoogleSignup() {
   if (error) errorMsg.value = mapAuthError(error)
 }
 
+// Détection appareil Apple (iOS/macOS) pour proposer Sign in with Apple
+const isAppleDevice = /iPad|iPhone|iPod|Mac OS/i.test(
+  typeof navigator !== 'undefined' ? navigator.userAgent : ''
+)
+
+async function handleAppleSignup() {
+  errorMsg.value = null
+  const { error } = await auth.signinWithApple()
+  if (error) errorMsg.value = mapAuthError(error)
+}
+
 function mapAuthError(err: string): string {
   if (err.includes('already registered') || err.includes('already exists'))
     return 'Cet e-mail est déjà utilisé. Connectez-vous plutôt.'
@@ -230,6 +241,8 @@ const operatorTypeLabel = computed(() =>
         </template>
         S'inscrire avec Google
       </v-btn>
+
+<!-- Apple OAuth temporairement désactivé — réactiver quand le provider Apple sera configuré dans Supabase -->
 
       <div class="auth-divider"><span>ou avec votre e-mail</span></div>
 
@@ -462,6 +475,12 @@ const operatorTypeLabel = computed(() =>
 }
 
 /* === Reste du styling existant === */
+.oauth-btn-apple {
+  background: #000 !important;
+  color: #fff !important;
+  border: 1px solid #000 !important;
+}
+.oauth-btn-apple:hover { background: #1a1a1a !important; }
 .oauth-btn {
   letter-spacing: 0.02em;
   text-transform: none !important;

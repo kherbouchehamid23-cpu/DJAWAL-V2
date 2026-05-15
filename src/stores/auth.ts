@@ -172,6 +172,22 @@ export const useAuthStore = defineStore('auth', () => {
     return { error: null }
   }
 
+  // === OAuth Apple (proposé uniquement sur iOS/macOS) ===
+  async function signinWithApple(): Promise<{ error: string | null }> {
+    lastError.value = null
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    if (error) {
+      lastError.value = error.message
+      return { error: error.message }
+    }
+    return { error: null }
+  }
+
   // === Magic Link (alternative sans mot de passe) ===
   async function signinWithMagicLink(email: string): Promise<{ error: string | null }> {
     lastError.value = null
@@ -240,7 +256,7 @@ export const useAuthStore = defineStore('auth', () => {
     canSubmit,
     // methods
     initialize, fetchProfile,
-    signupWithEmail, signinWithEmail, signinWithGoogle, signinWithMagicLink,
+    signupWithEmail, signinWithEmail, signinWithGoogle, signinWithApple, signinWithMagicLink,
     signOut, requestPasswordReset, updatePassword, updateProfile
   }
 })
