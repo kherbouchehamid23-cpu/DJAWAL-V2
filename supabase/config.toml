@@ -21,27 +21,31 @@ port = 54323
 
 [storage]
 enabled = true
-file_size_limit = "50MiB"
+file_size_limit = "100MiB"
 
+# Avatar utilisateur : 8 MB (largement suffisant pour photo iPhone 12MP compressée auto)
 [storage.buckets.avatars]
 public = true
-file_size_limit = "2MiB"
-allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+file_size_limit = "8MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/heic", "image/heif"]
 
+# Photos hero (couverture trip, destination, profil opérateur) : 20 MB
 [storage.buckets.hero-images]
 public = true
-file_size_limit = "10MiB"
-allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+file_size_limit = "20MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/avif", "image/heic", "image/heif"]
 
+# Panoramas 360 : 50 MB (fichiers très lourds par nature)
 [storage.buckets.panoramas]
 public = true
-file_size_limit = "30MiB"
-allowed_mime_types = ["image/jpeg"]
+file_size_limit = "50MiB"
+allowed_mime_types = ["image/jpeg", "image/webp"]
 
+# Documents KYC : 15 MB (passeport ou carte ID en HD + PDF scannés)
 [storage.buckets.kyc-documents]
 public = false
-file_size_limit = "5MiB"
-allowed_mime_types = ["image/jpeg", "image/png", "application/pdf"]
+file_size_limit = "15MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"]
 
 [storage.buckets.ambient-sounds]
 public = true
