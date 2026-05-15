@@ -3,15 +3,19 @@ import { ref, nextTick, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import djawalMonogram from '@/assets/branding/djawal-monogram.png'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const { isMobile } = useBreakpoint()
 
-// Masquer le FAB sur les pages où Djawal IA est déjà visible (homepage + composer)
-// pour éviter la redondance visuelle. Le drawer reste accessible via la nav.
+// Masquer le FAB :
+// - sur les pages où Djawal IA est déjà visible (homepage + composer)
+// - en mobile (redondance avec le bouton IA central de la BottomNav)
 const hideFab = computed(() => {
+  if (isMobile.value) return true
   const p = route.path
   return p === '/' || p.startsWith('/composer')
 })
@@ -23,6 +27,10 @@ interface Message {
   destinations?: any[]
   trips?: any[]
   loading?: boolean
+  // Mode IA : si trop vague ou si manque de critères, on propose d'aller dans le composer
+  mode?: 'too-vague' | 'needs-clarification'
+  // Question originale du user (pour pré-remplir le composer)
+  originalQuestion?: string
 }
 
 const isOpen = ref(false)
@@ -65,14 +73,31 @@ async function send() {
 
     if (error) throw error
 
-    // Remplacer le message loading
+    // Remplacer le message loading — gère les 3 modes de réponse de l'IA
     const idx = messages.value.length - 1
-    messages.value[idx] = {
-      role: 'assistant',
-      text: data.answer || 'Réponse vide.',
-      resources: data.resources,
-      destinations: data.destinations,
-      trips: data.trips
+    if (data.mode === 'too-vague') {
+      messages.value[idx] = {
+        role: 'assistant',
+        text: data.answer || 'Votre demande est trop large. Ouvrons le composeur détaillé pour mieux cerner votre voyage.',
+        mode: 'too-vague',
+        originalQuestion: question
+      }
+    } else if (data.mode === 'needs-clarification') {
+      // Affiche le message + ouvre le composer avec la question préremplie
+      messages.value[idx] = {
+        role: 'assistant',
+        text: (data.answer || 'J\'ai besoin de quelques précisions.') + '\n\nOuvrez le composeur pour répondre à mes questions.',
+        mode: 'needs-clarification',
+        originalQuestion: question
+      }
+    } else {
+      messages.value[idx] = {
+        role: 'assistant',
+        text: data.answer || 'Réponse vide.',
+        resources: data.resources,
+        destinations: data.destinations,
+        trips: data.trips
+      }
     }
   } catch (e: any) {
     const idx = messages.value.length - 1
@@ -94,6 +119,17 @@ function quickPrompt(p: string) {
 function goToTrip(id: string) {
   isOpen.value = false
   router.push(`/voyages/${id}`)
+}
+
+// Ouvre le composeur (vague → formulaire structuré, needs-clarification → composer en mode chat enrichi)
+function openComposer(m: Message) {
+  isOpen.value = false
+  if (m.mode === 'too-vague') {
+    router.push('/composer/formulaire')
+  } else {
+    // needs-clarification : on passe la question initiale via query param
+    router.push({ path: '/composer', query: { q: m.originalQuestion || '' } })
+  }
 }
 
 function goToDestination(id: string) {
@@ -145,6 +181,17 @@ function goToDestination(id: string) {
               <span></span><span></span><span></span>
             </div>
             <div v-else class="msg-text">{{ m.text }}</div>
+
+            <!-- Bouton CTA quand la réponse demande un retour vers le composer (too-vague ou needs-clarification) -->
+            <div v-if="m.mode === 'too-vague' || m.mode === 'needs-clarification'" class="msg-cta">
+              <button
+                type="button"
+                class="msg-cta-btn"
+                @click="openComposer(m)"
+              >
+                {{ m.mode === 'too-vague' ? 'Ouvrir le composeur structuré →' : 'Continuer dans le composeur →' }}
+              </button>
+            </div>
 
             <!-- Cards des ressources trouvées -->
             <div v-if="m.trips && m.trips.length > 0" class="rich-cards">
@@ -337,6 +384,31 @@ function goToDestination(id: string) {
 @keyframes dot-bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
   30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* CTA "Ouvrir le composeur" — affiché quand l'IA a besoin de plus d'infos */
+.msg-cta {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(212, 168, 68, 0.25);
+}
+.msg-cta-btn {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, #D4A844, #B8862E);
+  color: #0F2419;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.msg-cta-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(212, 168, 68, 0.35);
 }
 
 .rich-cards {

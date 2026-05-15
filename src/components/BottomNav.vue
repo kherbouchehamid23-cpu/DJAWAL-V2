@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useAuthStore } from '@/stores/auth'
+import djawalMonogram from '@/assets/branding/djawal-monogram.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -45,11 +46,7 @@ function navigate(to: string) {
           <path d="M21 10 c 0 7 -9 13 -9 13 s -9 -6 -9 -13 a 9 9 0 0 1 18 0 z" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        <svg v-else-if="item.icon === 'sparkles'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <!-- Djawal IA — étoile géométrique inspirée du monogramme -->
-          <path d="M12 2 L14.5 9 L22 12 L14.5 15 L12 22 L9.5 15 L2 12 L9.5 9 Z"/>
-          <circle cx="12" cy="12" r="2"/>
-        </svg>
+        <img v-else-if="item.icon === 'sparkles'" :src="djawalMonogram" alt="Djawal IA" class="nav-djawal-img" />
         <svg v-else-if="item.icon === 'heart'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
         </svg>
@@ -133,21 +130,27 @@ function navigate(to: string) {
   color: var(--c-fond, #FAF7F2);
 }
 .nav-icon-wrap {
-  width: 46px;
-  height: 46px;
-  background: linear-gradient(135deg, var(--c-accent, #D4A04F), var(--c-accent-fort, #B8862E));
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  background: #FAF7F2;
+  border-radius: 14px;
   margin-top: -16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(212, 160, 79, 0.45);
-  color: var(--c-primaire-profond, #0A1F2E);
+  box-shadow: 0 6px 18px rgba(70, 20, 100, 0.35);
   position: relative;
+  border: 2px solid #D4A844;
 }
 .nav-icon-wrap svg {
   width: 22px;
   height: 22px;
+}
+.nav-djawal-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 .nav-item.is-ai .nav-label {
   color: var(--c-accent-fort, #B8862E);

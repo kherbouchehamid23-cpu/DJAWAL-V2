@@ -445,6 +445,7 @@ function resetAll() {
   font-size: clamp(28px, 5vw, 46px);
   font-weight: 500; line-height: 1.05;
   margin-bottom: 14px;
+  color: #FAF7F2;
 }
 .form-hero h1 em { font-style: italic; color: #E8B96B; }
 .form-lead {
@@ -484,6 +485,7 @@ function resetAll() {
   font-family: 'Cormorant Garamond', serif;
   font-size: 26px; font-weight: 500;
   margin-bottom: 8px;
+  color: #FAF7F2;
 }
 .step-helper {
   color: rgba(250, 247, 242, 0.65);

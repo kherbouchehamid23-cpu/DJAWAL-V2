@@ -1,10 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useSEO } from '@/composables/useSEO'
 import djawalMonogram from '@/assets/branding/djawal-monogram.png'
+
+// Ref vers le bloc de réponse pour scroll auto après génération
+const responseAnchor = ref<HTMLElement | null>(null)
+
+async function scrollToResponse() {
+  await nextTick()
+  // Attente courte pour laisser le DOM se peindre avant le scroll
+  setTimeout(() => {
+    const el = responseAnchor.value
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, 80)
+}
 
 useSEO({ title: 'Djawal IA — Composer votre voyage en Algérie' })
 
@@ -61,6 +75,7 @@ async function submitInitial() {
     })
     if (fnErr) throw fnErr
     response.value = data
+    scrollToResponse()
   } catch (e: any) {
     error.value = e.message || 'Erreur lors de la génération.'
   } finally {
@@ -95,6 +110,7 @@ async function submitEnriched() {
     })
     if (fnErr) throw fnErr
     response.value = data
+    scrollToResponse()
   } catch (e: any) {
     error.value = e.message || 'Erreur lors de la génération.'
     response.value = previousResponse
@@ -153,6 +169,9 @@ function goToStructuredForm() {
 
         <!-- Erreur -->
         <div v-if="error" class="composer-error">⚠️ {{ error }}</div>
+
+        <!-- Ancre invisible pour scroll auto après réponse IA -->
+        <div ref="responseAnchor" class="response-anchor"></div>
 
         <!-- MODE 1 : Demande trop vague → redirection -->
         <div v-if="response?.mode === 'too-vague'" class="composer-vague">

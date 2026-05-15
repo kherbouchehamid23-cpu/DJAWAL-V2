@@ -31,9 +31,7 @@ onMounted(() => {
     <AppHeader />
     <v-main>
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
+        <component :is="Component" />
       </router-view>
     </v-main>
     <AppFooter />
@@ -45,15 +43,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Transition courte entre routes — pas de fade au premier chargement.
-   Vue gère le premier render sans appliquer la transition « appear » par défaut,
-   donc le mount initial reste opaque. Les changements de route restent fluides. */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+/* Pas de transition entre routes — évite les bugs d'opacity 0 bloquée
+   sur certaines pages après router.push() depuis une callback async. */
 </style>
