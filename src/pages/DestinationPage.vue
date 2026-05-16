@@ -490,10 +490,16 @@ function parsePriceRange(range: any): string {
 }
 .hero-fav-btn {
   position: absolute;
-  top: 24px;
+  top: 100px;  /* sous le header overlay (72px) + marge */
   right: 24px;
   z-index: 20; /* au-dessus de hero-overlay + hero-content */
   pointer-events: auto !important;
+}
+@media (max-width: 600px) {
+  .hero-fav-btn {
+    top: 80px;
+    right: 16px;
+  }
 }
 .reviews-wrapper {
   padding-top: var(--space-6);

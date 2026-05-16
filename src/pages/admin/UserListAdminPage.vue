@@ -12,12 +12,13 @@ const router = useRouter()
 interface UserRow {
   id: string
   display_name: string | null
-  email: string | null
   avatar_url: string | null
   role: string
   created_at: string
-  city: string | null
+  region: string | null
   bio: string | null
+  company_name: string | null
+  is_active: boolean
 }
 
 const users = ref<UserRow[]>([])
@@ -40,8 +41,8 @@ const filtered = computed(() => {
     if (roleFilter.value !== 'all' && u.role !== roleFilter.value) return false
     if (!q) return true
     return (u.display_name || '').toLowerCase().includes(q) ||
-           (u.email || '').toLowerCase().includes(q) ||
-           (u.city || '').toLowerCase().includes(q)
+           (u.region || '').toLowerCase().includes(q) ||
+           (u.company_name || '').toLowerCase().includes(q)
   })
 })
 
@@ -64,9 +65,12 @@ onMounted(async () => {
   loading.value = true
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, email, avatar_url, role, created_at, city, bio')
+    .select('id, display_name, avatar_url, role, created_at, region, bio, company_name, is_active')
     .order('created_at', { ascending: false })
-  if (!error && data) users.value = data as UserRow[]
+  if (error) {
+    console.error('[admin/users] load error:', error.message)
+  }
+  if (data) users.value = data as UserRow[]
   loading.value = false
 })
 
@@ -137,7 +141,7 @@ function openUser(id: string) {
         <input
           v-model="search"
           type="search"
-          placeholder="Rechercher par nom, email ou ville…"
+          placeholder="Rechercher par nom, région ou entreprise…"
           class="search-input"
         />
         <button
@@ -181,9 +185,10 @@ function openUser(id: string) {
                 class="user-role-badge"
                 :style="`background: ${roleColor(u.role)}`"
               >{{ roleLabel(u.role) }}</span>
+              <span v-if="!u.is_active" class="user-inactive-badge">Inactif</span>
             </div>
-            <div v-if="u.email" class="user-email">{{ u.email }}</div>
-            <div v-if="u.city" class="user-city">📍 {{ u.city }}</div>
+            <div v-if="u.company_name" class="user-company">🏢 {{ u.company_name }}</div>
+            <div v-if="u.region" class="user-city">📍 {{ u.region }}</div>
             <p v-if="u.bio" class="user-bio">{{ u.bio }}</p>
             <div class="user-meta">Inscrit le {{ fmtDate(u.created_at) }}</div>
           </div>
@@ -402,11 +407,21 @@ function openUser(id: string) {
   text-transform: uppercase;
   color: #0F2419;
 }
-.user-email {
+.user-company {
   font-size: 13px;
-  color: rgba(250, 247, 242, 0.7);
+  color: rgba(250, 247, 242, 0.75);
   margin-bottom: 3px;
-  word-break: break-all;
+  font-style: italic;
+}
+.user-inactive-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(184, 49, 46, 0.3);
+  color: #FFB3B3;
 }
 .user-city {
   font-size: 12.5px;

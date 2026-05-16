@@ -10,16 +10,16 @@ const router = useRouter()
 interface UserProfile {
   id: string
   display_name: string | null
-  email: string | null
   avatar_url: string | null
   role: string
   bio: string | null
-  city: string | null
-  languages: string[] | null
-  phone: string | null
-  business_name?: string | null
+  region: string | null
+  company_name?: string | null
+  operator_type?: string | null
+  specialties?: string[] | null
+  is_active: boolean
+  kyc_status: string
   created_at: string
-  updated_at: string
 }
 
 const profile = ref<UserProfile | null>(null)
@@ -49,10 +49,10 @@ onMounted(async () => {
   loading.value = true
   errorMsg.value = ''
 
-  // Profil
+  // Profil — colonnes réelles du schema profiles
   const { data: profileData, error: profileErr } = await supabase
     .from('profiles')
-    .select('id, display_name, email, avatar_url, role, bio, city, languages, phone, business_name, created_at, updated_at')
+    .select('id, display_name, avatar_url, role, bio, region, company_name, operator_type, specialties, is_active, kyc_status, created_at')
     .eq('id', userId.value)
     .maybeSingle()
 
@@ -150,16 +150,17 @@ function roleColor(role: string): string {
                   {{ roleLabel(profile.role) }}
                 </span>
               </div>
-              <p v-if="profile.business_name" class="business-name">{{ profile.business_name }}</p>
-              <p v-if="profile.email" class="profile-email">📧 {{ profile.email }}</p>
-              <p v-if="profile.phone" class="profile-phone">📞 {{ profile.phone }}</p>
-              <p v-if="profile.city" class="profile-city">📍 {{ profile.city }}</p>
-              <p v-if="profile.languages?.length" class="profile-langs">
-                🗣️ {{ profile.languages.join(', ') }}
+              <p v-if="profile.company_name" class="business-name">🏢 {{ profile.company_name }}</p>
+              <p v-if="profile.operator_type" class="profile-meta-line">Type : {{ profile.operator_type }}</p>
+              <p v-if="profile.region" class="profile-city">📍 {{ profile.region }}</p>
+              <p v-if="profile.specialties?.length" class="profile-langs">
+                ✨ {{ profile.specialties.join(' · ') }}
               </p>
               <p v-if="profile.bio" class="profile-bio">{{ profile.bio }}</p>
               <p class="profile-meta">
-                Inscrit le {{ fmtDate(profile.created_at) }} · Dernière mise à jour {{ fmtDate(profile.updated_at) }}
+                Inscrit le {{ fmtDate(profile.created_at) }}
+                · Statut KYC : <strong>{{ profile.kyc_status }}</strong>
+                · {{ profile.is_active ? '✅ Actif' : '⛔ Inactif' }}
               </p>
             </div>
           </div>

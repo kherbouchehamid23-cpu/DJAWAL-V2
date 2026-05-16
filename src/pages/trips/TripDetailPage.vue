@@ -334,10 +334,16 @@ function difficultyLabel(d: string | null) {
 }
 .trip-hero-fav-btn {
   position: absolute;
-  top: 24px;
+  top: 100px;  /* sous le header overlay (72px) + marge */
   right: 24px;
   z-index: 20;
   pointer-events: auto !important;
+}
+@media (max-width: 600px) {
+  .trip-hero-fav-btn {
+    top: 80px;  /* sous mini-header mobile */
+    right: 16px;
+  }
 }
 .hero-inner { position: relative; z-index: 1; }
 .hero-tag {
