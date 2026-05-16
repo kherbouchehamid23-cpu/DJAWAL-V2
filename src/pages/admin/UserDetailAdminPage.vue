@@ -3,9 +3,11 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useSEO } from '@/composables/useSEO'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 
 interface UserProfile {
   id: string
@@ -22,9 +24,34 @@ interface UserProfile {
   created_at: string
 }
 
+interface UserAuthInfo {
+  email: string | null
+  email_confirmed_at: string | null
+  last_sign_in_at: string | null
+}
+
+interface CascadePreview {
+  trips: number
+  memories: number
+  accommodations: number
+  restaurants: number
+  activities: number
+  sites: number
+  favorites: number
+  reviews: number
+}
+
 const profile = ref<UserProfile | null>(null)
+const authInfo = ref<UserAuthInfo | null>(null)
 const loading = ref(true)
 const errorMsg = ref('')
+
+// Actions admin
+const actionLoading = ref<'suspend' | 'reactivate' | 'delete' | null>(null)
+const actionError = ref('')
+const showDeleteModal = ref(false)
+const cascadePreview = ref<CascadePreview | null>(null)
+const deleteConfirmText = ref('')
 
 // Stats activité
 const stats = ref({
@@ -36,6 +63,8 @@ const stats = ref({
 })
 const recentReviews = ref<any[]>([])
 const recentFavorites = ref<any[]>([])
+
+const isSelf = computed(() => auth.user?.id === profile.value?.id)
 
 useSEO(() => ({
   title: profile.value
@@ -86,7 +115,88 @@ onMounted(async () => {
   }
 
   loading.value = false
+
+  // Fetch email via Edge Function (non-bloquant)
+  fetchAuthInfo()
 })
+
+async function callEdgeFunction(action: string, extra: Record<string, unknown> = {}) {
+  const { data, error } = await supabase.functions.invoke('admin-user-ops', {
+    body: { action, user_id: userId.value, ...extra }
+  })
+  if (error) throw new Error(error.message)
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
+async function fetchAuthInfo() {
+  try {
+    const data = await callEdgeFunction('get_email')
+    authInfo.value = {
+      email: data.email,
+      email_confirmed_at: data.email_confirmed_at,
+      last_sign_in_at: data.last_sign_in_at
+    }
+  } catch (e) {
+    console.warn('Impossible de récupérer email :', (e as Error).message)
+  }
+}
+
+async function toggleActive(target: boolean) {
+  if (!profile.value) return
+  actionLoading.value = target ? 'reactivate' : 'suspend'
+  actionError.value = ''
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_active: target })
+    .eq('id', profile.value.id)
+  actionLoading.value = null
+  if (error) {
+    actionError.value = 'Erreur : ' + error.message
+    return
+  }
+  profile.value.is_active = target
+}
+
+async function openDeleteModal() {
+  if (!profile.value) return
+  showDeleteModal.value = true
+  deleteConfirmText.value = ''
+  cascadePreview.value = null
+  // Charger le preview des conséquences
+  try {
+    const data = await callEdgeFunction('count_cascade')
+    cascadePreview.value = data as CascadePreview
+  } catch (e) {
+    actionError.value = 'Impossible de prévisualiser : ' + (e as Error).message
+  }
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false
+  deleteConfirmText.value = ''
+  cascadePreview.value = null
+}
+
+const deleteAllowed = computed(() => {
+  const name = (profile.value?.display_name || '').trim().toUpperCase()
+  return deleteConfirmText.value.trim().toUpperCase() === name && name.length > 0
+})
+
+async function confirmDelete() {
+  if (!deleteAllowed.value) return
+  actionLoading.value = 'delete'
+  actionError.value = ''
+  try {
+    await callEdgeFunction('delete_user', { confirm: true })
+    actionLoading.value = null
+    // Retour à la liste
+    router.push('/admin/users')
+  } catch (e) {
+    actionLoading.value = null
+    actionError.value = 'Erreur : ' + (e as Error).message
+  }
+}
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -157,10 +267,15 @@ function roleColor(role: string): string {
                 ✨ {{ profile.specialties.join(' · ') }}
               </p>
               <p v-if="profile.bio" class="profile-bio">{{ profile.bio }}</p>
+              <p v-if="authInfo?.email" class="profile-email">
+                ✉️ <a :href="`mailto:${authInfo.email}`">{{ authInfo.email }}</a>
+                <span v-if="!authInfo.email_confirmed_at" class="email-unverified">(non vérifié)</span>
+              </p>
               <p class="profile-meta">
                 Inscrit le {{ fmtDate(profile.created_at) }}
                 · Statut KYC : <strong>{{ profile.kyc_status }}</strong>
-                · {{ profile.is_active ? '✅ Actif' : '⛔ Inactif' }}
+                · {{ profile.is_active ? '✅ Actif' : '⛔ Suspendu' }}
+                <span v-if="authInfo?.last_sign_in_at"> · Dernière connexion {{ fmtDate(authInfo.last_sign_in_at) }}</span>
               </p>
             </div>
           </div>
@@ -229,20 +344,115 @@ function roleColor(role: string): string {
       <!-- ACTIONS ADMIN -->
       <section class="djawal-container content-section actions-section">
         <h2>Actions admin</h2>
+
+        <p v-if="actionError" class="action-error">{{ actionError }}</p>
+        <p v-if="isSelf" class="action-warn">⚠️ Vous consultez votre propre profil — les actions de suspension et suppression sont désactivées.</p>
+
         <div class="actions-grid">
           <router-link
             v-if="profile.role === 'guide_junior' || profile.role === 'guide_senior'"
             :to="`/guide/${profile.id}`"
             class="action-btn"
           >🗺️ Voir profil public guide</router-link>
-          <button class="action-btn disabled" disabled>
-            🚫 Suspendre le compte (à venir)
+
+          <router-link
+            v-if="profile.role === 'tourist_operator'"
+            :to="`/admin/users/${profile.id}`"
+            class="action-btn"
+          >🏢 Voir profil opérateur</router-link>
+
+          <!-- Suspendre / Réactiver -->
+          <button
+            v-if="profile.is_active"
+            class="action-btn action-warn-btn"
+            :disabled="isSelf || actionLoading !== null"
+            @click="toggleActive(false)"
+          >
+            {{ actionLoading === 'suspend' ? 'Suspension…' : '🚫 Suspendre le compte' }}
           </button>
-          <button class="action-btn disabled" disabled>
-            🗑️ Supprimer toutes les données (à venir)
+          <button
+            v-else
+            class="action-btn action-success-btn"
+            :disabled="isSelf || actionLoading !== null"
+            @click="toggleActive(true)"
+          >
+            {{ actionLoading === 'reactivate' ? 'Réactivation…' : '✅ Réactiver le compte' }}
+          </button>
+
+          <!-- Supprimer -->
+          <button
+            class="action-btn action-danger-btn"
+            :disabled="isSelf || actionLoading !== null"
+            @click="openDeleteModal"
+          >
+            🗑️ Supprimer définitivement
           </button>
         </div>
+
+        <p class="action-hint">
+          <strong>Suspendre</strong> : le compte ne peut plus se connecter au site public, ses contributions restent visibles (réversible).<br>
+          <strong>Supprimer</strong> : efface le compte et toutes ses contributions personnelles (voyages, souvenirs, favoris, avis). <strong>Irréversible.</strong>
+        </p>
       </section>
+
+      <!-- MODAL SUPPRESSION -->
+      <div v-if="showDeleteModal" class="modal-backdrop" @click.self="closeDeleteModal">
+        <div class="modal">
+          <header class="modal-header">
+            <h3>🗑️ Supprimer définitivement</h3>
+            <button class="modal-close" @click="closeDeleteModal" aria-label="Fermer">✕</button>
+          </header>
+
+          <div class="modal-body">
+            <p>Vous êtes sur le point de supprimer <strong>{{ profile.display_name }}</strong> ({{ roleLabel(profile.role) }}).</p>
+
+            <div v-if="cascadePreview === null" class="cascade-loading">Calcul des conséquences…</div>
+            <div v-else class="cascade-preview">
+              <p class="cascade-intro">Données qui seront effacées en cascade :</p>
+              <ul class="cascade-list">
+                <li v-if="cascadePreview.trips > 0">🧭 <strong>{{ cascadePreview.trips }}</strong> voyage(s)</li>
+                <li v-if="cascadePreview.memories > 0">📷 <strong>{{ cascadePreview.memories }}</strong> souvenir(s)</li>
+                <li v-if="cascadePreview.favorites > 0">❤️ <strong>{{ cascadePreview.favorites }}</strong> favori(s)</li>
+                <li v-if="cascadePreview.reviews > 0">⭐ <strong>{{ cascadePreview.reviews }}</strong> avis publié(s)</li>
+                <li v-if="cascadePreview.trips + cascadePreview.memories + cascadePreview.favorites + cascadePreview.reviews === 0" class="empty">
+                  Aucune contribution personnelle à effacer.
+                </li>
+              </ul>
+              <p v-if="cascadePreview.accommodations + cascadePreview.restaurants + cascadePreview.activities + cascadePreview.sites > 0" class="cascade-note">
+                <strong>Ressources opérateurs conservées</strong> (anonymisées) :
+                {{ cascadePreview.accommodations }} héberg., {{ cascadePreview.restaurants }} restaur., {{ cascadePreview.activities }} activ., {{ cascadePreview.sites }} site(s).
+              </p>
+            </div>
+
+            <div class="confirm-zone">
+              <label for="confirm-input">
+                Tapez le nom <code>{{ (profile.display_name || '').toUpperCase() }}</code> pour confirmer :
+              </label>
+              <input
+                id="confirm-input"
+                v-model="deleteConfirmText"
+                type="text"
+                class="confirm-input"
+                placeholder="Nom à recopier exactement"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <footer class="modal-footer">
+            <button class="modal-btn modal-cancel" @click="closeDeleteModal" :disabled="actionLoading === 'delete'">
+              Annuler
+            </button>
+            <button
+              class="modal-btn modal-delete"
+              :disabled="!deleteAllowed || actionLoading === 'delete'"
+              @click="confirmDelete"
+            >
+              {{ actionLoading === 'delete' ? 'Suppression en cours…' : 'Supprimer définitivement' }}
+            </button>
+          </footer>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -473,10 +683,237 @@ function roleColor(role: string): string {
   border-color: #D4A844;
   color: #FAF7F2;
 }
-.action-btn.disabled {
+.action-btn.disabled,
+.action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
+.action-warn-btn {
+  border-color: rgba(232, 185, 107, 0.55);
+  color: #E8B96B;
+}
+.action-warn-btn:hover:not(:disabled) {
+  background: rgba(232, 185, 107, 0.18);
+  color: #FAF7F2;
+}
+.action-success-btn {
+  border-color: rgba(159, 225, 203, 0.55);
+  color: #9FE1CB;
+}
+.action-success-btn:hover:not(:disabled) {
+  background: rgba(159, 225, 203, 0.15);
+  color: #FAF7F2;
+}
+.action-danger-btn {
+  border-color: rgba(240, 149, 149, 0.55);
+  color: #F09595;
+}
+.action-danger-btn:hover:not(:disabled) {
+  background: rgba(240, 149, 149, 0.16);
+  color: #FFF6E5;
+  border-color: #F09595;
+}
+.action-error {
+  background: rgba(184, 49, 46, 0.18);
+  border: 1px solid rgba(240, 149, 149, 0.5);
+  color: #F09595;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.action-warn {
+  background: rgba(232, 185, 107, 0.14);
+  border: 1px solid rgba(232, 185, 107, 0.35);
+  color: #E8B96B;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.action-hint {
+  margin-top: 18px;
+  font-size: 12.5px;
+  color: rgba(250, 247, 242, 0.55);
+  line-height: 1.65;
+  padding: 14px 16px;
+  background: rgba(31, 74, 54, 0.35);
+  border-radius: 10px;
+  border-left: 3px solid rgba(212, 168, 68, 0.4);
+}
+.action-hint strong { color: #E8B96B; }
+
+/* Email dans hero */
+.profile-email {
+  font-size: 14px;
+  color: rgba(250, 247, 242, 0.85);
+  margin: 4px 0 0;
+}
+.profile-email a { color: #E8B96B; text-decoration: none; }
+.profile-email a:hover { text-decoration: underline; }
+.email-unverified {
+  background: rgba(184, 49, 46, 0.25);
+  color: #FFB3B3;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* MODAL */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 18, 14, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal {
+  background: linear-gradient(180deg, #1A3A2A 0%, #0F2419 100%);
+  border: 1px solid rgba(240, 149, 149, 0.4);
+  border-radius: 18px;
+  max-width: 520px;
+  width: 100%;
+  color: #FAF7F2;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 26px 14px;
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
+}
+.modal-header h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: #F09595;
+  font-weight: 500;
+}
+.modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  color: #FAF7F2;
+  cursor: pointer;
+  font-size: 14px;
+}
+.modal-close:hover { background: rgba(255, 255, 255, 0.16); }
+.modal-body {
+  padding: 18px 26px;
+}
+.modal-body > p {
+  margin-bottom: 14px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.cascade-loading {
+  text-align: center;
+  padding: 18px;
+  font-style: italic;
+  color: rgba(250, 247, 242, 0.55);
+}
+.cascade-preview {
+  background: rgba(184, 49, 46, 0.12);
+  border: 1px solid rgba(240, 149, 149, 0.3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.cascade-intro {
+  font-size: 12.5px;
+  color: rgba(250, 247, 242, 0.7);
+  margin-bottom: 8px;
+}
+.cascade-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+  font-size: 13.5px;
+}
+.cascade-list li {
+  padding: 4px 0;
+}
+.cascade-list li.empty {
+  color: rgba(250, 247, 242, 0.55);
+  font-style: italic;
+}
+.cascade-note {
+  font-size: 12px;
+  color: rgba(250, 247, 242, 0.6);
+  border-top: 1px solid rgba(240, 149, 149, 0.18);
+  padding-top: 8px;
+  margin-top: 6px;
+}
+.confirm-zone {
+  margin-top: 14px;
+}
+.confirm-zone label {
+  display: block;
+  font-size: 13px;
+  color: rgba(250, 247, 242, 0.78);
+  margin-bottom: 8px;
+}
+.confirm-zone code {
+  background: rgba(240, 149, 149, 0.18);
+  color: #F09595;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+}
+.confirm-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(240, 149, 149, 0.35);
+  color: #FAF7F2;
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+.confirm-input:focus { border-color: #F09595; }
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 14px 26px 22px;
+  border-top: 1px solid rgba(212, 168, 68, 0.2);
+  justify-content: flex-end;
+}
+.modal-btn {
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+}
+.modal-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.modal-cancel {
+  background: transparent;
+  color: rgba(250, 247, 242, 0.7);
+  border-color: rgba(250, 247, 242, 0.25);
+}
+.modal-cancel:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
+.modal-delete {
+  background: #A32D2D;
+  color: #FAF7F2;
+}
+.modal-delete:hover:not(:disabled) { background: #791F1F; }
 
 .btn-primary {
   background: #D4A844;

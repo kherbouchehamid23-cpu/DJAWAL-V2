@@ -59,7 +59,7 @@ useSEO({
             <span class="icon">✦</span>
             <div>
               <strong>Composer un voyage</strong>
-              <small>Fennec, votre guide intelligent</small>
+              <small>Djawal IA, votre guide intelligent</small>
             </div>
           </router-link>
           <router-link to="/temoignages" class="suggestion">

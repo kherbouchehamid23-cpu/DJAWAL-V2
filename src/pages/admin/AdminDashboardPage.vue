@@ -10,6 +10,8 @@ const stats = ref({
   pendingAccommodations: 0,
   pendingRestaurants: 0,
   pendingActivities: 0,
+  pendingReviews: 0,
+  flaggedReviews: 0,
   totalGuides: 0,
   totalOperators: 0,
   totalVoyageurs: 0
@@ -22,6 +24,7 @@ onMounted(async () => {
   const [
     kyc, promotions, trips, memories,
     accommodations, restaurants, activities,
+    pendingReviews, flaggedReviews,
     guides, operators, voyageurs
   ] = await Promise.all([
     // KYC : guides ET opérateurs en attente
@@ -36,6 +39,9 @@ onMounted(async () => {
     supabase.from('accommodations').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
     supabase.from('restaurants').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
     supabase.from('activities').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
+    // Avis utilisateurs à modérer
+    supabase.from('user_reviews').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('user_reviews').select('id', { count: 'exact', head: true }).eq('status', 'flagged'),
     // Totaux
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .in('role', ['guide_senior', 'guide_junior']),
@@ -51,6 +57,8 @@ onMounted(async () => {
     pendingAccommodations: accommodations.count ?? 0,
     pendingRestaurants: restaurants.count ?? 0,
     pendingActivities: activities.count ?? 0,
+    pendingReviews: pendingReviews.count ?? 0,
+    flaggedReviews: flaggedReviews.count ?? 0,
     totalGuides: guides.count ?? 0,
     totalOperators: operators.count ?? 0,
     totalVoyageurs: voyageurs.count ?? 0
@@ -98,6 +106,12 @@ const totalPendingResources = computed(() =>
         <div class="stat-icon">✨</div>
         <strong>{{ loading ? '—' : stats.pendingMemories }}</strong>
         <span>Souvenirs à valider</span>
+      </router-link>
+
+      <router-link to="/admin/reviews" class="stat-card alert">
+        <div class="stat-icon">⭐</div>
+        <strong>{{ loading ? '—' : (stats.pendingReviews + stats.flaggedReviews) }}</strong>
+        <span>Avis à modérer</span>
       </router-link>
 
       <router-link to="/admin/users?role=guide_senior" class="stat-card">
@@ -165,6 +179,11 @@ const totalPendingResources = computed(() =>
           <div class="module-icon">✨</div>
           <h3>Souvenirs voyageurs</h3>
           <p>Approuver les témoignages avant publication sur le mur public.</p>
+        </router-link>
+        <router-link to="/admin/reviews" class="module-card">
+          <div class="module-icon">⭐</div>
+          <h3>Modération avis</h3>
+          <p>Approuver, refuser ou flagger les avis publiés par les voyageurs sur tous les contenus.</p>
         </router-link>
         <router-link to="/admin/ia-logs" class="module-card">
           <div class="module-icon">🤖</div>

@@ -12,7 +12,9 @@ export default defineConfig({
     vuetify({ autoImport: true }),
     Components({ dirs: ['src/components'], dts: true }),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' : on contrôle l'instant du refresh via PwaUpdateBanner.vue
+      // (au lieu de 'autoUpdate' qui met à jour silencieusement au prochain reload)
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
         name: 'Djawal — L\'Algérie vécue de l\'intérieur',
