@@ -33,7 +33,7 @@ const savingDest = ref<string | null>(null)
 const savingTrip = ref<string | null>(null)
 const flash = ref<{ type: 'ok' | 'err'; msg: string } | null>(null)
 
-const MAX_HOMEPAGE_DESTINATIONS = 12
+const MAX_HOMEPAGE_DESTINATIONS = 24
 const MAX_HOMEPAGE_TRIPS = 3
 
 async function load() {
@@ -230,6 +230,10 @@ function fmtPrice(p: number) {
           </div>
 
           <h3 class="subhead">Disponibles ({{ unfeaturedDests.length }})</h3>
+          <div v-if="featuredDestCount >= MAX_HOMEPAGE_DESTINATIONS" class="limit-notice">
+            ⚠️ Limite atteinte ({{ MAX_HOMEPAGE_DESTINATIONS }}). Pour ajouter une autre destination,
+            <strong>retirez-en une dans la section « Sélectionnées »</strong> ci-dessus (bouton « Retirer »).
+          </div>
           <div class="grid">
             <button
               v-for="d in unfeaturedDests"
@@ -539,6 +543,18 @@ function fmtPrice(p: number) {
   border-left: 3px solid var(--c-accent);
 }
 .note a { color: var(--c-primaire); font-weight: 600; }
+
+.limit-notice {
+  background: #FAEEDA;
+  border: 1px solid #EF9F27;
+  color: #633806;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  margin-bottom: var(--space-3);
+  line-height: 1.5;
+}
+.limit-notice strong { color: #412402; }
 
 @media (max-width: 720px) {
   .featured-item { grid-template-columns: auto 60px 1fr; }
