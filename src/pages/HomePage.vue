@@ -81,11 +81,19 @@ function scrollCarousel(dir: 'left' | 'right') {
 <template>
   <div class="home">
 
-    <!-- HERO image plein écran -->
+    <!-- HERO vidéo plein écran (object-fit: cover, sans floutage) -->
     <section class="hero">
-      <img class="hero-img"
-           src="https://images.pexels.com/photos/1001435/pexels-photo-1001435.jpeg?auto=compress&cs=tinysrgb&w=1920"
-           alt="Dunes du Sahara algérien" />
+      <video
+        class="hero-video"
+        src="/videos/home-hero-v2.mp4"
+        poster="/videos/home-hero-poster.jpg"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        aria-hidden="true"
+      ></video>
       <div class="hero-overlay"></div>
 
       <div class="hero-content">
@@ -236,7 +244,27 @@ function scrollCarousel(dir: 'left' | 'right') {
   justify-content: center;
   overflow: hidden;
 }
-.hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.hero-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;            /* remplit tout le hero, recadre si besoin */
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+  background: #0F2419;          /* couleur de fond pendant le chargement */
+}
+/* prefers-reduced-motion : on remplace la vidéo par le poster fixe */
+@media (prefers-reduced-motion: reduce) {
+  .hero-video {
+    /* Cache la vidéo, affiche le poster comme une image statique */
+    visibility: hidden;
+  }
+  .hero {
+    background-image: url('/videos/home-hero-poster.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+}
 .hero-overlay {
   position: absolute; inset: 0;
   background: linear-gradient(180deg,
