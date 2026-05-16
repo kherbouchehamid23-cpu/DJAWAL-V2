@@ -140,6 +140,11 @@ const totalPendingResources = computed(() =>
           <h3>Utilisateurs</h3>
           <p>Lister, filtrer et consulter le détail de tous les comptes (voyageurs, guides, opérateurs).</p>
         </router-link>
+        <router-link to="/admin/homepage" class="module-card">
+          <div class="module-icon">🏠</div>
+          <h3>Page d'accueil</h3>
+          <p>Choisir les destinations vedettes du carrousel et les 3 voyages signés mis en avant sur la home.</p>
+        </router-link>
         <router-link to="/admin/destinations" class="module-card">
           <div class="module-icon">🗺️</div>
           <h3>Destinations</h3>

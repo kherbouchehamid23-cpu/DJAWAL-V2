@@ -50,11 +50,31 @@ async function loadDestinations() {
   loading.value = true
   const { data, error } = await supabase
     .from('destinations')
-    .select('id, name, name_ar, slug, wilaya, cultural_theme, description, hero_image_url, coordinates, created_at')
-    .order('name')
+    .select('id, name, name_ar, slug, wilaya, cultural_theme, description, hero_image_url, coordinates, created_at, display_order')
+    .order('display_order', { ascending: true })
+    .order('name', { ascending: true })
   if (!error && data) destinations.value = data
   if (error) errorMsg.value = error.message
   loading.value = false
+}
+
+async function moveOrder(dest: any, direction: -1 | 1) {
+  const sorted = [...destinations.value].sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999))
+  const idx = sorted.findIndex(d => d.id === dest.id)
+  const swapIdx = idx + direction
+  if (swapIdx < 0 || swapIdx >= sorted.length) return
+  const other = sorted[swapIdx]
+  // Échange leur display_order
+  const a = dest.display_order ?? 999
+  const b = other.display_order ?? 999
+  await Promise.all([
+    supabase.from('destinations').update({ display_order: b }).eq('id', dest.id),
+    supabase.from('destinations').update({ display_order: a }).eq('id', other.id)
+  ])
+  dest.display_order = b
+  other.display_order = a
+  // Re-trier la liste localement pour refléter le nouvel ordre
+  destinations.value.sort((x, y) => (x.display_order ?? 999) - (y.display_order ?? 999) || x.name.localeCompare(y.name))
 }
 
 function openCreate() {
@@ -197,6 +217,9 @@ async function remove(dest: any) {
           <p class="card-desc">{{ dest.description }}</p>
 
           <div class="card-actions">
+            <button class="order-arrow" title="Monter dans l'ordre d'affichage" @click="moveOrder(dest, -1)">↑</button>
+            <button class="order-arrow" title="Descendre dans l'ordre d'affichage" @click="moveOrder(dest, 1)">↓</button>
+            <span class="order-num" title="Position d'affichage actuelle">#{{ dest.display_order ?? '—' }}</span>
             <v-btn variant="text" size="small" @click="openEdit(dest)">Modifier</v-btn>
             <v-btn variant="text" color="error" size="small" @click="remove(dest)">Supprimer</v-btn>
           </div>
@@ -425,5 +448,24 @@ h1 { font-size: clamp(28px, 4vw, 40px); margin-bottom: var(--space-2); }
   gap: 4px;
   padding-top: var(--space-2);
   border-top: 1px solid var(--c-gris-clair);
+  align-items: center;
+}
+.order-arrow {
+  width: 26px; height: 26px;
+  background: var(--c-fond-chaud);
+  border: 1px solid var(--c-gris-clair);
+  color: var(--c-primaire);
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+.order-arrow:hover { background: var(--c-primaire); color: white; }
+.order-num {
+  font-size: 11px;
+  color: var(--c-texte-doux);
+  margin-right: auto;
+  font-family: monospace;
 }
 </style>

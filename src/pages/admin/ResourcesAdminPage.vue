@@ -97,8 +97,17 @@ const form = reactive<any>({
   operator_phone: null,
   booking_required: true,
   coordinates_lat: null,
-  coordinates_lng: null
+  coordinates_lng: null,
+  // Badge éditorial admin
+  featured_label: null as null | 'vedette' | 'coup_de_coeur' | 'tendance'
 })
+
+const featuredLabelOptions = [
+  { value: null, title: '— Aucun badge —' },
+  { value: 'vedette', title: '★ Vedette' },
+  { value: 'coup_de_coeur', title: '♥ Coup de cœur' },
+  { value: 'tendance', title: '↗ Tendance' }
+]
 
 const { geocode, loading: geocoding } = useGeocode()
 
@@ -138,7 +147,8 @@ function resetForm() {
     activity_type: null, duration_hours: null, price_da: null,
     difficulty: null, min_age: null, max_group_size: null,
     operator_name: null, operator_phone: null, booking_required: true,
-    coordinates_lat: null, coordinates_lng: null
+    coordinates_lat: null, coordinates_lng: null,
+    featured_label: null
   })
 }
 
@@ -173,7 +183,8 @@ function openEdit(r: any) {
     max_group_size: r.max_group_size ?? null,
     operator_name: r.operator_name ?? null,
     operator_phone: r.operator_phone ?? null,
-    booking_required: r.booking_required ?? true
+    booking_required: r.booking_required ?? true,
+    featured_label: r.featured_label ?? null
   })
   editing.value = r
   dialogOpen.value = true
@@ -210,6 +221,9 @@ async function save() {
   }
 
   // Champs spécifiques par type
+  // Badge éditorial admin (toutes ressources)
+  payload.featured_label = form.featured_label || null
+
   if (resourceType.value === 'accommodations') {
     payload.address = form.address
     payload.star_rating = form.star_rating
@@ -347,6 +361,20 @@ async function remove(r: any) {
             </v-col>
             <v-col cols="12">
               <v-textarea v-model="form.description" label="Description *" rows="3" density="comfortable" />
+            </v-col>
+
+            <!-- Badge éditorial admin -->
+            <v-col cols="12">
+              <v-select
+                v-model="form.featured_label"
+                :items="featuredLabelOptions"
+                item-title="title"
+                item-value="value"
+                label="Badge promotion (optionnel)"
+                density="comfortable"
+                hint="Apparaît sur les cards publiques pour mettre en avant ce contenu."
+                persistent-hint
+              />
             </v-col>
 
             <!-- Hébergements -->

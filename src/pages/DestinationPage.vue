@@ -8,6 +8,7 @@ import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
 import Panorama360 from '@/components/Panorama360.vue'
 import ResourceDetailDialog from '@/components/ResourceDetailDialog.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
+import FeaturedBadge from '@/components/FeaturedBadge.vue'
 import ReviewSection from '@/components/ReviewSection.vue'
 
 const route = useRoute()
@@ -282,6 +283,7 @@ function parsePriceRange(range: any): string {
             <h2 class="group-title">🏛️ Sites & Monuments</h2>
             <div class="resource-cards">
               <article v-for="s in sites" :key="s.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(s, 'site')" @keydown.enter="openDetail(s, 'site')">
+                <FeaturedBadge :label="s.featured_label" size="sm" position="top-left" />
                 <FavoriteButton target-type="site" :target-id="s.id" size="sm" floating />
                 <span v-if="s.images && s.images.length > 0" class="rc-cover" :style="`background-image: url(${s.images[0]})`"></span>
                 <div class="rc-content">
@@ -313,6 +315,7 @@ function parsePriceRange(range: any): string {
             <h2 class="group-title">🏨 Hébergements</h2>
             <div class="resource-cards">
               <article v-for="h in accommodations" :key="h.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(h, 'accommodation')" @keydown.enter="openDetail(h, 'accommodation')">
+                <FeaturedBadge :label="h.featured_label" size="sm" position="top-left" />
                 <FavoriteButton target-type="accommodation" :target-id="h.id" size="sm" floating />
                 <span v-if="h.images && h.images.length > 0" class="rc-cover" :style="`background-image: url(${h.images[0]})`"></span>
                 <div class="rc-content">
@@ -343,6 +346,7 @@ function parsePriceRange(range: any): string {
             <h2 class="group-title">🍽️ Restaurants</h2>
             <div class="resource-cards">
               <article v-for="r in restaurants" :key="r.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(r, 'restaurant')" @keydown.enter="openDetail(r, 'restaurant')">
+                <FeaturedBadge :label="r.featured_label" size="sm" position="top-left" />
                 <FavoriteButton target-type="restaurant" :target-id="r.id" size="sm" floating />
                 <span v-if="r.images && r.images.length > 0" class="rc-cover" :style="`background-image: url(${r.images[0]})`"></span>
                 <div class="rc-content">
@@ -372,6 +376,7 @@ function parsePriceRange(range: any): string {
             <h2 class="group-title">🥾 Activités</h2>
             <div class="resource-cards">
               <article v-for="a in activities" :key="a.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(a, 'activity')" @keydown.enter="openDetail(a, 'activity')">
+                <FeaturedBadge :label="a.featured_label" size="sm" position="top-left" />
                 <FavoriteButton target-type="activity" :target-id="a.id" size="sm" floating />
                 <span v-if="a.images && a.images.length > 0" class="rc-cover" :style="`background-image: url(${a.images[0]})`"></span>
                 <div class="rc-content">

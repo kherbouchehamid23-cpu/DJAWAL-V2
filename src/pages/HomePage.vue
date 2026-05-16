@@ -14,13 +14,60 @@ const router = useRouter()
 const stats = ref({ travellers: 12000, guides: 450 })
 const aiInput = ref('')
 
+function fmtPriceDA(p: number) {
+  return new Intl.NumberFormat('fr-DZ').format(p) + ' DA'
+}
+
 onMounted(async () => {
+  // Stats guides
   const { count: guidesCount } = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
     .in('role', ['guide_senior', 'guide_junior'])
     .eq('kyc_status', 'approved')
   if (guidesCount && guidesCount >= 50) stats.value.guides = guidesCount
+
+  // Destinations vedettes — configurées via /admin/homepage
+  const { data: destData } = await supabase
+    .from('destinations')
+    .select('id, name, name_ar, tagline, description, hero_image_url, cultural_theme')
+    .eq('is_featured_homepage', true)
+    .order('homepage_display_order', { ascending: true })
+  if (destData && destData.length > 0) {
+    heroCards.value = destData.map((d: any) => ({
+      id: d.id,
+      name: d.name,
+      sub: d.tagline || (d.cultural_theme ? d.cultural_theme.charAt(0).toUpperCase() + d.cultural_theme.slice(1) : ''),
+      arabic: d.name_ar || '',
+      desc: (d.description || '').slice(0, 80),
+      img: d.hero_image_url || '',
+      theme: d.cultural_theme || 'mauresque'
+    }))
+  }
+
+  // Voyages signés — configurés via /admin/homepage
+  const { data: tripData } = await supabase
+    .from('trips')
+    .select(`
+      id, title, duration_days, price_da, description, cover_image_url, tags,
+      profiles!trips_created_by_fkey(display_name, region, role)
+    `)
+    .eq('is_featured_homepage', true)
+    .eq('status', 'published')
+    .order('homepage_display_order', { ascending: true })
+    .limit(3)
+  if (tripData && tripData.length > 0) {
+    signedTrips.value = tripData.map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      duration: `${t.duration_days} jour${t.duration_days > 1 ? 's' : ''}`,
+      desc: (t.description || '').slice(0, 140),
+      guide: t.profiles?.display_name || 'Guide Djawal',
+      guideRole: t.profiles?.region || (t.profiles?.role === 'guide_senior' ? 'Guide Senior' : 'Guide Djawal'),
+      price: fmtPriceDA(t.price_da || 0),
+      img: t.cover_image_url || ''
+    }))
+  }
 })
 
 function goToComposer(prefill?: string) {
@@ -50,7 +97,30 @@ const quickPrompts = [
   { label: 'Saveurs kabyles', q: 'Voyage gastronomique en Kabylie' }
 ]
 
-const heroCards = [
+// ===== Cards carrousel + voyages signés =====
+// Configurés via /admin/homepage (super_admin). Fallback hardcodé ci-dessous
+// si la BDD ne renvoie rien (premières visites avant configuration admin).
+interface HeroCard {
+  id?: string
+  name: string
+  sub: string
+  arabic: string
+  desc: string
+  img: string
+  theme: string
+}
+interface SignedTrip {
+  id?: string
+  title: string
+  duration: string
+  desc: string
+  guide: string
+  guideRole: string
+  price: string
+  img: string
+}
+
+const fallbackHeroCards: HeroCard[] = [
   { name: 'Tassili n\'Ajjer', sub: 'Saharien · UNESCO', arabic: 'طاسيلي', desc: 'Plateau de l\'art rupestre', img: 'https://images.pexels.com/photos/9351229/pexels-photo-9351229.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'saharien' },
   { name: 'Casbah d\'Alger', sub: 'Mauresque · UNESCO', arabic: 'القصبة', desc: 'Médina ottomane vivante', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'mauresque' },
   { name: 'Djurdjura', sub: 'Kabylie', arabic: 'جرجرة', desc: 'Cèdres et sommets de Kabylie', img: 'https://images.pexels.com/photos/14088291/pexels-photo-14088291.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'aures' },
@@ -63,11 +133,14 @@ const heroCards = [
   { name: 'Djémila', sub: 'Aurès · UNESCO', arabic: 'جميلة', desc: 'Cité romaine de Cuicul', img: 'https://images.pexels.com/photos/1631181/pexels-photo-1631181.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'aures' }
 ]
 
-const signedTrips = [
+const fallbackSignedTrips: SignedTrip[] = [
   { title: 'Cœur du Hoggar : silence et étoiles', duration: '9 jours · Hiver', desc: "Marche douce dans l'Atakor. Nuit chez les Touaregs. Lever de lune sur l'Assekrem.", guide: 'Yacine', guideRole: 'Touareg du Hoggar', price: '218 000 DA', img: 'https://images.pexels.com/photos/2382325/pexels-photo-2382325.jpeg?auto=compress&cs=tinysrgb&w=800' },
   { title: "L'Algérie mauresque : Tlemcen, Casbah, Tipaza", duration: '7 jours · Toute saison', desc: 'Trois capitales, trois siècles. Mansourah, Casbah, ruines romaines face à la mer.', guide: 'Lina', guideRole: "Casbah d'Alger", price: '174 000 DA', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800' },
   { title: "M'Zab : l'épure pour philosophie", duration: '5 jours · Printemps', desc: "Ghardaïa, Beni Isguen, El Atteuf. La sobriété mozabite comme art de vivre.", guide: 'Hamid', guideRole: "Senior · M'Zab", price: '131 000 DA', img: 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&cs=tinysrgb&w=800' }
 ]
+
+const heroCards = ref<HeroCard[]>(fallbackHeroCards)
+const signedTrips = ref<SignedTrip[]>(fallbackSignedTrips)
 
 const archCarousel = ref<HTMLElement | null>(null)
 function scrollCarousel(dir: 'left' | 'right') {
@@ -155,8 +228,8 @@ function scrollCarousel(dir: 'left' | 'right') {
 
         <div class="dest-carousel-wrap">
           <div class="dest-carousel" ref="archCarousel">
-            <button v-for="d in heroCards" :key="d.name" class="dest-card" type="button"
-                    @click="router.push('/voyages?theme=' + d.theme)">
+            <button v-for="d in heroCards" :key="d.id || d.name" class="dest-card" type="button"
+                    @click="d.id ? router.push('/destination/' + d.id) : router.push('/voyages?theme=' + d.theme)">
               <img class="dest-card-img" :src="d.img" :alt="d.name" loading="lazy" />
               <div class="dest-card-body">
                 <div class="dest-card-theme">— {{ d.sub }} —</div>
@@ -182,7 +255,8 @@ function scrollCarousel(dir: 'left' | 'right') {
           <p class="section-lede">Pas un catalogue. Des invitations à vivre — composées par les guides eux-mêmes.</p>
         </header>
         <div class="trips-grid">
-          <article v-for="t in signedTrips" :key="t.title" class="trip-card" @click="router.push('/voyages')">
+          <article v-for="t in signedTrips" :key="t.id || t.title" class="trip-card"
+                   @click="t.id ? router.push('/voyages/' + t.id) : router.push('/voyages')">
             <div class="trip-img-wrap">
               <img :src="t.img" :alt="t.title" loading="lazy" />
               <span class="trip-duration-badge">{{ t.duration }}</span>

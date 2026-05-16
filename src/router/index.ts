@@ -278,6 +278,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Modération avis — Admin' }
   },
   {
+    path: '/admin/homepage',
+    name: 'admin-homepage',
+    component: () => import('@/pages/admin/HomepageAdminPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'HomePage — Admin' }
+  },
+  {
     path: '/admin/memoires',
     name: 'admin-memories',
     component: () => import('@/pages/admin/MemoriesAdminPage.vue'),

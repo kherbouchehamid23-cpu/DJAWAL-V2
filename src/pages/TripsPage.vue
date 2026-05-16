@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { parseCoordinates } from '@/lib/geo'
 import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
+import FeaturedBadge from '@/components/FeaturedBadge.vue'
 import { useSEO } from '@/composables/useSEO'
 
 const route = useRoute()
@@ -187,12 +188,14 @@ onMounted(async () => {
   const [destRes, tripsRes] = await Promise.all([
     supabase
       .from('destinations')
-      .select('id, name, name_ar, slug, wilaya, cultural_theme, description, hero_image_url, coordinates')
-      .order('name'),
+      .select('id, name, name_ar, slug, wilaya, cultural_theme, description, hero_image_url, coordinates, display_order')
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true }),
     supabase
       .from('trips')
-      .select('id, title, duration_days, price_da, cover_image_url, destinations(name, cultural_theme), profiles!trips_created_by_fkey(display_name, role)')
+      .select('id, title, duration_days, price_da, cover_image_url, featured_label, destinations(name, cultural_theme), profiles!trips_created_by_fkey(display_name, role)')
       .eq('status', 'published')
+      .order('featured_label', { ascending: false, nullsFirst: false })
       .order('published_at', { ascending: false })
       .limit(8)
   ])
@@ -519,6 +522,7 @@ function closeMobileMap() {
             :style="trip.cover_image_url ? `background-image: url(${trip.cover_image_url})` : ''"
           >
             <span v-if="trip.profiles?.role === 'guide_senior'" class="senior-badge">⭐ Senior</span>
+            <FeaturedBadge :label="trip.featured_label" size="sm" position="top-left" />
             <FavoriteButton
               target-type="trip"
               :target-id="trip.id"
