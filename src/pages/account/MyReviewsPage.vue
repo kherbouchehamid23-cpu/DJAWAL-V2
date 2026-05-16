@@ -5,11 +5,13 @@ import { useAuthStore } from '@/stores/auth'
 
 interface Review {
   id: string
-  trip_id: string
+  target_id: string
+  target_type: string
   rating: number
   comment: string | null
+  status: string
   created_at: string
-  trips?: {
+  trip?: {
     title: string
     cover_image_url: string | null
     destinations?: { name: string } | null
@@ -22,12 +24,30 @@ const loading = ref(true)
 
 async function load() {
   loading.value = true
+  // Récupère tous les avis du user (tout statut + tous types)
   const { data } = await supabase
-    .from('reviews')
-    .select('id, trip_id, rating, comment, created_at, trips(title, cover_image_url, destinations(name))')
-    .eq('created_by', auth.user!.id)
+    .from('user_reviews')
+    .select('id, target_id, target_type, rating, comment, status, created_at')
+    .eq('user_id', auth.user!.id)
     .order('created_at', { ascending: false })
-  reviews.value = (data as any) || []
+
+  const list = (data as any[]) || []
+
+  // Pour les avis sur trips, on enrichit avec le titre + cover + destination
+  const tripIds = list.filter(r => r.target_type === 'trip').map(r => r.target_id)
+  let tripsById: Record<string, any> = {}
+  if (tripIds.length > 0) {
+    const { data: tripsData } = await supabase
+      .from('trips')
+      .select('id, title, cover_image_url, destinations(name)')
+      .in('id', tripIds)
+    for (const t of (tripsData as any[]) || []) tripsById[t.id] = t
+  }
+
+  reviews.value = list.map(r => ({
+    ...r,
+    trip: r.target_type === 'trip' ? tripsById[r.target_id] : null
+  }))
   loading.value = false
 }
 
@@ -35,7 +55,7 @@ onMounted(load)
 
 async function remove(r: Review) {
   if (!confirm('Supprimer cet avis ?')) return
-  const { error } = await supabase.from('reviews').delete().eq('id', r.id)
+  const { error } = await supabase.from('user_reviews').delete().eq('id', r.id)
   if (error) { alert('Erreur : ' + error.message); return }
   reviews.value = reviews.value.filter(x => x.id !== r.id)
 }
@@ -70,21 +90,34 @@ function fmtDate(iso: string) {
 
     <div v-else class="reviews-list">
       <article v-for="r in reviews" :key="r.id" class="review-card">
-        <router-link :to="`/voyages/${r.trip_id}`" class="review-link">
+        <router-link :to="`/voyages/${r.target_id}`" v-if="r.target_type === 'trip'" class="review-link">
           <div
             class="review-cover"
-            :style="r.trips?.cover_image_url ? `background-image: url(${r.trips.cover_image_url})` : ''"
+            :style="r.trip?.cover_image_url ? `background-image: url(${r.trip.cover_image_url})` : ''"
           ></div>
           <div class="review-body">
-            <div class="review-dest" v-if="r.trips?.destinations">📍 {{ r.trips.destinations.name }}</div>
-            <h3>{{ r.trips?.title }}</h3>
+            <div class="review-dest" v-if="r.trip?.destinations">📍 {{ r.trip.destinations.name }}</div>
+            <h3>{{ r.trip?.title || 'Voyage' }}</h3>
             <div class="review-rating">
               <span v-for="n in 5" :key="n" :class="['star', { filled: n <= r.rating }]">★</span>
               <span class="review-date">· {{ fmtDate(r.created_at) }}</span>
+              <span v-if="r.status !== 'approved'" class="review-status">· {{ r.status }}</span>
             </div>
             <p v-if="r.comment" class="review-comment">« {{ r.comment }} »</p>
           </div>
         </router-link>
+        <div v-else class="review-link review-link-generic">
+          <div class="review-body">
+            <div class="review-dest">{{ r.target_type }}</div>
+            <h3>Avis</h3>
+            <div class="review-rating">
+              <span v-for="n in 5" :key="n" :class="['star', { filled: n <= r.rating }]">★</span>
+              <span class="review-date">· {{ fmtDate(r.created_at) }}</span>
+              <span v-if="r.status !== 'approved'" class="review-status">· {{ r.status }}</span>
+            </div>
+            <p v-if="r.comment" class="review-comment">« {{ r.comment }} »</p>
+          </div>
+        </div>
         <button class="remove-btn" @click="remove(r)">🗑️ Supprimer</button>
       </article>
     </div>

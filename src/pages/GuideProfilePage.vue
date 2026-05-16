@@ -81,16 +81,25 @@ onMounted(async () => {
     .order('published_at', { ascending: false })
   trips.value = (tripsData as any) || []
 
-  // Avis sur ses voyages
+  // Avis sur ses voyages (utilise user_reviews polymorphique)
   if (trips.value.length > 0) {
     const tripIds = trips.value.map(t => t.id)
     const { data: revData } = await supabase
-      .from('reviews')
-      .select('id, rating, comment, created_at, trip_id, profiles(display_name), trips(title)')
-      .in('trip_id', tripIds)
+      .from('user_reviews')
+      .select('id, rating, comment, created_at, target_id, profiles!user_reviews_user_id_fkey(display_name)')
+      .eq('target_type', 'trip')
+      .eq('status', 'approved')
+      .in('target_id', tripIds)
       .order('created_at', { ascending: false })
       .limit(8)
-    reviews.value = (revData as any) || []
+    // Joindre les trips manuellement
+    const tripsById: Record<string, any> = {}
+    for (const t of trips.value) tripsById[t.id] = t
+    reviews.value = ((revData as any[]) || []).map(r => ({
+      ...r,
+      trip_id: r.target_id,
+      trips: tripsById[r.target_id] ? { title: tripsById[r.target_id].title } : null
+    }))
   }
 
   loading.value = false

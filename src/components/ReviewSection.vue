@@ -1,18 +1,34 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 
-const props = defineProps<{
-  tripId: string
-}>()
+type TargetType =
+  | 'trip' | 'destination' | 'accommodation' | 'site'
+  | 'restaurant' | 'activity' | 'guide' | 'operator'
+
+const props = withDefaults(defineProps<{
+  // Mode 1 (nouveau) : target_type + target_id
+  targetType?: TargetType
+  targetId?: string
+  // Mode 2 (rétro-compat) : tripId
+  tripId?: string
+  // Personnalisation visuelle
+  title?: string
+}>(), {
+  title: '⭐ Avis'
+})
+
+// Résolution du target effectif
+const effectiveType = computed<TargetType>(() => props.targetType || 'trip')
+const effectiveId = computed<string>(() => props.targetId || props.tripId || '')
 
 interface Review {
   id: string
   rating: number
   comment: string | null
   created_at: string
-  created_by: string
+  user_id: string
   profiles?: { display_name: string; avatar_url: string | null } | null
 }
 
@@ -34,21 +50,33 @@ const avg = computed(() => {
 })
 
 async function load() {
+  if (!effectiveId.value) return
   loading.value = true
   const { data } = await supabase
-    .from('reviews')
-    .select('id, rating, comment, created_at, created_by, profiles(display_name, avatar_url)')
-    .eq('trip_id', props.tripId)
+    .from('user_reviews')
+    .select('id, rating, comment, created_at, user_id, profiles!user_reviews_user_id_fkey(display_name, avatar_url)')
+    .eq('target_type', effectiveType.value)
+    .eq('target_id', effectiveId.value)
+    .eq('status', 'approved')
     .order('created_at', { ascending: false })
   reviews.value = (data as any) || []
 
-  // Trouver mon avis si connecté
+  // Trouver mon avis si connecté (peut être en pending donc on refait une requête séparée)
+  myReview.value = null
+  formRating.value = 5
+  formComment.value = ''
   if (auth.user) {
-    const mine = reviews.value.find(r => r.created_by === auth.user!.id)
+    const { data: mine } = await supabase
+      .from('user_reviews')
+      .select('id, rating, comment, created_at, user_id')
+      .eq('target_type', effectiveType.value)
+      .eq('target_id', effectiveId.value)
+      .eq('user_id', auth.user.id)
+      .maybeSingle()
     if (mine) {
-      myReview.value = mine
-      formRating.value = mine.rating
-      formComment.value = mine.comment || ''
+      myReview.value = mine as any
+      formRating.value = (mine as any).rating
+      formComment.value = (mine as any).comment || ''
     }
   }
 
@@ -56,6 +84,8 @@ async function load() {
 }
 
 onMounted(load)
+// Recharger si la cible change (cas où le composant reste monté mais reçoit un nouvel ID)
+watch([effectiveType, effectiveId], load)
 
 async function submitReview() {
   formError.value = ''
@@ -65,8 +95,9 @@ async function submitReview() {
   }
   saving.value = true
   const payload = {
-    trip_id: props.tripId,
-    created_by: auth.user!.id,
+    user_id: auth.user!.id,
+    target_type: effectiveType.value,
+    target_id: effectiveId.value,
     rating: formRating.value,
     comment: formComment.value.trim() || null
   }
@@ -74,12 +105,12 @@ async function submitReview() {
   let err
   if (myReview.value) {
     const { error: e } = await supabase
-      .from('reviews')
+      .from('user_reviews')
       .update({ rating: payload.rating, comment: payload.comment })
       .eq('id', myReview.value.id)
     err = e
   } else {
-    const { error: e } = await supabase.from('reviews').insert(payload)
+    const { error: e } = await supabase.from('user_reviews').insert(payload)
     err = e
   }
   saving.value = false
@@ -92,7 +123,7 @@ async function submitReview() {
 
 async function deleteMine() {
   if (!myReview.value || !confirm('Supprimer votre avis ?')) return
-  const { error } = await supabase.from('reviews').delete().eq('id', myReview.value.id)
+  const { error } = await supabase.from('user_reviews').delete().eq('id', myReview.value.id)
   if (error) { alert('Erreur : ' + error.message); return }
   myReview.value = null
   formRating.value = 5
@@ -112,7 +143,7 @@ function initial(name?: string | null) {
 <template>
   <section class="reviews">
     <header class="reviews-head">
-      <h2>⭐ Avis des voyageurs</h2>
+      <h2>{{ title }}</h2>
       <div v-if="avg" class="avg-row">
         <span class="avg-num">{{ avg }}</span>
         <span class="avg-stars">
@@ -178,7 +209,7 @@ function initial(name?: string | null) {
         v-for="r in reviews"
         :key="r.id"
         class="review-item"
-        :class="{ mine: r.created_by === auth.user?.id }"
+        :class="{ mine: r.user_id === auth.user?.id }"
       >
         <div class="review-avatar">
           <img v-if="r.profiles?.avatar_url" :src="r.profiles.avatar_url" :alt="r.profiles?.display_name || ''" />

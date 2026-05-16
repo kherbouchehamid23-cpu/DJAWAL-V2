@@ -51,20 +51,31 @@ onMounted(async () => {
     else if (t.status === 'published') counts.value.published++
   }
 
-  // Avis reçus sur les voyages du guide
+  // Avis reçus sur les voyages du guide (table polymorphique user_reviews)
   if (myTripIds.length > 0) {
     const { data: revs } = await supabase
-      .from('reviews')
-      .select('id, rating, comment, created_at, trip_id, trips(title), profiles(display_name)')
-      .in('trip_id', myTripIds)
+      .from('user_reviews')
+      .select('id, rating, comment, created_at, target_id, profiles!user_reviews_user_id_fkey(display_name)')
+      .eq('target_type', 'trip')
+      .eq('status', 'approved')
+      .in('target_id', myTripIds)
       .order('created_at', { ascending: false })
       .limit(5)
-    recentReviews.value = (revs as any) || []
+    // Joindre les titres de voyages
+    const titles: Record<string, string> = {}
+    for (const t of (tripsData as any[] || [])) titles[t.id] = t.title
+    recentReviews.value = ((revs as any[]) || []).map((r: any) => ({
+      ...r,
+      trip_id: r.target_id,
+      trips: { title: titles[r.target_id] || 'Voyage' }
+    }))
 
     const { data: allRevs } = await supabase
-      .from('reviews')
+      .from('user_reviews')
       .select('rating')
-      .in('trip_id', myTripIds)
+      .eq('target_type', 'trip')
+      .eq('status', 'approved')
+      .in('target_id', myTripIds)
     if (allRevs && allRevs.length > 0) {
       const sum = allRevs.reduce((s: number, r: any) => s + r.rating, 0)
       avgRating.value = (sum / allRevs.length).toFixed(1)

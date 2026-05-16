@@ -21,14 +21,15 @@ const loading = ref(true)
 
 onMounted(async () => {
   loading.value = true
-  // Récupérer les favoris du user puis joindre les trips publiés
+  // Récupérer les favoris de type 'trip' du user puis joindre les trips publiés
   const { data: favs } = await supabase
-    .from('favorites')
-    .select('trip_id, created_at')
+    .from('user_favorites')
+    .select('target_id, created_at')
     .eq('user_id', auth.user!.id)
+    .eq('target_type', 'trip')
     .order('created_at', { ascending: false })
 
-  const ids = (favs || []).map((f: any) => f.trip_id)
+  const ids = (favs || []).map((f: any) => f.target_id)
   if (ids.length === 0) {
     loading.value = false
     return
