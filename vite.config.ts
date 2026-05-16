@@ -12,9 +12,11 @@ export default defineConfig({
     vuetify({ autoImport: true }),
     Components({ dirs: ['src/components'], dts: true }),
     VitePWA({
-      // 'prompt' : on contrôle l'instant du refresh via PwaUpdateBanner.vue
-      // (au lieu de 'autoUpdate' qui met à jour silencieusement au prochain reload)
-      registerType: 'prompt',
+      // 'autoUpdate' + workbox.skipWaiting + clientsClaim ci-dessous :
+      // la PWA installée se met à jour SILENCIEUSEMENT et IMMÉDIATEMENT au
+      // prochain chargement (pas d'attente, pas d'interaction utilisateur).
+      // C'est le comportement attendu pour une app installée comme native.
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
         name: 'Djawal — L\'Algérie vécue de l\'intérieur',
@@ -35,6 +37,13 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // Forcer activation immédiate du nouveau SW (pas d'attente jusqu'au reload)
+        // + reprendre le contrôle des pages déjà ouvertes (pas besoin de fermer/rouvrir)
+        skipWaiting: true,
+        clientsClaim: true,
+        // Nettoyer les caches anciens automatiquement (évite que les utilisateurs PWA
+        // restent bloqués sur d'anciennes versions de djawal-static / djawal-images)
+        cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
         runtimeCaching: [
           {
