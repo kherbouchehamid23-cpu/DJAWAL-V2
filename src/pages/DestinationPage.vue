@@ -492,7 +492,8 @@ function parsePriceRange(range: any): string {
   position: absolute;
   top: 24px;
   right: 24px;
-  z-index: 3;
+  z-index: 20; /* au-dessus de hero-overlay + hero-content */
+  pointer-events: auto !important;
 }
 .reviews-wrapper {
   padding-top: var(--space-6);

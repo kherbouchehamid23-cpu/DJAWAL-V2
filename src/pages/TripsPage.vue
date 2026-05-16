@@ -906,6 +906,12 @@ function closeMobileMap() {
   right: 16px;
   top: 16px;
 }
+/* Sur la card vedette, le bouton coeur passe en BAS-DROITE pour ne pas chevaucher le badge thème */
+.dest-card-featured .fav-btn.is-floating {
+  top: auto;
+  right: 16px;
+  bottom: 16px;
+}
 .featured-body { padding: 36px 32px; display: flex; flex-direction: column; justify-content: center; }
 .featured-body h3 {
   font-family: 'Cormorant Garamond', serif;
@@ -1016,6 +1022,12 @@ function closeMobileMap() {
   padding: 4px 10px; border-radius: 999px;
   font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
   border: 1px solid rgba(212, 168, 68, 0.4);
+}
+/* Sur les cards voyages signés, le coeur passe en BAS-DROITE pour ne pas chevaucher le badge Senior */
+.trip-strip-card .fav-btn.is-floating {
+  top: auto;
+  right: 10px;
+  bottom: 10px;
 }
 .trip-strip-body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; }
 .trip-strip-dest {

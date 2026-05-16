@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useFavorites } from '@/composables/useFavorites'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import ReviewSection from '@/components/ReviewSection.vue'
 
 const auth = useAuthStore()
@@ -181,6 +182,13 @@ function difficultyLabel(d: string | null) {
         class="trip-hero"
         :style="trip.cover_image_url ? `background-image: linear-gradient(rgba(10,31,46,0.4), rgba(10,31,46,0.7)), url(${trip.cover_image_url})` : ''"
       >
+        <!-- Bouton coeur en haut-droite du hero, immédiatement visible -->
+        <FavoriteButton
+          target-type="trip"
+          :target-id="trip.id"
+          size="lg"
+          class="trip-hero-fav-btn"
+        />
         <div class="djawal-container hero-inner">
           <div class="hero-tag">{{ trip.destinations?.name }} · {{ trip.destinations?.wilaya }}</div>
           <h1>{{ trip.title }}</h1>
@@ -208,11 +216,6 @@ function difficultyLabel(d: string | null) {
           <div v-if="trip.tags && trip.tags.length > 0" class="tags">
             <span v-for="t in trip.tags" :key="t" class="tag">#{{ t }}</span>
           </div>
-
-          <button class="fav-btn" :class="{ active: isFav }" @click="handleToggleFav">
-            <span class="fav-icon">{{ isFav ? '❤️' : '🤍' }}</span>
-            <span>{{ isFav ? 'Dans vos favoris' : 'Ajouter aux favoris' }}</span>
-          </button>
         </div>
       </section>
 
@@ -328,6 +331,13 @@ function difficultyLabel(d: string | null) {
   color: var(--c-fond);
   padding: var(--space-8) 0;
   position: relative;
+}
+.trip-hero-fav-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 20;
+  pointer-events: auto !important;
 }
 .hero-inner { position: relative; z-index: 1; }
 .hero-tag {

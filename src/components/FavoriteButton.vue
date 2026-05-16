@@ -110,6 +110,7 @@ async function onClick(e: Event) {
   position: absolute;
   top: 12px;
   right: 12px;
-  z-index: 3;
+  z-index: 10; /* au-dessus des overlays / images / contenus */
+  pointer-events: auto !important;
 }
 </style>

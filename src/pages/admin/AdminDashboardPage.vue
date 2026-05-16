@@ -100,17 +100,17 @@ const totalPendingResources = computed(() =>
         <span>Souvenirs à valider</span>
       </router-link>
 
-      <div class="stat-card">
+      <router-link to="/admin/users?role=guide_senior" class="stat-card">
         <div class="stat-icon">🎒</div>
         <strong>{{ loading ? '—' : stats.totalGuides }}</strong>
         <span>Guides enregistrés</span>
-      </div>
+      </router-link>
 
-      <div class="stat-card">
+      <router-link to="/admin/users?role=voyageur" class="stat-card">
         <div class="stat-icon">🧳</div>
         <strong>{{ loading ? '—' : stats.totalVoyageurs }}</strong>
         <span>Voyageurs</span>
-      </div>
+      </router-link>
     </div>
 
     <section>
@@ -120,6 +120,11 @@ const totalPendingResources = computed(() =>
           <div class="module-icon">📋</div>
           <h3>Validation KYC</h3>
           <p>Examiner les dossiers des nouveaux guides et les approuver ou rejeter.</p>
+        </router-link>
+        <router-link to="/admin/users" class="module-card">
+          <div class="module-icon">👥</div>
+          <h3>Utilisateurs</h3>
+          <p>Lister, filtrer et consulter le détail de tous les comptes (voyageurs, guides, opérateurs).</p>
         </router-link>
         <router-link to="/admin/destinations" class="module-card">
           <div class="module-icon">🗺️</div>

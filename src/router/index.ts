@@ -229,6 +229,19 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Validation KYC — Djawal' }
   },
   {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('@/pages/admin/UserListAdminPage.vue'),
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Utilisateurs — Admin Djawal' }
+  },
+  {
+    path: '/admin/users/:id',
+    name: 'admin-user-detail',
+    component: () => import('@/pages/admin/UserDetailAdminPage.vue'),
+    props: true,
+    meta: { requiresAuth: true, requiresRole: ['super_admin'], title: 'Utilisateur — Admin Djawal' }
+  },
+  {
     path: '/admin/moderation-resources',
     name: 'admin-moderation-resources',
     component: () => import('@/pages/admin/AdminResourceModerationPage.vue'),
