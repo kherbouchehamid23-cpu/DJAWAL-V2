@@ -7,6 +7,8 @@ import { useThemeStore } from '@/stores/theme'
 import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
 import Panorama360 from '@/components/Panorama360.vue'
 import ResourceDetailDialog from '@/components/ResourceDetailDialog.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
+import ReviewSection from '@/components/ReviewSection.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -214,6 +216,13 @@ function parsePriceRange(range: any): string {
           <span class="meta-pill">{{ destination.cultural_theme === 'saharien' ? '🏜️ Saharien' : destination.cultural_theme === 'mauresque' ? '🏛️ Mauresque' : '⛰️ Aurès' }}</span>
         </div>
       </div>
+      <!-- Bouton favoris en haut-droite du hero -->
+      <FavoriteButton
+        target-type="destination"
+        :target-id="destination.id"
+        size="lg"
+        class="hero-fav-btn"
+      />
     </header>
 
     <!-- DESCRIPTION -->
@@ -272,7 +281,8 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'sites') && sites.length > 0" class="resource-group">
             <h2 class="group-title">🏛️ Sites & Monuments</h2>
             <div class="resource-cards">
-              <button v-for="s in sites" :key="s.id" type="button" class="resource-card clickable" @click="openDetail(s, 'site')">
+              <article v-for="s in sites" :key="s.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(s, 'site')" @keydown.enter="openDetail(s, 'site')">
+                <FavoriteButton target-type="site" :target-id="s.id" size="sm" floating />
                 <span v-if="s.images && s.images.length > 0" class="rc-cover" :style="`background-image: url(${s.images[0]})`"></span>
                 <div class="rc-content">
                   <div class="rc-header">
@@ -294,7 +304,7 @@ function parsePriceRange(range: any): string {
                     <span v-if="has360(s)" class="rc-badge-360" @click.stop="openPanorama(s)">🌐 360°</span>
                   </div>
                 </div>
-              </button>
+              </article>
             </div>
           </article>
 
@@ -302,7 +312,8 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'accommodations') && accommodations.length > 0" class="resource-group">
             <h2 class="group-title">🏨 Hébergements</h2>
             <div class="resource-cards">
-              <button v-for="h in accommodations" :key="h.id" type="button" class="resource-card clickable" @click="openDetail(h, 'accommodation')">
+              <article v-for="h in accommodations" :key="h.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(h, 'accommodation')" @keydown.enter="openDetail(h, 'accommodation')">
+                <FavoriteButton target-type="accommodation" :target-id="h.id" size="sm" floating />
                 <span v-if="h.images && h.images.length > 0" class="rc-cover" :style="`background-image: url(${h.images[0]})`"></span>
                 <div class="rc-content">
                   <div class="rc-header">
@@ -323,7 +334,7 @@ function parsePriceRange(range: any): string {
                     <span v-if="has360(h)" class="rc-badge-360" @click.stop="openPanorama(h)">🌐 360°</span>
                   </div>
                 </div>
-              </button>
+              </article>
             </div>
           </article>
 
@@ -331,7 +342,8 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'restaurants') && restaurants.length > 0" class="resource-group">
             <h2 class="group-title">🍽️ Restaurants</h2>
             <div class="resource-cards">
-              <button v-for="r in restaurants" :key="r.id" type="button" class="resource-card clickable" @click="openDetail(r, 'restaurant')">
+              <article v-for="r in restaurants" :key="r.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(r, 'restaurant')" @keydown.enter="openDetail(r, 'restaurant')">
+                <FavoriteButton target-type="restaurant" :target-id="r.id" size="sm" floating />
                 <span v-if="r.images && r.images.length > 0" class="rc-cover" :style="`background-image: url(${r.images[0]})`"></span>
                 <div class="rc-content">
                   <div class="rc-header">
@@ -351,7 +363,7 @@ function parsePriceRange(range: any): string {
                     <span v-if="has360(r)" class="rc-badge-360" @click.stop="openPanorama(r)">🌐 360°</span>
                   </div>
                 </div>
-              </button>
+              </article>
             </div>
           </article>
 
@@ -359,7 +371,8 @@ function parsePriceRange(range: any): string {
           <article v-if="(activeTab === 'all' || activeTab === 'activities') && activities.length > 0" class="resource-group">
             <h2 class="group-title">🥾 Activités</h2>
             <div class="resource-cards">
-              <button v-for="a in activities" :key="a.id" type="button" class="resource-card clickable" @click="openDetail(a, 'activity')">
+              <article v-for="a in activities" :key="a.id" class="resource-card clickable" role="button" tabindex="0" @click="openDetail(a, 'activity')" @keydown.enter="openDetail(a, 'activity')">
+                <FavoriteButton target-type="activity" :target-id="a.id" size="sm" floating />
                 <span v-if="a.images && a.images.length > 0" class="rc-cover" :style="`background-image: url(${a.images[0]})`"></span>
                 <div class="rc-content">
                   <div class="rc-header">
@@ -382,7 +395,7 @@ function parsePriceRange(range: any): string {
                     <span v-if="has360(a)" class="rc-badge-360" @click.stop="openPanorama(a)">🌐 360°</span>
                   </div>
                 </div>
-              </button>
+              </article>
             </div>
           </article>
 
@@ -401,6 +414,15 @@ function parsePriceRange(range: any): string {
           />
         </aside>
       </div>
+    </section>
+
+    <!-- AVIS sur la destination -->
+    <section class="djawal-container reviews-wrapper">
+      <ReviewSection
+        target-type="destination"
+        :target-id="destination.id"
+        :title="`⭐ Avis sur ${destination.name}`"
+      />
     </section>
 
     <!-- Modale détail ressource -->
@@ -465,6 +487,16 @@ function parsePriceRange(range: any): string {
   position: relative;
   padding: var(--space-7) var(--space-5) var(--space-6);
   width: 100%;
+}
+.hero-fav-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 3;
+}
+.reviews-wrapper {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-7);
 }
 .hero-back {
   display: inline-block;
@@ -615,6 +647,15 @@ function parsePriceRange(range: any): string {
   width: 100%;
   display: block;
   overflow: hidden;
+  position: relative; /* pour positionner le FavoriteButton flottant */
+}
+.resource-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ombre-elevee);
+}
+.resource-card.clickable:focus-visible {
+  outline: 2px solid var(--c-accent, #D4A04F);
+  outline-offset: 2px;
 }
 .resource-card.clickable .rc-content {
   padding: var(--space-4);

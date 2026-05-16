@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { parseCoordinates } from '@/lib/geo'
 import LeafletMap, { type MapMarker } from '@/components/LeafletMap.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import { useSEO } from '@/composables/useSEO'
 
 const route = useRoute()
@@ -435,6 +436,12 @@ function closeMobileMap() {
               <span class="theme-badge" :style="`background: ${themeBadgeColor(featuredDestination.cultural_theme)}`">
                 {{ themeLabel(featuredDestination.cultural_theme) }}
               </span>
+              <FavoriteButton
+                target-type="destination"
+                :target-id="featuredDestination.id"
+                size="md"
+                floating
+              />
             </div>
             <div class="featured-body">
               <h3>{{ featuredDestination.name }}</h3>
@@ -461,6 +468,12 @@ function closeMobileMap() {
                 <span class="theme-badge" :style="`background: ${themeBadgeColor(dest.cultural_theme)}`">
                   {{ themeLabel(dest.cultural_theme) }}
                 </span>
+                <FavoriteButton
+                  target-type="destination"
+                  :target-id="dest.id"
+                  size="sm"
+                  floating
+                />
               </div>
               <div class="card-body">
                 <h3>{{ dest.name }}</h3>
@@ -506,6 +519,12 @@ function closeMobileMap() {
             :style="trip.cover_image_url ? `background-image: url(${trip.cover_image_url})` : ''"
           >
             <span v-if="trip.profiles?.role === 'guide_senior'" class="senior-badge">⭐ Senior</span>
+            <FavoriteButton
+              target-type="trip"
+              :target-id="trip.id"
+              size="sm"
+              floating
+            />
           </div>
           <div class="trip-strip-body">
             <div class="trip-strip-dest">📍 {{ trip.destinations?.name }}</div>

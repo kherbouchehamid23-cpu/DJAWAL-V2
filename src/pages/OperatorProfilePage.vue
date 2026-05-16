@@ -3,6 +3,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useSEO } from '@/composables/useSEO'
+import ReviewSection from '@/components/ReviewSection.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
@@ -242,6 +244,24 @@ async function load() {
         " class="empty-section">
         <p>Ce profil n'a pas encore publié de produits sur Djawal.</p>
       </section>
+
+      <!-- Avis sur l'opérateur -->
+      <section v-if="operator?.id" class="djawal-container djawal-section">
+        <ReviewSection
+          target-type="operator"
+          :target-id="operator.id"
+          :title="`⭐ Avis sur ${operator.business_name || 'cet opérateur'}`"
+        />
+      </section>
+
+      <!-- Bouton favori opérateur -->
+      <FavoriteButton
+        v-if="operator?.id"
+        target-type="operator"
+        :target-id="operator.id"
+        size="lg"
+        class="op-fav-btn"
+      />
     </template>
   </div>
 </template>

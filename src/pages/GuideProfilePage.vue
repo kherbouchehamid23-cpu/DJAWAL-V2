@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useSEO } from '@/composables/useSEO'
+import ReviewSection from '@/components/ReviewSection.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 
 interface Guide {
   id: string
@@ -228,6 +230,24 @@ function fmtDate(iso: string) {
           </article>
         </div>
       </section>
+
+      <!-- Avis directs sur le guide en tant que personne -->
+      <section class="djawal-container djawal-section">
+        <ReviewSection
+          target-type="guide"
+          :target-id="guide.id"
+          :title="`⭐ Avis sur ${guide.display_name}`"
+        />
+      </section>
+
+      <!-- Bouton favori du guide (en haut à droite de la card profil) -->
+      <FavoriteButton
+        v-if="guide.id"
+        target-type="guide"
+        :target-id="guide.id"
+        size="lg"
+        class="guide-fav-btn"
+      />
     </template>
   </div>
 </template>
