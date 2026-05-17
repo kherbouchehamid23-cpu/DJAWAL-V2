@@ -34,6 +34,7 @@ const isHomePage = isOverlayPage
 
 const navItems = [
   { to: '/voyages', label: 'Destinations' },
+  { to: '/guides', label: 'Guides' },
   { to: '/temoignages', label: 'Souvenirs' },
   { to: '/about', label: 'À propos' },
   { to: '/composer', label: 'Djawal IA', accent: true }

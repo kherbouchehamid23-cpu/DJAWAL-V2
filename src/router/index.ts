@@ -58,6 +58,12 @@ const routes: RouteRecordRaw[] = [
     meta: { culturalTheme: 'mauresque', title: 'Composer mon voyage — Djawal' }
   },
   {
+    path: '/guides',
+    name: 'guides',
+    component: () => import('@/pages/GuidesPage.vue'),
+    meta: { culturalTheme: 'mauresque', title: 'Guides locaux — Djawal' }
+  },
+  {
     path: '/guide/:id',
     name: 'guide-profile',
     component: () => import('@/pages/GuideProfilePage.vue'),

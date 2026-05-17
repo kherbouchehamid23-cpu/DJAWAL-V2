@@ -3,8 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useSEO } from '@/composables/useSEO'
-import djawalMonogram from '@/assets/branding/djawal-monogram.png'
-
 useSEO({
   title: "L'Algérie, vécue de l'intérieur",
   description: "Du cœur de la Casbah aux dunes du Tassili. Connectez-vous avec les habitants ou laissez Djawal IA composer votre aventure sur-mesure."
@@ -12,70 +10,14 @@ useSEO({
 
 const router = useRouter()
 const stats = ref({ travellers: 12000, guides: 450 })
-const aiInput = ref('')
 
 function fmtPriceDA(p: number) {
   return new Intl.NumberFormat('fr-DZ').format(p) + ' DA'
 }
 
-onMounted(async () => {
-  // Stats guides
-  const { count: guidesCount } = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .in('role', ['guide_senior', 'guide_junior'])
-    .eq('kyc_status', 'approved')
-  if (guidesCount && guidesCount >= 50) stats.value.guides = guidesCount
-
-  // Destinations vedettes — configurées via /admin/homepage
-  const { data: destData } = await supabase
-    .from('destinations')
-    .select('id, name, name_ar, tagline, description, hero_image_url, cultural_theme')
-    .eq('is_featured_homepage', true)
-    .order('homepage_display_order', { ascending: true })
-  if (destData && destData.length > 0) {
-    heroCards.value = destData.map((d: any) => ({
-      id: d.id,
-      name: d.name,
-      sub: d.tagline || (d.cultural_theme ? d.cultural_theme.charAt(0).toUpperCase() + d.cultural_theme.slice(1) : ''),
-      arabic: d.name_ar || '',
-      desc: (d.description || '').slice(0, 80),
-      img: d.hero_image_url || '',
-      theme: d.cultural_theme || 'mauresque'
-    }))
-  }
-
-  // Voyages signés — configurés via /admin/homepage
-  const { data: tripData } = await supabase
-    .from('trips')
-    .select(`
-      id, title, duration_days, price_da, description, cover_image_url, tags,
-      profiles!trips_created_by_fkey(display_name, region, role)
-    `)
-    .eq('is_featured_homepage', true)
-    .eq('status', 'published')
-    .order('homepage_display_order', { ascending: true })
-    .limit(3)
-  if (tripData && tripData.length > 0) {
-    signedTrips.value = tripData.map((t: any) => ({
-      id: t.id,
-      title: t.title,
-      duration: `${t.duration_days} jour${t.duration_days > 1 ? 's' : ''}`,
-      desc: (t.description || '').slice(0, 140),
-      guide: t.profiles?.display_name || 'Guide Djawal',
-      guideRole: t.profiles?.region || (t.profiles?.role === 'guide_senior' ? 'Guide Senior' : 'Guide Djawal'),
-      price: fmtPriceDA(t.price_da || 0),
-      img: t.cover_image_url || ''
-    }))
-  }
-})
-
 function goToComposer(prefill?: string) {
   if (prefill) router.push({ path: '/composer', query: { q: prefill } })
   else router.push('/composer')
-}
-function submitAI() {
-  goToComposer(aiInput.value.trim() || undefined)
 }
 function fmtNumber(n: number) {
   return new Intl.NumberFormat('fr-FR').format(n)
@@ -97,9 +39,7 @@ const quickPrompts = [
   { label: 'Saveurs kabyles', q: 'Voyage gastronomique en Kabylie' }
 ]
 
-// ===== Cards carrousel + voyages signés =====
-// Configurés via /admin/homepage (super_admin). Fallback hardcodé ci-dessous
-// si la BDD ne renvoie rien (premières visites avant configuration admin).
+// ===== Types cards =====
 interface HeroCard {
   id?: string
   name: string
@@ -118,8 +58,10 @@ interface SignedTrip {
   guideRole: string
   price: string
   img: string
+  mode?: 'signed' | 'agency'
 }
 
+// Fallback si BDD vide
 const fallbackHeroCards: HeroCard[] = [
   { name: 'Tassili n\'Ajjer', sub: 'Saharien · UNESCO', arabic: 'طاسيلي', desc: 'Plateau de l\'art rupestre', img: 'https://images.pexels.com/photos/9351229/pexels-photo-9351229.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'saharien' },
   { name: 'Casbah d\'Alger', sub: 'Mauresque · UNESCO', arabic: 'القصبة', desc: 'Médina ottomane vivante', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800', theme: 'mauresque' },
@@ -134,9 +76,9 @@ const fallbackHeroCards: HeroCard[] = [
 ]
 
 const fallbackSignedTrips: SignedTrip[] = [
-  { title: 'Cœur du Hoggar : silence et étoiles', duration: '9 jours · Hiver', desc: "Marche douce dans l'Atakor. Nuit chez les Touaregs. Lever de lune sur l'Assekrem.", guide: 'Yacine', guideRole: 'Touareg du Hoggar', price: '218 000 DA', img: 'https://images.pexels.com/photos/2382325/pexels-photo-2382325.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { title: "L'Algérie mauresque : Tlemcen, Casbah, Tipaza", duration: '7 jours · Toute saison', desc: 'Trois capitales, trois siècles. Mansourah, Casbah, ruines romaines face à la mer.', guide: 'Lina', guideRole: "Casbah d'Alger", price: '174 000 DA', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800' },
-  { title: "M'Zab : l'épure pour philosophie", duration: '5 jours · Printemps', desc: "Ghardaïa, Beni Isguen, El Atteuf. La sobriété mozabite comme art de vivre.", guide: 'Hamid', guideRole: "Senior · M'Zab", price: '131 000 DA', img: 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&cs=tinysrgb&w=800' }
+  { title: 'Cœur du Hoggar : silence et étoiles', duration: '9 jours', desc: "Marche douce dans l'Atakor. Nuit chez les Touaregs. Lever de lune sur l'Assekrem.", guide: 'Yacine', guideRole: 'Touareg du Hoggar', price: '218 000 DA', img: 'https://images.pexels.com/photos/2382325/pexels-photo-2382325.jpeg?auto=compress&cs=tinysrgb&w=800', mode: 'signed' },
+  { title: "L'Algérie mauresque : Tlemcen, Casbah, Tipaza", duration: '7 jours', desc: 'Trois capitales, trois siècles. Mansourah, Casbah, ruines romaines face à la mer.', guide: 'Lina', guideRole: "Casbah d'Alger", price: '174 000 DA', img: 'https://images.pexels.com/photos/29639897/pexels-photo-29639897.jpeg?auto=compress&cs=tinysrgb&w=800', mode: 'signed' },
+  { title: "M'Zab : l'épure pour philosophie", duration: '5 jours', desc: "Ghardaïa, Beni Isguen, El Atteuf. La sobriété mozabite comme art de vivre.", guide: 'Hamid', guideRole: "Senior · M'Zab", price: '131 000 DA', img: 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&cs=tinysrgb&w=800', mode: 'signed' }
 ]
 
 const heroCards = ref<HeroCard[]>(fallbackHeroCards)
@@ -149,6 +91,164 @@ function scrollCarousel(dir: 'left' | 'right') {
   const cardWidth = card ? card.offsetWidth + 18 : 280
   archCarousel.value.scrollBy({ left: (dir === 'left' ? -1 : 1) * cardWidth * 3, behavior: 'smooth' })
 }
+
+// ===== GUIDES FEATURED =====
+interface FeaturedGuide {
+  id: string
+  display_name: string | null
+  avatar_url: string | null
+  role: 'guide_senior' | 'guide_junior'
+  region: string | null
+  specialties: string[] | null
+  bio: string | null
+  rating?: number | null
+  reviewCount?: number
+}
+const featuredGuides = ref<FeaturedGuide[]>([])
+
+async function loadFeaturedGuides() {
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, display_name, avatar_url, role, region, specialties, bio')
+    .in('role', ['guide_senior', 'guide_junior'])
+    .eq('kyc_status', 'approved')
+    .eq('is_active', true)
+    .order('role', { ascending: false })
+    .limit(4)
+  if (!data || data.length === 0) return
+  const list = data as FeaturedGuide[]
+  const ids = list.map(g => g.id)
+  const { data: aggData } = await supabase
+    .from('review_aggregates')
+    .select('target_id, average_rating, review_count')
+    .eq('target_type', 'guide')
+    .in('target_id', ids)
+  const ratingMap = new Map(
+    (aggData || []).map((a: any) => [a.target_id, { rating: Number(a.average_rating), count: a.review_count }])
+  )
+  for (const g of list) {
+    const r = ratingMap.get(g.id)
+    if (r) { g.rating = r.rating; g.reviewCount = r.count }
+  }
+  featuredGuides.value = list
+}
+
+function guideInitial(name?: string | null): string {
+  return (name || '?')[0].toUpperCase()
+}
+function openGuide(id: string) {
+  router.push(`/guide/${id}`)
+}
+
+// ===== MINI-CHAT IA HOME =====
+interface ChatMsg {
+  role: 'user' | 'ai'
+  text: string
+}
+const chatMessages = ref<ChatMsg[]>([])
+const chatInput = ref('')
+const chatLoading = ref(false)
+const chatStarted = ref(false)
+
+const homeChatPrompts = [
+  { icon: '📍', label: "Je suis à Béjaïa demain. Quoi faire avec deux enfants ?" },
+  { icon: '🛏', label: "Un riad ou maison d'hôte de caractère à Ghardaïa ?" },
+  { icon: '⏱', label: "Trois jours à Oran sans toucher à la plage. Possible ?" }
+]
+
+async function sendChatMessage(text?: string) {
+  const q = (text ?? chatInput.value).trim()
+  if (!q || chatLoading.value) return
+  chatStarted.value = true
+  chatMessages.value.push({ role: 'user', text: q })
+  chatInput.value = ''
+  chatLoading.value = true
+  try {
+    const { data, error } = await supabase.functions.invoke('ai-assistant', {
+      body: { question: q, user_id: null }
+    })
+    if (error) throw error
+    const ans = (data && (data.answer || data.message)) as string | undefined
+    if (data?.mode === 'too-vague' || data?.mode === 'needs-clarification') {
+      chatMessages.value.push({
+        role: 'ai',
+        text: data.answer || "Pour vous répondre précisément, j'ai besoin de quelques détails. Cliquez sur « Continuer dans Djawal IA » ci-dessous."
+      })
+    } else if (ans) {
+      chatMessages.value.push({ role: 'ai', text: ans })
+    } else {
+      chatMessages.value.push({ role: 'ai', text: 'Je suis là — pourriez-vous reformuler votre question ?' })
+    }
+  } catch (e: any) {
+    chatMessages.value.push({
+      role: 'ai',
+      text: "Je n'ai pas pu répondre tout de suite. Réessayez ou continuez avec Djawal IA en pleine page."
+    })
+  } finally {
+    chatLoading.value = false
+  }
+}
+
+function continueInComposer() {
+  const lastUser = [...chatMessages.value].reverse().find(m => m.role === 'user')
+  if (lastUser) router.push({ path: '/composer', query: { q: lastUser.text } })
+  else router.push('/composer')
+}
+
+onMounted(async () => {
+  // Stats guides
+  const { count: guidesCount } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .in('role', ['guide_senior', 'guide_junior'])
+    .eq('kyc_status', 'approved')
+  if (guidesCount && guidesCount >= 50) stats.value.guides = guidesCount
+
+  // Destinations vedettes
+  const { data: destData } = await supabase
+    .from('destinations')
+    .select('id, name, name_ar, tagline, description, hero_image_url, cultural_theme')
+    .eq('is_featured_homepage', true)
+    .order('homepage_display_order', { ascending: true })
+  if (destData && destData.length > 0) {
+    heroCards.value = destData.map((d: any) => ({
+      id: d.id,
+      name: d.name,
+      sub: d.tagline || (d.cultural_theme ? d.cultural_theme.charAt(0).toUpperCase() + d.cultural_theme.slice(1) : ''),
+      arabic: d.name_ar || '',
+      desc: (d.description || '').slice(0, 80),
+      img: d.hero_image_url || '',
+      theme: d.cultural_theme || 'mauresque'
+    }))
+  }
+
+  // Voyages signés + packages agence
+  const { data: tripData } = await supabase
+    .from('trips')
+    .select(`
+      id, title, duration_days, price_da, description, cover_image_url, tags, composition_mode,
+      profiles!trips_created_by_fkey(display_name, region, role)
+    `)
+    .eq('is_featured_homepage', true)
+    .eq('status', 'published')
+    .order('homepage_display_order', { ascending: true })
+    .limit(6)
+  if (tripData && tripData.length > 0) {
+    signedTrips.value = tripData.map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      duration: `${t.duration_days} jour${t.duration_days > 1 ? 's' : ''}`,
+      desc: (t.description || '').slice(0, 140),
+      guide: t.profiles?.display_name || 'Guide Djawal',
+      guideRole: t.profiles?.region || (t.profiles?.role === 'guide_senior' ? 'Guide Senior' : (t.profiles?.role === 'tourist_operator' ? 'Opérateur touristique' : 'Guide Djawal')),
+      price: fmtPriceDA(t.price_da || 0),
+      img: t.cover_image_url || '',
+      mode: t.composition_mode === 'agency_package' ? 'agency' : 'signed'
+    }))
+  }
+
+  await loadFeaturedGuides()
+})
 </script>
 
 <template>
@@ -168,25 +268,40 @@ function scrollCarousel(dir: 'left' | 'right') {
         <h1>L'Algérie,<br><em>vécue de l'intérieur.</em></h1>
         <p>Du cœur de la Casbah aux dunes du Tassili — voyagez aux côtés des Algériens qui racontent leur terre.</p>
 
-        <!-- BANDEAU IA central -->
-        <div class="hero-ia">
-          <form class="ia-pill" @submit.prevent="submitAI">
-            <div class="ia-mark" aria-hidden="true">
-              <img :src="djawalMonogram" alt="" />
-            </div>
-            <input v-model="aiInput" type="text" class="ia-input ia-input-desktop"
-                   placeholder="Racontez-moi votre voyage idéal — Djawal IA compose le reste…"
-                   aria-label="Décrivez votre voyage" />
-            <input v-model="aiInput" type="text" class="ia-input ia-input-mobile"
-                   placeholder="Décrivez votre voyage idéal…"
-                   aria-label="Décrivez votre voyage" />
-            <button type="submit" class="ia-submit">Composer →</button>
-          </form>
-          <div class="ia-prompts">
-            <button v-for="p in quickPrompts" :key="p.label" type="button" class="ia-prompt" @click="goToComposer(p.q)">
-              {{ p.label }}
-            </button>
-          </div>
+        <!-- DOUBLE CTA -->
+        <div class="hero-duo" role="group" aria-label="Choisissez votre point de départ">
+          <button class="hero-duo-card is-chat" type="button" aria-label="Discuter avec Djawal IA" @click="router.push('/composer')">
+            <span class="duo-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                <line x1="8.5" y1="11.5" x2="8.51" y2="11.5"/>
+                <line x1="12" y1="11.5" x2="12.01" y2="11.5"/>
+                <line x1="15.5" y1="11.5" x2="15.51" y2="11.5"/>
+              </svg>
+            </span>
+            <span class="duo-text">
+              <span class="duo-title">Discuter avec Djawal IA<span class="arrow" aria-hidden="true">→</span></span>
+              <span class="duo-sub">Posez votre question — restaurant, hôtel, activité, en direct.</span>
+            </span>
+          </button>
+          <button class="hero-duo-card is-compose" type="button" aria-label="Composer mon voyage en mode guidé" @click="router.push('/composer/formulaire')">
+            <span class="duo-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <polygon points="14.5 9.5 9.5 14.5 9.5 9.5 14.5 9.5" fill="currentColor" stroke="none"/>
+              </svg>
+            </span>
+            <span class="duo-text">
+              <span class="duo-title">Composer mon voyage<span class="arrow" aria-hidden="true">→</span></span>
+              <span class="duo-sub">Parcours guidé en quelques étapes — sur-mesure, signé par un guide.</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="hero-pills" aria-label="Idées de voyage rapides">
+          <button v-for="p in quickPrompts" :key="p.label" type="button" class="hero-pill" @click="goToComposer(p.q)">
+            {{ p.label }}
+          </button>
         </div>
 
         <a href="#destinations" class="hero-cta-secondary">
@@ -221,7 +336,7 @@ function scrollCarousel(dir: 'left' | 'right') {
     <section class="section destinations" id="destinations">
       <div class="djawal-container">
         <header class="section-head">
-          <div class="section-eyebrow">— 10 territoires à explorer —</div>
+          <div class="section-eyebrow">— Territoires à explorer —</div>
           <h2>Choisissez <em>votre Algérie</em>.</h2>
           <p class="section-lede">Chaque destination, une porte ouverte sur un univers.</p>
         </header>
@@ -246,13 +361,13 @@ function scrollCarousel(dir: 'left' | 'right') {
       </div>
     </section>
 
-    <!-- VOYAGES SIGNÉS DJAWAL -->
+    <!-- VOYAGES SIGNÉS + PACKAGES AGENCE -->
     <section class="section signed-trips">
       <div class="djawal-container">
         <header class="section-head">
-          <div class="section-eyebrow">— Voyages signés Djawal —</div>
-          <h2>Trois récits, trois <em>quêtes différentes</em>.</h2>
-          <p class="section-lede">Pas un catalogue. Des invitations à vivre — composées par les guides eux-mêmes.</p>
+          <div class="section-eyebrow">— Voyages signés &amp; packages agence —</div>
+          <h2>Des récits, des <em>quêtes différentes</em>.</h2>
+          <p class="section-lede">Pas un catalogue. Des invitations à vivre — composées par les guides locaux ou nos opérateurs partenaires.</p>
         </header>
         <div class="trips-grid">
           <article v-for="t in signedTrips" :key="t.id || t.title" class="trip-card"
@@ -260,6 +375,8 @@ function scrollCarousel(dir: 'left' | 'right') {
             <div class="trip-img-wrap">
               <img :src="t.img" :alt="t.title" loading="lazy" />
               <span class="trip-duration-badge">{{ t.duration }}</span>
+              <span v-if="t.mode === 'agency'" class="trip-mode-badge agency">📦 Package agence</span>
+              <span v-else class="trip-mode-badge signed">✍️ Signé Djawal</span>
             </div>
             <div class="trip-body">
               <h3 class="trip-title">{{ t.title }}</h3>
@@ -277,6 +394,40 @@ function scrollCarousel(dir: 'left' | 'right') {
       </div>
     </section>
 
+    <!-- GUIDES FEATURED -->
+    <section v-if="featuredGuides.length > 0" class="section guides-section">
+      <div class="djawal-container">
+        <header class="section-head">
+          <div class="section-eyebrow">— Les voix du pays —</div>
+          <h2>Vos guides, <em>vos hôtes</em>.</h2>
+          <p class="section-lede">Tous rencontrés en visio avant d'apparaître ici. Tous évalués par les voyageurs qu'ils ont accompagnés.</p>
+        </header>
+        <div class="guides-grid">
+          <article v-for="g in featuredGuides" :key="g.id" class="guide-card"
+                   @click="openGuide(g.id)" tabindex="0" role="button" @keydown.enter="openGuide(g.id)">
+            <div class="guide-portrait">
+              <img v-if="g.avatar_url" :src="g.avatar_url" :alt="g.display_name || 'Guide'" loading="lazy" />
+              <div v-else class="portrait-fallback"><span>{{ guideInitial(g.display_name) }}</span></div>
+              <span v-if="g.role === 'guide_senior'" class="guide-badge senior">⭐ Senior</span>
+              <span v-else class="guide-badge junior">Junior</span>
+              <span v-if="g.rating" class="guide-rating">
+                <span class="star">★</span> {{ g.rating.toFixed(1) }}<small v-if="g.reviewCount">·{{ g.reviewCount }}</small>
+              </span>
+            </div>
+            <div class="guide-info">
+              <div class="guide-meta" v-if="g.region">📍 {{ g.region }}</div>
+              <h3 class="guide-name">{{ g.display_name || 'Guide Djawal' }}</h3>
+              <p v-if="g.specialties && g.specialties.length > 0" class="guide-spec">{{ g.specialties.slice(0, 2).join(' · ') }}</p>
+              <p v-else-if="g.bio" class="guide-spec">{{ g.bio.slice(0, 80) }}{{ g.bio.length > 80 ? '…' : '' }}</p>
+            </div>
+          </article>
+        </div>
+        <div class="section-foot">
+          <router-link to="/guides" class="see-all-btn">Découvrir tous nos guides →</router-link>
+        </div>
+      </div>
+    </section>
+
     <!-- TÉMOIGNAGE -->
     <section class="testimonial">
       <div class="testimonial-inner">
@@ -284,6 +435,65 @@ function scrollCarousel(dir: 'left' | 'right') {
              alt="Témoignage Amina" class="testimonial-avatar" loading="lazy" />
         <p class="testimonial-quote">Un voyage inoubliable au cœur du Sahara. Djawal a su créer une expérience magique, à mille lieues du tourisme classique.</p>
         <p class="testimonial-name">— AMINA B., PARIS</p>
+      </div>
+    </section>
+
+    <!-- DJAWAL IA — mini-chat fonctionnel -->
+    <section class="section ia-section" id="djawal-ia">
+      <div class="djawal-container">
+        <div class="ia-grid">
+          <div class="ia-text">
+            <div class="section-eyebrow">— Djawal IA —</div>
+            <h2 class="ia-h2">Posez-lui la question<br/>qu'on pose à un <em>cousin du pays</em>.</h2>
+            <p class="ia-lede">Restaurants, hôtels, randos, monuments — Djawal IA connaît horaires, saisons et secrets, et cite ses sources : guides locaux et souvenirs des voyageurs.</p>
+            <div class="ia-prompts-list">
+              <button v-for="p in homeChatPrompts" :key="p.label" class="ia-prompt-btn" type="button"
+                      @click="sendChatMessage(p.label)" :disabled="chatLoading">
+                <span class="ia-prompt-icon">{{ p.icon }}</span>
+                <span class="ia-prompt-text">{{ p.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="ia-chat">
+            <div class="chat-head">
+              <div class="chat-avatar">D</div>
+              <div class="chat-meta">
+                <strong>Djawal IA</strong>
+                <span class="status"><span class="dot"></span> En ligne · répond en français</span>
+              </div>
+            </div>
+
+            <div class="chat-log" :class="{ empty: !chatStarted }">
+              <div v-if="!chatStarted" class="chat-empty">
+                <p class="empty-italic">« Marhaba ! Décris-moi ton voyage idéal ou pose-moi une question concrète. »</p>
+                <p class="empty-hint">Clique un des exemples à gauche ou écris ci-dessous.</p>
+              </div>
+              <template v-else>
+                <div v-for="(m, i) in chatMessages" :key="i" class="chat-msg" :class="m.role">
+                  <div v-if="m.role === 'user'" class="bubble user-bubble">{{ m.text }}</div>
+                  <div v-else class="bubble ai-bubble">{{ m.text }}</div>
+                </div>
+                <div v-if="chatLoading" class="chat-msg ai">
+                  <div class="bubble ai-bubble typing"><span></span><span></span><span></span></div>
+                </div>
+              </template>
+            </div>
+
+            <form class="chat-input-wrap" @submit.prevent="sendChatMessage()">
+              <input v-model="chatInput" type="text" placeholder="Demandez à Djawal IA…" aria-label="Message à Djawal IA" :disabled="chatLoading" />
+              <button class="send-btn" type="submit" aria-label="Envoyer" :disabled="chatLoading || !chatInput.trim()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/>
+                </svg>
+              </button>
+            </form>
+
+            <button v-if="chatStarted" class="continue-btn" type="button" @click="continueInComposer">
+              Continuer dans Djawal IA (pleine page) →
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -299,7 +509,7 @@ function scrollCarousel(dir: 'left' | 'right') {
 .arabic { font-family: 'Amiri', serif; }
 .djawal-container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 
-/* ========== HERO ========== */
+/* === HERO === */
 .hero {
   position: relative;
   height: 95vh;
@@ -323,7 +533,7 @@ function scrollCarousel(dir: 'left' | 'right') {
 .hero-content {
   position: relative; z-index: 2;
   text-align: center;
-  max-width: 780px;
+  max-width: 880px;
   padding: 90px 32px 32px;
 }
 .hero-eyebrow {
@@ -357,99 +567,117 @@ function scrollCarousel(dir: 'left' | 'right') {
   line-height: 1.5;
 }
 
-/* Bandeau IA central */
-.hero-ia { max-width: 720px; margin: 0 auto 18px; }
-.ia-pill {
+/* === DOUBLE CTA HERO === */
+.hero-duo {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr;
   gap: 12px;
-  align-items: center;
-  background: rgba(15, 36, 25, 0.6);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1.5px solid rgba(212, 168, 68, 0.5);
-  border-radius: 999px;
-  padding: 10px 12px 10px 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  max-width: 760px;
+  margin: 0 auto 18px;
 }
-.ia-mark {
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  background: #FAF7F2;
-  padding: 4px;
-  box-shadow: 0 0 0 2.5px rgba(212, 168, 68, 0.55);
-  flex-shrink: 0;
-}
-.ia-mark img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-.ia-input {
-  width: 100%; min-width: 0;
-  background: transparent; border: none; outline: none;
-  color: #FAF7F2; font-size: 14px;
-  padding: 10px 8px; font-family: inherit;
-}
-.ia-input::placeholder { color: rgba(250, 247, 242, 0.55); font-style: italic; }
-.ia-input-mobile { display: none; }
-.ia-submit {
-  background: #D4A844; color: #0F2419;
-  border: none; padding: 11px 22px;
-  border-radius: 999px;
-  font-weight: 600; font-size: 13px; cursor: pointer;
-  white-space: nowrap; transition: all 0.2s;
-  box-shadow: 0 8px 20px rgba(212, 168, 68, 0.3);
+@media (min-width: 641px) { .hero-duo { grid-template-columns: 1fr 1fr; gap: 14px; } }
+.hero-duo-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px 14px 14px;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  border: none;
   font-family: inherit;
+  transition: all 0.3s ease;
 }
-.ia-submit:hover { background: #E8B96B; transform: translateY(-1px); }
-.ia-prompts {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  justify-content: center; margin-top: 14px;
+.duo-icon {
+  flex-shrink: 0; width: 44px; height: 44px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  transition: transform 0.3s ease;
 }
-.ia-prompt {
-  background: rgba(250, 247, 242, 0.08);
-  color: rgba(250, 247, 242, 0.78);
-  border: 1px solid rgba(212, 168, 68, 0.3);
-  padding: 7px 14px;
-  border-radius: 999px;
-  font-size: 12px; font-family: inherit;
-  cursor: pointer; transition: all 0.2s;
+.hero-duo-card:hover .duo-icon { transform: scale(1.08) rotate(-4deg); }
+.duo-text { flex: 1; min-width: 0; }
+.duo-title {
+  font-weight: 600; font-size: 14.5px;
+  letter-spacing: 0.01em; line-height: 1.2;
+  margin-bottom: 2px;
+  display: flex; align-items: center; gap: 6px;
 }
-.ia-prompt:hover { background: rgba(212, 168, 68, 0.2); border-color: #D4A844; color: #FAF7F2; }
-
-.hero-cta-secondary {
-  display: inline-block;
-  color: #E8B96B;
-  font-size: 13px; text-decoration: none;
-  margin-top: 6px; padding: 8px 14px;
+.duo-title .arrow { font-weight: 400; font-size: 16px; opacity: 0.7; transition: transform 0.28s ease; }
+.hero-duo-card:hover .duo-title .arrow { transform: translateX(4px); }
+.duo-sub {
   font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  letter-spacing: 0.02em;
+  font-style: italic; font-size: 13px;
+  line-height: 1.35; opacity: 0.88;
+  display: block;
+}
+.hero-duo-card.is-chat {
+  background: rgba(26, 58, 42, 0.65);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  color: #FAF7F2;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.hero-duo-card.is-chat:hover { background: rgba(26, 58, 42, 0.85); border-color: #D4A844; }
+.hero-duo-card.is-chat .duo-icon {
+  background: rgba(212, 168, 68, 0.12);
+  border: 1px solid rgba(212, 168, 68, 0.35);
+  color: #D4A844;
+}
+.hero-duo-card.is-compose {
+  background: #D4A844; color: #0F2419;
+  border: 1px solid #D4A844;
+  box-shadow: 0 4px 24px rgba(212, 168, 68, 0.3);
+}
+.hero-duo-card.is-compose:hover { background: #E8B96B; transform: translateY(-2px); box-shadow: 0 8px 36px rgba(212, 168, 68, 0.4); }
+.hero-duo-card.is-compose .duo-icon {
+  background: rgba(15, 36, 25, 0.25); color: #0F2419;
+  border: 1px solid rgba(15, 36, 25, 0.3);
+}
+.hero-duo-card.is-compose .duo-sub { color: rgba(15, 36, 25, 0.78); }
+
+/* === HERO PILLS === */
+.hero-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.hero-pill {
+  padding: 8px 16px; border-radius: 999px;
+  background: rgba(15, 36, 25, 0.55);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  color: rgba(250, 247, 242, 0.85);
+  font-size: 12.5px; font-family: inherit; cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.hero-pill:hover { background: rgba(212, 168, 68, 0.18); color: #FAF7F2; border-color: #D4A844; }
+
+/* === CTA secondary + stats === */
+.hero-cta-secondary {
+  display: inline-block; color: #E8B96B;
+  font-size: 13px; text-decoration: none;
+  margin-top: 6px; padding: 6px 12px;
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
   transition: color 0.2s;
 }
 .hero-cta-secondary:hover { color: #D4A844; }
-
 .hero-stats {
-  margin-top: 24px;
-  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 20px;
+  display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 16px;
-  background: rgba(15, 36, 25, 0.5);
-  backdrop-filter: blur(8px);
-  border-radius: 999px;
-  font-size: 12px;
-  color: rgba(250, 247, 242, 0.78);
+  background: rgba(15, 36, 25, 0.6);
   border: 1px solid rgba(232, 185, 107, 0.2);
+  border-radius: 999px;
+  font-size: 12.5px; color: rgba(250, 247, 242, 0.85);
+  backdrop-filter: blur(8px);
 }
+.stats-num { color: #E8B96B; font-weight: 600; font-family: 'Cormorant Garamond', serif; font-size: 14px; }
 .stats-dots { display: inline-flex; margin-right: 4px; }
-.dot {
+.stats-dots .dot {
   width: 22px; height: 22px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 9px; font-weight: 600; color: #fff;
   font-family: 'Cormorant Garamond', serif;
 }
-.dot-1 { background: #D4A844; }
-.dot-2 { background: #2D5A3D; margin-left: -6px; }
-.dot-3 { background: #C45A2C; margin-left: -6px; }
-.stats-num { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 500; color: #FAF7F2; }
+.stats-dots .dot:not(:first-child) { margin-left: -6px; }
+.stats-dots .dot-1 { background: #D4A844; z-index: 3; }
+.stats-dots .dot-2 { background: #2D5A3D; z-index: 2; }
+.stats-dots .dot-3 { background: #C45A2C; z-index: 1; }
 
-/* ========== BANDEAU CATÉGORIES ========== */
+/* === CAT-BANNER === */
 .cat-banner {
   background: rgba(31, 74, 54, 0.55);
   backdrop-filter: blur(10px);
@@ -467,22 +695,17 @@ function scrollCarousel(dir: 'left' | 'right') {
 }
 .cat-banner::before { left: 0; background: linear-gradient(to right, #1A3A2A 0%, transparent 100%); }
 .cat-banner::after { right: 0; background: linear-gradient(to left, #1A3A2A 0%, transparent 100%); }
-@media (min-width: 900px) {
-  .cat-banner::before, .cat-banner::after { display: none; }
-}
+@media (min-width: 900px) { .cat-banner::before, .cat-banner::after { display: none; } }
 .cat-banner-inner {
   display: flex; gap: 10px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   padding: 0 32px;
-  justify-content: flex-start;
   -webkit-overflow-scrolling: touch;
 }
 .cat-banner-inner::-webkit-scrollbar { display: none; }
-@media (min-width: 900px) {
-  .cat-banner-inner { justify-content: center; overflow-x: visible; }
-}
+@media (min-width: 900px) { .cat-banner-inner { justify-content: center; overflow-x: visible; } }
 .cat-chip {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 16px;
@@ -490,19 +713,14 @@ function scrollCarousel(dir: 'left' | 'right') {
   border: 1px solid rgba(212, 168, 68, 0.25);
   border-radius: 999px;
   font-family: inherit; font-size: 13px; font-weight: 500;
-  color: #FAF7F2;
-  cursor: pointer; white-space: nowrap;
+  color: #FAF7F2; cursor: pointer; white-space: nowrap;
   scroll-snap-align: start; flex-shrink: 0;
   transition: all 0.2s;
 }
 .cat-chip svg { width: 17px; height: 17px; color: #D4A844; flex-shrink: 0; }
-.cat-chip:hover {
-  background: rgba(212, 168, 68, 0.18);
-  border-color: #D4A844;
-  transform: translateY(-1px);
-}
+.cat-chip:hover { background: rgba(212, 168, 68, 0.18); border-color: #D4A844; transform: translateY(-1px); }
 
-/* ========== SECTION HEADS ========== */
+/* === SECTION COMMON === */
 .section { padding: 90px 0; position: relative; }
 .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
 .section-eyebrow {
@@ -525,206 +743,390 @@ function scrollCarousel(dir: 'left' | 'right') {
   color: rgba(250, 247, 242, 0.55);
   line-height: 1.55; max-width: 580px; margin: 0 auto;
 }
+.section-foot { text-align: center; margin-top: 40px; }
+.see-all-btn {
+  display: inline-block; padding: 12px 24px;
+  border: 1px solid rgba(212, 168, 68, 0.4);
+  border-bottom: 2px solid #D4A844;
+  color: #D4A844;
+  font-size: 13px; letter-spacing: 0.04em;
+  text-decoration: none; border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.see-all-btn:hover { background: rgba(212, 168, 68, 0.12); color: #FAF7F2; }
 
-/* ========== DESTINATIONS CARROUSEL ========== */
-.destinations { background: #0F2419; }
+/* === DESTINATIONS CARROUSEL === */
+.dest-carousel-wrap { position: relative; }
 .dest-carousel {
   display: flex; gap: 18px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
+  padding: 4px 4px 18px;
   scrollbar-width: none;
-  padding: 8px 0 24px;
-  -webkit-overflow-scrolling: touch;
 }
 .dest-carousel::-webkit-scrollbar { display: none; }
 .dest-card {
-  position: relative;
-  background: #2D5A3D;
-  border-radius: 20px;
-  overflow: hidden;
-  cursor: pointer;
-  flex: 0 0 calc((100% - 36px) / 3);
-  scroll-snap-align: start;
-  transition: transform 0.3s, box-shadow 0.3s;
-  border: none;
-  padding: 0;
-  text-align: left;
-  font-family: inherit;
-  color: inherit;
+  flex: 0 0 280px; scroll-snap-align: start;
+  background: rgba(31, 74, 54, 0.55);
+  border: 1px solid rgba(245, 239, 230, 0.08);
+  border-radius: 6px; overflow: hidden;
+  cursor: pointer; text-align: left;
+  font-family: inherit; padding: 0;
+  transition: all 0.3s ease;
 }
-.dest-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35); }
+.dest-card:hover { transform: translateY(-4px); border-color: rgba(212, 168, 68, 0.5); }
 .dest-card-img {
-  width: 100%; height: 240px;
+  width: 100%; aspect-ratio: 4/5;
   object-fit: cover; display: block;
-  transition: transform 0.5s;
+  background: linear-gradient(135deg, #2D5A3D, #1A3A2A);
 }
-.dest-card:hover .dest-card-img { transform: scale(1.06); }
-.dest-card-body { padding: 18px 20px 22px; }
+.dest-card-body { padding: 16px 18px; }
 .dest-card-theme {
-  font-size: 10px; letter-spacing: 0.18em;
-  text-transform: uppercase; color: #D4A844;
-  margin-bottom: 6px; font-weight: 500;
+  font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #B8862E; font-weight: 500; margin-bottom: 8px;
 }
 .dest-card-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; font-weight: 500;
-  color: #FAF7F2; line-height: 1.1;
-  margin-bottom: 4px;
+  font-weight: 500; font-size: 21px;
+  color: #FAF7F2; margin-bottom: 4px; line-height: 1.15;
 }
-.dest-card-arabic {
-  font-size: 13px; color: #E8B96B;
-  opacity: 0.85; margin-left: 8px;
-}
-.dest-card-desc { font-size: 13px; color: rgba(250, 247, 242, 0.55); line-height: 1.5; }
-.carousel-nav { display: flex; justify-content: center; gap: 12px; margin-top: 28px; }
-.carousel-btn {
-  width: 48px; height: 48px; border-radius: 50%;
-  background: rgba(250, 247, 242, 0.08);
-  border: 1px solid rgba(212, 168, 68, 0.4);
-  color: #FAF7F2; font-size: 20px; font-weight: 600;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; font-family: inherit;
-}
-.carousel-btn:hover { background: #D4A844; color: #0F2419; border-color: #D4A844; transform: scale(1.06); }
-
-/* ========== VOYAGES SIGNÉS ========== */
-.signed-trips { background: #1A3A2A; }
-.trips-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-.trip-card {
-  background: #2D5A3D;
-  border-radius: 20px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  display: flex; flex-direction: column;
-}
-.trip-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35); }
-.trip-img-wrap { position: relative; height: 220px; overflow: hidden; }
-.trip-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-.trip-card:hover .trip-img-wrap img { transform: scale(1.06); }
-.trip-duration-badge {
-  position: absolute; top: 14px; left: 14px;
-  background: rgba(15, 36, 25, 0.85);
-  color: #E8B96B;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 11px; letter-spacing: 0.1em;
-  text-transform: uppercase; font-weight: 500;
+.dest-card-arabic { font-size: 13px; opacity: 0.7; margin-left: 6px; font-weight: 400; }
+.dest-card-desc {
   font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 13.5px; color: rgba(250, 247, 242, 0.7); line-height: 1.4;
 }
-.trip-body { padding: 20px 22px 22px; flex: 1; display: flex; flex-direction: column; }
+.carousel-nav { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+.carousel-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(31, 74, 54, 0.6);
+  border: 1px solid rgba(212, 168, 68, 0.3);
+  color: #D4A844; font-family: inherit; font-size: 16px;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.carousel-btn:hover { background: rgba(212, 168, 68, 0.18); border-color: #D4A844; color: #FAF7F2; }
+
+/* === TRIPS GRID + MODE BADGE === */
+.trips-grid {
+  display: grid; grid-template-columns: 1fr; gap: 24px;
+  max-width: 1100px; margin: 0 auto;
+}
+@media (min-width: 641px) { .trips-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1025px) { .trips-grid { grid-template-columns: repeat(3, 1fr); gap: 28px; } }
+.trip-card {
+  background: rgba(31, 74, 54, 0.55);
+  border: 1px solid rgba(245, 239, 230, 0.08);
+  border-radius: 6px; overflow: hidden;
+  cursor: pointer; transition: all 0.3s ease;
+}
+.trip-card:hover { transform: translateY(-4px); border-color: rgba(212, 168, 68, 0.5); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
+.trip-img-wrap { position: relative; aspect-ratio: 16/10; overflow: hidden; }
+.trip-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.trip-duration-badge {
+  position: absolute; top: 12px; left: 12px;
+  padding: 5px 12px;
+  background: rgba(15, 36, 25, 0.85); backdrop-filter: blur(8px);
+  border-radius: 999px;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #E8B96B; font-weight: 600; z-index: 2;
+}
+.trip-mode-badge {
+  position: absolute; top: 12px; right: 12px;
+  padding: 5px 11px; border-radius: 999px;
+  font-size: 10.5px; letter-spacing: 0.05em; font-weight: 700;
+  z-index: 2; backdrop-filter: blur(8px);
+}
+.trip-mode-badge.signed { background: rgba(212, 168, 68, 0.92); color: #0F2419; }
+.trip-mode-badge.agency { background: rgba(40, 52, 97, 0.92); color: #E8B96B; }
+.trip-body { padding: 18px 22px 22px; }
 .trip-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; font-weight: 500;
-  color: #FAF7F2; line-height: 1.15;
-  margin-bottom: 10px;
+  font-weight: 500; font-size: 22px; color: #FAF7F2;
+  margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.2;
 }
-.trip-desc { font-size: 14px; color: rgba(250, 247, 242, 0.55); line-height: 1.55; margin-bottom: 18px; flex: 1; }
+.trip-desc {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 14.5px; color: rgba(250, 247, 242, 0.7);
+  line-height: 1.5; margin-bottom: 18px;
+}
 .trip-foot {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid rgba(212, 168, 68, 0.18);
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 16px; border-top: 1px solid rgba(212, 168, 68, 0.15);
+  font-size: 13px;
 }
-.trip-guide { font-size: 12px; color: rgba(250, 247, 242, 0.55); }
-.trip-guide strong {
-  display: block;
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic; font-weight: 500;
-  font-size: 15px; color: #E8B96B;
-  margin-bottom: 2px;
-}
+.trip-guide { color: rgba(250, 247, 242, 0.75); }
+.trip-guide strong { display: block; color: #FAF7F2; font-weight: 600; font-size: 13px; margin-bottom: 2px; }
 .trip-price {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; font-weight: 500;
-  color: #D4A844; text-align: right; line-height: 1;
+  font-family: 'Cormorant Garamond', serif; font-weight: 600;
+  color: #D4A844; font-size: 18px; text-align: right;
 }
 .trip-price small {
-  display: block; font-style: italic;
-  font-size: 10px; color: rgba(250, 247, 242, 0.55);
-  margin-top: 4px; letter-spacing: 0.06em;
+  display: block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(250, 247, 242, 0.5); font-family: 'Inter', sans-serif;
+  font-weight: 400; margin-top: 3px;
 }
 
-/* ========== TÉMOIGNAGE ========== */
-.testimonial { background: #0F2419; padding: 80px 32px; text-align: center; }
-.testimonial-inner { max-width: 680px; margin: 0 auto; }
+/* === GUIDES SECTION === */
+.guides-section { background: rgba(15, 36, 25, 0.6); }
+.guides-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 18px; max-width: 1100px; margin: 0 auto;
+}
+@media (min-width: 641px) { .guides-grid { grid-template-columns: repeat(4, 1fr); } }
+.guide-card { cursor: pointer; transition: transform 0.3s ease; }
+.guide-card:hover { transform: translateY(-3px); }
+.guide-card:focus-visible { outline: 2px solid #E8B96B; outline-offset: 4px; border-radius: 4px; }
+.guide-portrait {
+  aspect-ratio: 4/5; position: relative;
+  border-radius: 4px; overflow: hidden;
+  margin-bottom: 12px;
+  background: linear-gradient(160deg, #2D5A3D 0%, #1A3A2A 100%);
+  border: 1px solid rgba(212, 168, 68, 0.15);
+}
+.guide-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.portrait-fallback {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 50px; color: #E8B96B; font-weight: 500;
+  background: linear-gradient(135deg, #2D5A3D 0%, #B8862E 100%);
+}
+.guide-badge {
+  position: absolute; top: 8px; left: 8px;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  font-weight: 700; z-index: 3;
+}
+.guide-badge.senior { background: linear-gradient(135deg, #D4A844, #B8862E); color: #0F2419; }
+.guide-badge.junior { background: rgba(15, 36, 25, 0.78); color: #E8B96B; border: 1px solid rgba(212, 168, 68, 0.4); }
+.guide-rating {
+  position: absolute; bottom: 8px; left: 8px;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px;
+  background: rgba(15, 36, 25, 0.85); backdrop-filter: blur(8px);
+  border-radius: 999px;
+  font-size: 11px; color: #FAF7F2; z-index: 3;
+  border: 1px solid rgba(212, 168, 68, 0.3);
+}
+.guide-rating .star { color: #E8B96B; }
+.guide-rating small { opacity: 0.7; margin-left: 2px; font-size: 9.5px; }
+.guide-info { padding: 0 2px; }
+.guide-meta {
+  font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #B8862E; font-weight: 500; margin-bottom: 4px;
+}
+.guide-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500; font-size: 18px; color: #FAF7F2;
+  margin-bottom: 2px; line-height: 1.15;
+}
+.guide-spec {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 13.5px; color: rgba(250, 247, 242, 0.65); line-height: 1.4;
+}
+
+/* === TESTIMONIAL === */
+.testimonial {
+  background: rgba(15, 36, 25, 0.5);
+  padding: 80px 0; text-align: center;
+  border-top: 1px solid rgba(212, 168, 68, 0.1);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.1);
+}
+.testimonial-inner { max-width: 640px; margin: 0 auto; padding: 0 32px; }
 .testimonial-avatar {
-  width: 72px; height: 72px; border-radius: 50%;
-  object-fit: cover; margin: 0 auto 24px;
-  border: 3px solid #D4A844;
-  display: block;
+  width: 70px; height: 70px; border-radius: 50%;
+  object-fit: cover; border: 2px solid rgba(212, 168, 68, 0.4);
+  margin: 0 auto 22px; display: block;
 }
 .testimonial-quote {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: clamp(20px, 2.5vw, 26px); line-height: 1.5;
+  color: #FAF7F2; margin-bottom: 14px;
+}
+.testimonial-quote::before { content: "« "; color: #D4A844; }
+.testimonial-quote::after { content: " »"; color: #D4A844; }
+.testimonial-name {
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: #B8862E; font-weight: 500;
+}
+
+/* === DJAWAL IA SECTION (mini-chat fonctionnel) === */
+.ia-section { background: linear-gradient(180deg, #1A3A2A 0%, #0F2419 100%); }
+.ia-grid {
+  display: grid; grid-template-columns: 1fr;
+  gap: 36px; align-items: start;
+  max-width: 1100px; margin: 0 auto;
+}
+@media (min-width: 1025px) { .ia-grid { grid-template-columns: 1fr 1.1fr; gap: 56px; } }
+
+.ia-text { padding: 8px 0; }
+.ia-h2 {
   font-family: 'Cormorant Garamond', serif;
-  font-style: italic; font-size: 22px;
-  color: #FAF7F2; line-height: 1.45;
+  font-weight: 400; font-size: clamp(28px, 3.5vw, 38px);
+  line-height: 1.1; color: #FAF7F2;
+  margin: 12px 0 16px; letter-spacing: -0.01em;
+}
+.ia-h2 em { font-style: italic; color: #E8B96B; font-weight: 500; }
+.ia-lede {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 16.5px; color: rgba(250, 247, 242, 0.7);
+  line-height: 1.55; margin-bottom: 24px;
+}
+.ia-prompts-list { display: flex; flex-direction: column; gap: 8px; }
+.ia-prompt-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 18px;
+  background: rgba(31, 74, 54, 0.5);
+  border: 1px solid rgba(212, 168, 68, 0.2);
+  border-radius: 8px;
+  font-family: inherit; text-align: left;
+  cursor: pointer; transition: all 0.2s ease; color: #FAF7F2;
+}
+.ia-prompt-btn:hover:not(:disabled) { background: rgba(212, 168, 68, 0.1); border-color: #D4A844; transform: translateX(4px); }
+.ia-prompt-btn:disabled { opacity: 0.5; cursor: wait; }
+.ia-prompt-icon { font-size: 18px; flex-shrink: 0; }
+.ia-prompt-text {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 14.5px; color: rgba(250, 247, 242, 0.85); line-height: 1.35;
+}
+
+.ia-chat {
+  background: rgba(31, 74, 54, 0.65);
+  border: 1px solid rgba(212, 168, 68, 0.25);
+  border-radius: 12px;
+  padding: 22px;
+  backdrop-filter: blur(8px);
+}
+.chat-head {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(212, 168, 68, 0.15);
   margin-bottom: 18px;
 }
-.testimonial-quote::before { content: '« '; color: #D4A844; }
-.testimonial-quote::after { content: ' »'; color: #D4A844; }
-.testimonial-name { font-size: 13px; color: #E8B96B; letter-spacing: 0.08em; }
-
-/* ========== RESPONSIVE ========== */
-@media (max-width: 900px) {
-  .hero { height: auto; min-height: 100vh; padding: 0; }
-  .hero-content { padding: 100px 20px 40px; }
-  .hero h1 { font-size: 42px; }
-  .hero p { font-size: 16px; margin-bottom: 24px; }
-  .djawal-container { padding: 0 20px; }
-  .cat-banner-inner { padding: 0 20px; }
-  .trips-grid { grid-template-columns: 1fr; gap: 18px; }
-  .dest-card { flex: 0 0 calc((100% - 24px) / 3); }
-  .dest-card-img { height: 200px; }
-  .dest-card-title { font-size: 18px; }
-  .section { padding: 70px 0; }
+.chat-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, #D4A844, #B8862E);
+  display: grid; place-items: center;
+  font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  color: #0F2419; font-size: 20px;
 }
-@media (max-width: 600px) {
-  .hero-content { padding: 88px 16px 32px; }
-  .hero h1 { font-size: 32px; line-height: 1.1; }
-  .hero p { font-size: 15px; margin-bottom: 20px; }
-  .hero-eyebrow { font-size: 10px; padding: 6px 14px; margin-bottom: 20px; }
-  .hero-stats { font-size: 11px; padding: 7px 14px; flex-wrap: wrap; justify-content: center; }
-  .hero-cta-secondary { font-size: 12px; }
+.chat-meta strong {
+  display: block; font-family: 'Cormorant Garamond', serif;
+  font-weight: 500; font-size: 18px; color: #FAF7F2;
+}
+.chat-meta .status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #B8862E;
+}
+.chat-meta .status .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #D4A844;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
-  /* Bandeau IA mobile : compact horizontal */
-  .hero-ia { max-width: 100%; margin: 0 auto 14px; padding: 0 4px; }
-  .ia-pill { grid-template-columns: 40px 1fr auto; padding: 6px 8px; gap: 8px; }
-  .ia-mark { width: 40px; height: 40px; padding: 3px; }
-  .ia-input { padding: 10px 4px; font-size: 13px; }
-  .ia-input-desktop { display: none; }
-  .ia-input-mobile { display: block; }
-  .ia-submit { padding: 9px 14px; font-size: 12px; }
-  .ia-prompts { gap: 6px; margin-top: 10px; }
-  .ia-prompt { font-size: 11px; padding: 6px 12px; }
+.chat-log {
+  min-height: 240px; max-height: 380px;
+  overflow-y: auto; padding: 4px 0 12px;
+}
+.chat-log.empty {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 240px;
+}
+.chat-empty { text-align: center; padding: 20px; }
+.empty-italic {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 17px; color: rgba(250, 247, 242, 0.78);
+  margin-bottom: 10px; line-height: 1.5;
+}
+.empty-hint { font-size: 12px; color: rgba(250, 247, 242, 0.45); letter-spacing: 0.03em; }
 
-  .dest-card { flex: 0 0 calc((100% - 16px) / 3); }
-  .dest-card-img { height: 140px; }
-  .dest-card-title { font-size: 14px; }
-  .dest-card-desc { font-size: 11px; }
-  .dest-card-arabic { display: none; }
-  .dest-card-body { padding: 12px 14px 14px; }
-  .dest-card-theme { font-size: 9px; margin-bottom: 4px; }
+.chat-msg { margin-bottom: 14px; display: flex; }
+.chat-msg.user { justify-content: flex-end; }
+.chat-msg.ai { justify-content: flex-start; }
+.bubble {
+  max-width: 85%; padding: 11px 16px;
+  border-radius: 16px;
+  font-size: 14px; line-height: 1.5;
+}
+.user-bubble {
+  background: #D4A844; color: #0F2419;
+  border-bottom-right-radius: 4px; font-weight: 500;
+}
+.ai-bubble {
+  background: rgba(15, 36, 25, 0.7); color: #FAF7F2;
+  border: 1px solid rgba(212, 168, 68, 0.18);
+  border-bottom-left-radius: 4px;
+}
+.ai-bubble.typing {
+  display: inline-flex; gap: 4px; padding: 14px 16px;
+}
+.ai-bubble.typing span {
+  width: 6px; height: 6px; background: #D4A844; border-radius: 50%;
+  animation: typing-dot 1.4s ease-in-out infinite;
+}
+.ai-bubble.typing span:nth-child(2) { animation-delay: 0.15s; }
+.ai-bubble.typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
 
-  .section { padding: 56px 0; }
-  .section h2 { font-size: 26px; }
-  .section-eyebrow { font-size: 11px; }
-  .section-lede { font-size: 15px; }
-  .trip-img-wrap { height: 180px; }
-  .trip-title { font-size: 19px; }
-  .testimonial { padding: 60px 16px; }
-  .testimonial-quote { font-size: 18px; }
-  .cat-chip { padding: 9px 14px; font-size: 12px; }
-  .cat-chip svg { width: 15px; height: 15px; }
-  .carousel-btn { width: 42px; height: 42px; font-size: 18px; }
+.chat-input-wrap {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 6px 6px 16px;
+  background: rgba(15, 36, 25, 0.6);
+  border: 1px solid rgba(212, 168, 68, 0.25);
+  border-radius: 999px;
+  transition: border-color 0.2s ease;
+}
+.chat-input-wrap:focus-within { border-color: #D4A844; }
+.chat-input-wrap input {
+  flex: 1; background: transparent; border: 0; outline: 0;
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 14.5px; color: #FAF7F2; padding: 8px 0;
+}
+.chat-input-wrap input::placeholder { color: rgba(250, 247, 242, 0.4); }
+.chat-input-wrap input:disabled { opacity: 0.6; }
+.send-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #D4A844; color: #0F2419; border: 0;
+  cursor: pointer; display: grid; place-items: center;
+  transition: background 0.2s ease; flex-shrink: 0;
+}
+.send-btn:hover:not(:disabled) { background: #E8B96B; }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.continue-btn {
+  display: block; width: 100%;
+  margin-top: 14px; padding: 11px 18px;
+  background: transparent;
+  border: 1px solid rgba(212, 168, 68, 0.4);
+  border-radius: 8px; color: #D4A844;
+  font-family: inherit; font-size: 13px;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.continue-btn:hover { background: rgba(212, 168, 68, 0.12); border-color: #D4A844; color: #FAF7F2; }
+
+/* === Mobile === */
+@media (max-width: 700px) {
+  .djawal-container { padding: 0 18px; }
+  .hero-content { padding: 100px 20px 28px; }
+  .section { padding: 60px 0; }
+  .section-head { margin-bottom: 36px; }
+  .testimonial { padding: 50px 0; }
+  .ia-chat { padding: 16px; }
+  .ia-prompt-btn { padding: 11px 14px; }
+  .empty-italic { font-size: 15px; }
+  .dest-card { flex: 0 0 240px; }
+  .trip-mode-badge { font-size: 9.5px; padding: 4px 9px; }
+  .cat-banner-inner { padding: 0 18px; }
 }
 @media (max-width: 380px) {
-  .hero h1 { font-size: 28px; }
-  .ia-pill { grid-template-columns: 36px 1fr auto; padding: 5px 6px; gap: 6px; }
-  .ia-mark { width: 36px; height: 36px; padding: 2px; }
-  .ia-input { font-size: 12px; padding: 8px 2px; }
-  .ia-submit { padding: 8px 12px; font-size: 11px; }
-  .ia-prompt { font-size: 10px; padding: 5px 10px; }
-  .dest-card { flex: 0 0 calc((100% - 16px) / 2); }
+  .hero h1 { font-size: 32px; }
+  .duo-title { font-size: 13.5px; }
+  .duo-sub { font-size: 12px; }
 }
 </style>
