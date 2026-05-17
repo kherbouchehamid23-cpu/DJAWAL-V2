@@ -221,22 +221,34 @@ onMounted(async () => {
     .eq('kyc_status', 'approved')
   if (guidesCount && guidesCount >= 50) stats.value.guides = guidesCount
 
-  // Destinations vedettes
-  const { data: destData } = await supabase
+  // Destinations vedettes : 1) featured d'abord 2) sinon top 10 DB 3) sinon fallback statique
+  const mapDest = (d: any) => ({
+    id: d.id,
+    name: d.name,
+    sub: d.tagline || (d.cultural_theme ? d.cultural_theme.charAt(0).toUpperCase() + d.cultural_theme.slice(1) : ''),
+    arabic: d.name_ar || '',
+    desc: (d.description || '').slice(0, 80),
+    img: d.hero_image_url || '',
+    theme: d.cultural_theme || 'mauresque'
+  })
+  const { data: featuredData } = await supabase
     .from('destinations')
     .select('id, name, name_ar, tagline, description, hero_image_url, cultural_theme')
     .eq('is_featured_homepage', true)
     .order('homepage_display_order', { ascending: true })
-  if (destData && destData.length > 0) {
-    heroCards.value = destData.map((d: any) => ({
-      id: d.id,
-      name: d.name,
-      sub: d.tagline || (d.cultural_theme ? d.cultural_theme.charAt(0).toUpperCase() + d.cultural_theme.slice(1) : ''),
-      arabic: d.name_ar || '',
-      desc: (d.description || '').slice(0, 80),
-      img: d.hero_image_url || '',
-      theme: d.cultural_theme || 'mauresque'
-    }))
+  if (featuredData && featuredData.length > 0) {
+    heroCards.value = featuredData.map(mapDest)
+  } else {
+    // Aucune featured : fetch toutes les destinations DB pour garantir un id réel cliquable
+    const { data: allDest } = await supabase
+      .from('destinations')
+      .select('id, name, name_ar, tagline, description, hero_image_url, cultural_theme')
+      .order('name', { ascending: true })
+      .limit(10)
+    if (allDest && allDest.length > 0) {
+      heroCards.value = allDest.map(mapDest)
+    }
+    // Sinon on garde fallbackHeroCards statique (DB vide, dev offline)
   }
 
   // Voyages signés + packages agence
