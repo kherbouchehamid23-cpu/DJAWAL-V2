@@ -31,58 +31,61 @@ const counts = ref({ draft: 0, pending: 0, published: 0 })
 const loading = ref(true)
 
 onMounted(async () => {
-  const { data } = await supabase
-    .from('trips')
-    .select('id, title, status, cover_image_url, duration_days, destinations(name)')
-    .eq('created_by', auth.user!.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
-  recentTrips.value = (data as any) || []
-
-  const { data: all } = await supabase
-    .from('trips')
-    .select('id, status')
-    .eq('created_by', auth.user!.id)
-  const myTripIds: string[] = []
-  for (const t of (all || [])) {
-    myTripIds.push(t.id)
-    if (t.status === 'draft') counts.value.draft++
-    else if (t.status === 'pending_review') counts.value.pending++
-    else if (t.status === 'published') counts.value.published++
-  }
-
-  // Avis reçus sur les voyages du guide (table polymorphique user_reviews)
-  if (myTripIds.length > 0) {
-    const { data: revs } = await supabase
-      .from('user_reviews')
-      .select('id, rating, comment, created_at, target_id, profiles!user_reviews_user_id_fkey(display_name)')
-      .eq('target_type', 'trip')
-      .eq('status', 'approved')
-      .in('target_id', myTripIds)
+  try {
+    const { data: recentData } = await supabase
+      .from('trips')
+      .select('id, title, status, cover_image_url, duration_days, destinations(name)')
+      .eq('created_by', auth.user!.id)
       .order('created_at', { ascending: false })
       .limit(5)
-    // Joindre les titres de voyages
+    recentTrips.value = (recentData as any) || []
+
+    const { data: all } = await supabase
+      .from('trips')
+      .select('id, title, status')
+      .eq('created_by', auth.user!.id)
+    const myTripIds: string[] = []
     const titles: Record<string, string> = {}
-    for (const t of (tripsData as any[] || [])) titles[t.id] = t.title
-    recentReviews.value = ((revs as any[]) || []).map((r: any) => ({
-      ...r,
-      trip_id: r.target_id,
-      trips: { title: titles[r.target_id] || 'Voyage' }
-    }))
-
-    const { data: allRevs } = await supabase
-      .from('user_reviews')
-      .select('rating')
-      .eq('target_type', 'trip')
-      .eq('status', 'approved')
-      .in('target_id', myTripIds)
-    if (allRevs && allRevs.length > 0) {
-      const sum = allRevs.reduce((s: number, r: any) => s + r.rating, 0)
-      avgRating.value = (sum / allRevs.length).toFixed(1)
+    for (const t of (all || []) as any[]) {
+      myTripIds.push(t.id)
+      titles[t.id] = t.title
+      if (t.status === 'draft') counts.value.draft++
+      else if (t.status === 'pending_review') counts.value.pending++
+      else if (t.status === 'published') counts.value.published++
     }
-  }
 
-  loading.value = false
+    // Avis reçus sur les voyages du guide (table polymorphique user_reviews)
+    if (myTripIds.length > 0) {
+      const { data: revs } = await supabase
+        .from('user_reviews')
+        .select('id, rating, comment, created_at, target_id, profiles!user_reviews_user_id_fkey(display_name)')
+        .eq('target_type', 'trip')
+        .eq('status', 'approved')
+        .in('target_id', myTripIds)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      recentReviews.value = ((revs as any[]) || []).map((r: any) => ({
+        ...r,
+        trip_id: r.target_id,
+        trips: { title: titles[r.target_id] || 'Voyage' }
+      }))
+
+      const { data: allRevs } = await supabase
+        .from('user_reviews')
+        .select('rating')
+        .eq('target_type', 'trip')
+        .eq('status', 'approved')
+        .in('target_id', myTripIds)
+      if (allRevs && allRevs.length > 0) {
+        const sum = allRevs.reduce((s: number, r: any) => s + r.rating, 0)
+        avgRating.value = (sum / allRevs.length).toFixed(1)
+      }
+    }
+  } catch (e) {
+    console.warn('[guide-dashboard] error loading data:', e)
+  } finally {
+    loading.value = false
+  }
 })
 
 function fmtDate(iso: string) {

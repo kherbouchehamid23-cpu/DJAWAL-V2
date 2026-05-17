@@ -14,7 +14,9 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@motionone/vue": "^10.16.4",
     "@supabase/supabase-js": "^2.45.0",
+    "@vercel/analytics": "^2.0.1",
     "@vueuse/core": "^11.0.0",
     "howler": "^2.2.4",
     "leaflet": "^1.9.4",
@@ -24,8 +26,7 @@
     "vue-i18n": "^10.0.0",
     "vue-router": "^4.4.0",
     "vuedraggable": "^4.1.0",
-    "vuetify": "^3.7.0",
-    "@motionone/vue": "^10.16.4"
+    "vuetify": "^3.7.0"
   },
   "devDependencies": {
     "@types/howler": "^2.2.11",

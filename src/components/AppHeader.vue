@@ -71,7 +71,7 @@ const navItems = [
       <!-- ACTIONS -->
       <div class="header-actions">
         <template v-if="auth.isAuthenticated">
-          <v-menu>
+          <v-menu location="bottom end" :offset="[0, 8]" :close-on-content-click="true">
             <template #activator="{ props }">
               <button v-bind="props" class="account-btn-native">
                 {{ auth.profile?.display_name || 'Mon compte' }}

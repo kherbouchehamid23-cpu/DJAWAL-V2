@@ -45,7 +45,10 @@ function setLink(rel: string, href: string) {
 }
 
 function apply(data: SEOData) {
-  const fullTitle = data.title ? `${data.title}${SUFFIX}` : `Djawal — Voyager l'Algérie autrement`
+  // Évite le doublon si le title contient déjà le suffix "— Djawal"
+  const fullTitle = data.title
+    ? (data.title.endsWith(SUFFIX) || /\bDjawal\s*$/.test(data.title) ? data.title : `${data.title}${SUFFIX}`)
+    : `Djawal — Voyager l'Algérie autrement`
   document.title = fullTitle
 
   const desc = data.description ||

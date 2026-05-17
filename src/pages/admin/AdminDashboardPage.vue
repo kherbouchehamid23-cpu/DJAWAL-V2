@@ -21,47 +21,47 @@ const loading = ref(true)
 onMounted(async () => {
   loading.value = true
 
-  const [
-    kyc, promotions, trips, memories,
-    accommodations, restaurants, activities,
-    pendingReviews, flaggedReviews,
-    guides, operators, voyageurs
-  ] = await Promise.all([
-    // KYC : guides ET opérateurs en attente
+  // Promise.allSettled : si une query plante (RLS, table absente, etc.),
+  // les autres stats s'affichent quand même au lieu de tout bloquer sur "—"
+  const results = await Promise.allSettled([
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .in('role', ['guide_senior', 'guide_junior', 'tourist_operator']).eq('kyc_status', 'pending'),
-    // Guides juniors approuvés KYC = candidats à la promotion Senior
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .eq('role', 'guide_junior').eq('kyc_status', 'approved'),
     supabase.from('trips').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
     supabase.from('memories').select('id', { count: 'exact', head: true }).eq('published', false),
-    // Ressources opérateurs en attente
     supabase.from('accommodations').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
     supabase.from('restaurants').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
     supabase.from('activities').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
-    // Avis utilisateurs à modérer
     supabase.from('user_reviews').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('user_reviews').select('id', { count: 'exact', head: true }).eq('status', 'flagged'),
-    // Totaux
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .in('role', ['guide_senior', 'guide_junior']),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'tourist_operator'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'voyageur')
   ])
 
+  // Helper : extraire count d'un settled-result, 0 si plantage
+  const c = (i: number): number => {
+    const r = results[i]
+    if (r.status === 'fulfilled') return (r.value as any).count ?? 0
+    console.warn(`[admin-dashboard] query ${i} failed:`, r.reason)
+    return 0
+  }
+
   stats.value = {
-    pendingKyc: kyc.count ?? 0,
-    pendingPromotions: promotions.count ?? 0,
-    pendingTrips: trips.count ?? 0,
-    pendingMemories: memories.count ?? 0,
-    pendingAccommodations: accommodations.count ?? 0,
-    pendingRestaurants: restaurants.count ?? 0,
-    pendingActivities: activities.count ?? 0,
-    pendingReviews: pendingReviews.count ?? 0,
-    flaggedReviews: flaggedReviews.count ?? 0,
-    totalGuides: guides.count ?? 0,
-    totalOperators: operators.count ?? 0,
-    totalVoyageurs: voyageurs.count ?? 0
+    pendingKyc: c(0),
+    pendingPromotions: c(1),
+    pendingTrips: c(2),
+    pendingMemories: c(3),
+    pendingAccommodations: c(4),
+    pendingRestaurants: c(5),
+    pendingActivities: c(6),
+    pendingReviews: c(7),
+    flaggedReviews: c(8),
+    totalGuides: c(9),
+    totalOperators: c(10),
+    totalVoyageurs: c(11)
   }
   loading.value = false
 })

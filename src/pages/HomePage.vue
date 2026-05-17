@@ -195,6 +195,23 @@ function continueInComposer() {
   else router.push('/composer')
 }
 
+// Parser markdown minimal pour bulles IA : **gras**, *italique*, retours à la ligne
+function formatMessage(text: string): string {
+  if (!text) return ''
+  // Échapper HTML pour éviter XSS
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  // **gras**
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  // *italique* (uniquement si pas déjà dans **)
+  html = html.replace(/(^|[^*])\*([^*]+)\*([^*]|$)/g, '$1<em>$2</em>$3')
+  // retours à la ligne
+  html = html.replace(/\n/g, '<br>')
+  return html
+}
+
 onMounted(async () => {
   // Stats guides
   const { count: guidesCount } = await supabase
@@ -472,7 +489,7 @@ onMounted(async () => {
               <template v-else>
                 <div v-for="(m, i) in chatMessages" :key="i" class="chat-msg" :class="m.role">
                   <div v-if="m.role === 'user'" class="bubble user-bubble">{{ m.text }}</div>
-                  <div v-else class="bubble ai-bubble">{{ m.text }}</div>
+                  <div v-else class="bubble ai-bubble" v-html="formatMessage(m.text)"></div>
                 </div>
                 <div v-if="chatLoading" class="chat-msg ai">
                   <div class="bubble ai-bubble typing"><span></span><span></span><span></span></div>
@@ -721,7 +738,13 @@ onMounted(async () => {
 .cat-chip:hover { background: rgba(212, 168, 68, 0.18); border-color: #D4A844; transform: translateY(-1px); }
 
 /* === SECTION COMMON === */
-.section { padding: 90px 0; position: relative; }
+.section {
+  padding: 90px 0;
+  position: relative;
+  /* Forcer fond sombre cohérent sur toutes les sections (évite "Choisissez" blanc invisible sur beige) */
+  background: #1A3A2A;
+  color: #FAF7F2;
+}
 .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
 .section-eyebrow {
   display: inline-block;

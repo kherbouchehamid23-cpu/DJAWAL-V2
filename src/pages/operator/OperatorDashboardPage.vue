@@ -144,7 +144,7 @@ async function loadStats() {
     <section class="caps-section">
       <h2>Vos capacités de soumission</h2>
       <p class="caps-intro">
-        En tant que {{ operatorTypeLabel.toLowerCase() }}, vous pouvez soumettre les produits suivants à Djawal :
+        En tant {{ /^[aeiouhéè]/i.test(operatorTypeLabel.toLowerCase()) ? "qu'" : "que " }}{{ operatorTypeLabel.toLowerCase() }}, vous pouvez soumettre les produits suivants à Djawal :
       </p>
       <div class="caps-grid">
         <router-link
