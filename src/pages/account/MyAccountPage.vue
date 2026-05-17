@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { supabase } from '@/lib/supabase'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
 
 const auth = useAuthStore()
+const router = useRouter()
 const displayName = ref('')
 const bio = ref('')
 const region = ref('')
@@ -11,6 +14,30 @@ const avatarUrl = ref<string | null>(null)
 const saving = ref(false)
 const savedMsg = ref<string | null>(null)
 const errorMsg = ref<string | null>(null)
+
+// === Self-service "Devenir guide" ===
+const showBecomeGuideModal = ref(false)
+const becomingGuide = ref(false)
+const becomeError = ref<string | null>(null)
+
+async function confirmBecomeGuide() {
+  if (!auth.profile) return
+  becomingGuide.value = true
+  becomeError.value = null
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role: 'guide_junior', kyc_status: 'pending' })
+    .eq('id', auth.profile.id)
+  if (error) {
+    becomingGuide.value = false
+    becomeError.value = error.message
+    return
+  }
+  await auth.fetchProfile()
+  becomingGuide.value = false
+  showBecomeGuideModal.value = false
+  router.push('/espace-guide/kyc')
+}
 
 onMounted(() => {
   if (auth.profile) {
@@ -85,6 +112,61 @@ const kycLabel: Record<string, { text: string; color: string }> = {
     <v-alert v-if="auth.kycRejected" type="error" variant="tonal" class="mb-6">
       Votre dossier KYC a été rejeté. Contactez le support pour plus d'informations.
     </v-alert>
+
+    <!-- Self-service : voyageur peut se déclarer guide local -->
+    <section v-if="auth.role === 'voyageur'" class="become-guide-card">
+      <div class="bg-icon" aria-hidden="true">🎒</div>
+      <h2>Vous voulez devenir guide local Djawal ?</h2>
+      <p>
+        Si vous êtes Algérien(ne) passionné(e) par votre région et que vous voulez partager
+        vos parcours avec les voyageurs, devenez <strong>guide local</strong>. Vous serez
+        accompagné par notre équipe et bénéficierez d'un profil public dédié.
+      </p>
+      <button type="button" class="become-btn" @click="showBecomeGuideModal = true">
+        Devenir guide local
+      </button>
+      <p class="become-note">
+        Demande gratuite · Validation par notre équipe Super Admin après vérification KYC (sous 48 h)
+      </p>
+    </section>
+
+    <!-- Modal de confirmation passage en guide -->
+    <v-dialog v-model="showBecomeGuideModal" max-width="520" persistent>
+      <v-card class="become-modal">
+        <v-card-title class="modal-title">Devenir guide local Djawal</v-card-title>
+        <v-card-text>
+          <p class="modal-intro">
+            En confirmant, votre statut devient <strong>Guide Junior — en attente de validation</strong>.
+            Aucun de vos parcours ne sera publié tant que votre dossier n'est pas approuvé.
+          </p>
+          <ol class="modal-steps">
+            <li>
+              <strong>Complétez votre dossier KYC</strong>
+              <small>Pièce d'identité, justificatif de résidence, photo</small>
+            </li>
+            <li>
+              <strong>Attendez la validation Super Admin</strong>
+              <small>Sous 48 h ouvrées après réception du dossier complet</small>
+            </li>
+            <li>
+              <strong>Publiez vos parcours</strong>
+              <small>Vous pourrez composer et soumettre vos premiers itinéraires</small>
+            </li>
+          </ol>
+          <v-alert v-if="becomeError" type="error" variant="tonal" class="mt-3">
+            {{ becomeError }}
+          </v-alert>
+        </v-card-text>
+        <v-card-actions class="modal-actions">
+          <v-btn variant="text" @click="showBecomeGuideModal = false" :disabled="becomingGuide">
+            Annuler
+          </v-btn>
+          <v-btn color="primary" variant="flat" @click="confirmBecomeGuide" :loading="becomingGuide">
+            Confirmer ma demande
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <div class="my-grid">
       <!-- Profil -->
@@ -318,5 +400,122 @@ const kycLabel: Record<string, { text: string; color: string }> = {
 
 @media (max-width: 880px) {
   .my-grid { grid-template-columns: 1fr; }
+}
+
+/* === Become guide self-service card === */
+.become-guide-card {
+  position: relative;
+  background: linear-gradient(135deg, var(--c-fond-chaud), var(--c-surface));
+  border: 2px solid var(--c-accent);
+  border-radius: var(--r-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  text-align: center;
+  overflow: hidden;
+}
+.become-guide-card .bg-icon {
+  position: absolute;
+  right: -16px;
+  top: -16px;
+  font-size: 140px;
+  opacity: 0.08;
+  pointer-events: none;
+  line-height: 1;
+}
+.become-guide-card h2 {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.4vw, 26px);
+  color: var(--c-primaire-profond);
+  margin-bottom: var(--space-3);
+  position: relative;
+}
+.become-guide-card p {
+  color: var(--c-texte-doux);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+}
+.become-btn {
+  background: var(--c-accent);
+  color: white;
+  border: none;
+  padding: 14px 36px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: var(--t-base);
+  position: relative;
+}
+.become-btn:hover {
+  background: var(--c-accent-fort);
+  transform: translateY(-1px);
+  box-shadow: var(--ombre-elevee);
+}
+.become-note {
+  margin-top: var(--space-3) !important;
+  margin-bottom: 0 !important;
+  font-size: 13px !important;
+}
+
+/* === Become guide modal === */
+.become-modal .modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--c-primaire-profond);
+}
+.become-modal .modal-intro {
+  margin-bottom: var(--space-4);
+  line-height: 1.6;
+}
+.become-modal .modal-steps {
+  list-style: none;
+  counter-reset: step;
+  padding: 0;
+  margin: 0 0 var(--space-3);
+}
+.become-modal .modal-steps li {
+  counter-increment: step;
+  position: relative;
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + 36px);
+  margin-bottom: var(--space-2);
+  background: var(--c-fond-chaud);
+  border-radius: var(--r-md);
+  border-left: 3px solid var(--c-accent);
+}
+.become-modal .modal-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  background: var(--c-accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+.become-modal .modal-steps strong {
+  display: block;
+  color: var(--c-primaire-profond);
+  margin-bottom: 2px;
+}
+.become-modal .modal-steps small {
+  color: var(--c-texte-doux);
+  font-size: 12px;
+}
+.become-modal .modal-actions {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 </style>
