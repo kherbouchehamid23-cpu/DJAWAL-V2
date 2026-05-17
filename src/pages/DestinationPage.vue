@@ -98,12 +98,17 @@ function has360(r: Resource): boolean {
 
 const slug = computed(() => route.params.id as string)
 
+// UUID v4 regex (param `:id` peut etre un UUID ou un slug textuel)
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 async function loadDestination() {
   loading.value = true
+  const param = slug.value
+  const lookupColumn = UUID_RE.test(param) ? 'id' : 'slug'
   const { data: dest } = await supabase
     .from('destinations')
     .select('*')
-    .eq('slug', slug.value)
+    .eq(lookupColumn, param)
     .single()
 
   if (!dest) {
