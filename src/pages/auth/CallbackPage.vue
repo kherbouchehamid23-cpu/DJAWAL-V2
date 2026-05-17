@@ -20,8 +20,42 @@ onMounted(async () => {
 
   await auth.fetchProfile()
 
-  // Redirection selon le rôle
-  if (auth.role === 'guide_junior' && auth.profile?.kyc_status === 'pending') {
+  // Si signup via OAuth en tant que guide/opérateur : le trigger DB a créé
+  // un profil 'voyageur' par défaut (raw_user_meta_data vide). On applique
+  // le rôle voulu via UPDATE (RLS profile_self_update autorise id=auth.uid()).
+  const pendingRaw = localStorage.getItem('djawal_pending_signup')
+  if (pendingRaw && auth.profile?.role === 'voyageur') {
+    try {
+      const pending = JSON.parse(pendingRaw)
+      if (pending.role === 'guide_junior' || pending.role === 'tourist_operator') {
+        const updates: Record<string, unknown> = { role: pending.role, kyc_status: 'pending' }
+        if (pending.role === 'tourist_operator') {
+          if (pending.operator_type) updates.operator_type = pending.operator_type
+          if (pending.company_name) updates.company_name = pending.company_name
+        }
+        if (pending.region) updates.region = pending.region
+        if (pending.display_name) updates.display_name = pending.display_name
+        const { error: upErr } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', session.user.id)
+        if (upErr) {
+          console.warn('[callback] failed to apply pending signup role:', upErr.message)
+        } else {
+          await auth.fetchProfile()
+        }
+      }
+    } catch (e) {
+      console.warn('[callback] invalid pending signup payload:', (e as Error).message)
+    } finally {
+      localStorage.removeItem('djawal_pending_signup')
+    }
+  }
+
+  // Redirection selon le rôle (potentiellement mis à jour ci-dessus)
+  if (auth.role === 'tourist_operator') {
+    router.replace({ path: '/espace-operateur/kyc' })
+  } else if (auth.role === 'guide_junior' && auth.profile?.kyc_status === 'pending') {
     router.replace({ name: 'guide-kyc' })
   } else if (auth.role === 'guide_senior' || auth.role === 'guide_junior') {
     router.replace({ name: 'guide-dashboard' })

@@ -112,8 +112,25 @@ async function handleSignup() {
 
 async function handleGoogleSignup() {
   errorMsg.value = null
+  persistPendingSignup()
   const { error } = await auth.signinWithGoogle()
   if (error) errorMsg.value = mapAuthError(error)
+}
+
+// Persiste le contexte signup (role + opérateur) pour CallbackPage
+// car signInWithOAuth ne passe pas de metadata au trigger DB
+function persistPendingSignup() {
+  if (path.value === 'voyageur') {
+    localStorage.removeItem('djawal_pending_signup')
+    return
+  }
+  localStorage.setItem('djawal_pending_signup', JSON.stringify({
+    role: path.value,
+    operator_type: operatorType.value || null,
+    company_name: companyName.value.trim() || null,
+    region: region.value.trim() || null,
+    display_name: displayName.value.trim() || null
+  }))
 }
 
 // Détection appareil Apple (iOS/macOS) pour proposer Sign in with Apple
@@ -123,6 +140,7 @@ const isAppleDevice = /iPad|iPhone|iPod|Mac OS/i.test(
 
 async function handleAppleSignup() {
   errorMsg.value = null
+  persistPendingSignup()
   const { error } = await auth.signinWithApple()
   if (error) errorMsg.value = mapAuthError(error)
 }
