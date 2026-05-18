@@ -67,32 +67,45 @@ async function handleFileChange(slot: DocSlot, event: Event) {
   slot.uploading = true
   slot.error = null
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const path = `${auth.user.id}/${slot.type}.${ext}`
+  // Verifier la session avant upload (JWT peut etre expire apres OAuth callback long)
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    slot.uploading = false
+    slot.error = 'Session expiree. Reconnectez-vous puis recommencez.'
+    return
+  }
+  // Forcer un refresh du token pour garantir un JWT frais cote RLS
+  await supabase.auth.refreshSession()
 
-  // Upload (overwrite si existe déjà)
+  const userId = session.user.id
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const path = `${userId}/${slot.type}.${ext}`
+
+  // 1) Upload storage (policy kyc_owner_write : auth.uid() == foldername[1])
   const { error: upErr } = await supabase.storage
     .from('kyc-documents')
     .upload(path, file, { upsert: true })
 
   if (upErr) {
     slot.uploading = false
-    slot.error = upErr.message
+    slot.error = `Upload storage refuse : ${upErr.message}`
+    console.warn('[kyc] storage upload error', { path, userId, error: upErr })
     return
   }
 
-  // Enregistrer en BDD
+  // 2) Enregistrer en BDD (policy kyc_docs_self_write : profile_id == auth.uid())
   const { error: dbErr } = await supabase
     .from('kyc_documents')
     .upsert({
-      profile_id: auth.user.id,
+      profile_id: userId,
       document_type: slot.type,
       storage_path: path
     }, { onConflict: 'profile_id,document_type' })
 
   if (dbErr) {
     slot.uploading = false
-    slot.error = dbErr.message
+    slot.error = `Enregistrement DB refuse : ${dbErr.message}`
+    console.warn('[kyc] db upsert error', { userId, type: slot.type, error: dbErr })
     return
   }
 
