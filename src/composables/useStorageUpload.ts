@@ -84,4 +84,8 @@ export function useStorageUpload(bucket: StorageBucket) {
       error.value = delErr.message
       return false
     }
- 
+    return true
+  }
+
+  return { uploadFile, deleteFile, uploading, progress, error }
+}
