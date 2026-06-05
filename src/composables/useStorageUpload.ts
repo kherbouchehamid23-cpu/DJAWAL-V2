@@ -39,9 +39,10 @@ export function useStorageUpload(bucket: StorageBucket) {
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
       let filename = path || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
-      // Préfixe user_id requis par la RLS des buckets opérateurs
+      // Préfixe user_id requis par la RLS de certains buckets
       // (storage.foldername(name)[1] = auth.uid()::TEXT)
-      if (bucket === 'operator-gallery' || bucket === 'operator-avatars') {
+      const userPrefixedBuckets: StorageBucket[] = ['operator-gallery', 'operator-avatars', 'avatars', 'kyc-documents']
+      if (userPrefixedBuckets.includes(bucket)) {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
           error.value = 'Authentification requise pour uploader.'
@@ -83,8 +84,4 @@ export function useStorageUpload(bucket: StorageBucket) {
       error.value = delErr.message
       return false
     }
-    return true
-  }
-
-  return { uploadFile, deleteFile, uploading, progress, error }
-}
+ 
