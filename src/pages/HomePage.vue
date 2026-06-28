@@ -226,6 +226,7 @@ onMounted(async () => {
     .select('id', { count: 'exact', head: true })
   stats.value.guides = guidesCount || 0
   stats.value.destinations = destCount || 0
+  // On n'affiche le bandeau que s'il y a de quoi être crédible
   showStats.value = (stats.value.guides > 0 || stats.value.destinations > 0)
 
   // Destinations vedettes : 1) featured d'abord 2) sinon top 10 DB 3) sinon fallback statique
