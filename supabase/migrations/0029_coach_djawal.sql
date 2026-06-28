@@ -1,8 +1,11 @@
 -- =========================================================
--- DJAWAL V2 — Coach Djawal : schéma de support
--- 1) Champs multilingues obligatoires + qualité sur trips
--- 2) Table de réglages app_settings (seuil de publication configurable)
--- 3) Gate de publication doublé côté base (trigger)
+-- DJAWAL V2 — Coach Djawal : schéma de support (v2, sûr pour la prod)
+-- 1) Champs multilingues + qualité sur trips (+ backfill)
+-- 2) Table app_settings (seuil de publication configurable)
+-- 3) Gate de publication : se déclenche UNIQUEMENT au passage en 'published'
+--    (INSERT publié, ou transition draft/pending -> published), jamais sur
+--    une simple édition d'un voyage déjà publié -> pas de régression sur
+--    les voyages existants.
 -- Idempotent.
 -- =========================================================
 
@@ -10,10 +13,11 @@
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS title_fr TEXT;
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS title_en TEXT;
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS description_fr TEXT;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS description_ar TEXT;
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS description_en TEXT;
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS ai_quality_score INT DEFAULT 0;
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS ai_assisted BOOLEAN DEFAULT false;
--- title_ar / description (FR historique) existent déjà ; on backfille les nouveaux champs
+-- Backfill FR depuis l'existant (title/description historiques)
 UPDATE trips SET title_fr = COALESCE(title_fr, title) WHERE title_fr IS NULL;
 UPDATE trips SET description_fr = COALESCE(description_fr, description) WHERE description_fr IS NULL;
 
@@ -34,15 +38,18 @@ CREATE POLICY "app_settings_write_admin" ON app_settings FOR ALL
   USING (public.current_user_role() = 'super_admin')
   WITH CHECK (public.current_user_role() = 'super_admin');
 
--- ===== 3. Gate de publication (trigger) =====
--- Refuse status='published' si : un triplet FR/AR/EN est vide,
--- pas d'image, prix/durée invalides, ou score < seuil configuré.
+-- ===== 3. Gate de publication (trigger) — transition uniquement =====
 CREATE OR REPLACE FUNCTION public.enforce_trip_publish_quality()
 RETURNS TRIGGER AS $$
 DECLARE
   thr INT;
+  is_publishing BOOLEAN;
 BEGIN
-  IF NEW.status = 'published' THEN
+  -- On ne contrôle QUE le moment où le voyage devient publié.
+  is_publishing := (NEW.status = 'published')
+                   AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM 'published');
+
+  IF is_publishing THEN
     SELECT COALESCE((SELECT value::INT FROM app_settings WHERE key = 'publish_quality_threshold'), 70) INTO thr;
 
     IF COALESCE(NULLIF(TRIM(NEW.title_fr), ''), NULLIF(TRIM(NEW.title), '')) IS NULL
@@ -74,7 +81,3 @@ DROP TRIGGER IF EXISTS trg_trip_publish_quality ON trips;
 CREATE TRIGGER trg_trip_publish_quality
   BEFORE INSERT OR UPDATE ON trips
   FOR EACH ROW EXECUTE FUNCTION public.enforce_trip_publish_quality();
-
--- Note : ce trigger s'exécute AVANT le trigger existant qui bascule les
--- guides_junior en 'pending_review'. L'ordre alphabétique des noms de triggers
--- garantit que la qualité est vérifiée d'abord.
