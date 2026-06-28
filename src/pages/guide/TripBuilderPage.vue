@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
+import CoachPanel from '@/components/CoachPanel.vue'
 
 /**
  * Sprint 5 — Constructeur de parcours.
@@ -53,16 +54,47 @@ const error = ref('')
 const success = ref('')
 
 // === MÉTADONNÉES ===
-const title = ref('')
+const title = ref('')          // = titre FR (champ historique)
 const titleAr = ref('')
+const titleEn = ref('')
 const destinationId = ref<string>('')
 const durationDays = ref(3)
 const priceDa = ref(15000)
-const description = ref('')
+const description = ref('')    // = description FR (champ historique)
+const descriptionAr = ref('')
+const descriptionEn = ref('')
 const coverImageUrl = ref('')
 const maxTravelers = ref(8)
 const difficulty = ref<'facile' | 'modere' | 'difficile'>('modere')
 const tagsInput = ref('')
+
+// === COACH DJAWAL ===
+const aiScore = ref(0)
+const aiAssisted = ref(false)
+const canPublish = ref(false)
+const coachCatalog = computed(() => catalog.value.map(r => ({ name: r.name, type: r.type })))
+const coachModel = computed(() => ({
+  title_fr: title.value, title_ar: titleAr.value, title_en: titleEn.value,
+  description_fr: description.value, description_ar: descriptionAr.value, description_en: descriptionEn.value,
+  destinationId: destinationId.value,
+  durationDays: durationDays.value,
+  priceDa: priceDa.value,
+  difficulty: difficulty.value,
+  tags: tagsInput.value,
+  hasCover: !!coverImageUrl.value,
+  days: days.value.map(d => [d.theme, d.description, ...d.steps.map(s => s.resource_name || s.note)].filter(Boolean).join(' '))
+}))
+function onCoachApply(data: Record<string, any>) {
+  if (data.title_fr !== undefined) title.value = data.title_fr
+  if (data.title_ar !== undefined) titleAr.value = data.title_ar
+  if (data.title_en !== undefined) titleEn.value = data.title_en
+  if (data.description_fr !== undefined) description.value = data.description_fr
+  if (data.description_ar !== undefined) descriptionAr.value = data.description_ar
+  if (data.description_en !== undefined) descriptionEn.value = data.description_en
+  if (data.tags !== undefined) tagsInput.value = data.tags
+  if (Array.isArray(data.days)) data.days.forEach((txt: string, i: number) => { if (days.value[i]) days.value[i].description = txt })
+  if (data.ai_assisted) aiAssisted.value = true
+}
 
 const destinations = ref<Destination[]>([])
 const days = ref<Day[]>([])
@@ -187,15 +219,19 @@ async function loadTrip(id: string) {
     error.value = "Voyage introuvable ou accès refusé."
     return
   }
-  title.value = trip.title
+  title.value = trip.title_fr || trip.title
   titleAr.value = trip.title_ar || ''
+  titleEn.value = trip.title_en || ''
   destinationId.value = trip.destination_id
   durationDays.value = trip.duration_days
   priceDa.value = trip.price_da
-  description.value = trip.description
+  description.value = trip.description_fr || trip.description
+  descriptionAr.value = trip.description_ar || ''
+  descriptionEn.value = trip.description_en || ''
   coverImageUrl.value = trip.cover_image_url || ''
   maxTravelers.value = trip.max_travelers
   difficulty.value = trip.difficulty || 'modere'
+  aiAssisted.value = !!trip.ai_assisted
   tagsInput.value = (trip.tags || []).join(', ')
 
   await loadCatalog(trip.destination_id)
@@ -266,6 +302,11 @@ async function save(targetStatus: 'draft' | 'published') {
     error.value = 'La description doit faire au moins 50 caractères.'; return
   }
   if (priceDa.value < 0) { error.value = 'Le prix ne peut pas être négatif.'; return }
+  // Publication : exiger la qualité minimale (trilingue + score), comme le gate base
+  if (targetStatus === 'published' && !canPublish.value) {
+    error.value = 'Publication impossible : complétez la fiche (trilingue FR+AR+EN, image, programme, score ≥ seuil). Voir le Coach Djawal à droite.'
+    return
+  }
 
   saving.value = true
   try {
@@ -277,15 +318,22 @@ async function save(targetStatus: 'draft' | 'published') {
     const tripPayload = {
       created_by: auth.user!.id,
       title: title.value.trim(),
+      title_fr: title.value.trim(),
       title_ar: titleAr.value.trim() || null,
+      title_en: titleEn.value.trim() || null,
       destination_id: destinationId.value,
       duration_days: durationDays.value,
       price_da: priceDa.value,
       description: description.value.trim(),
+      description_fr: description.value.trim(),
+      description_ar: descriptionAr.value.trim() || null,
+      description_en: descriptionEn.value.trim() || null,
       cover_image_url: coverImageUrl.value.trim() || null,
       max_travelers: maxTravelers.value,
       difficulty: difficulty.value,
       tags,
+      ai_quality_score: aiScore.value,
+      ai_assisted: aiAssisted.value,
       status: targetStatus
     }
 
@@ -404,10 +452,16 @@ function typeLabel(t: string) {
               />
               <v-text-field
                 v-model="titleAr"
-                label="Titre en arabe (optionnel)"
+                label="Titre en arabe (AR) *"
                 variant="outlined"
                 density="comfortable"
                 class="arabic"
+              />
+              <v-text-field
+                v-model="titleEn"
+                label="Titre en anglais (EN) *"
+                variant="outlined"
+                density="comfortable"
               />
               <v-select
                 v-model="destinationId"
@@ -463,13 +517,30 @@ function typeLabel(t: string) {
             </div>
             <v-textarea
               v-model="description"
-              label="Description (min. 50 caractères)"
+              label="Description en français (FR) * — min. 50 caractères"
               placeholder="Racontez le voyage : l'esprit, les paysages, les rencontres prévues…"
               variant="outlined"
               density="comfortable"
               rows="4"
               class="mt-3"
             />
+            <v-textarea
+              v-model="descriptionAr"
+              label="Description en arabe (AR) *"
+              variant="outlined"
+              density="comfortable"
+              rows="3"
+              class="mt-3 arabic"
+            />
+            <v-textarea
+              v-model="descriptionEn"
+              label="Description en anglais (EN) *"
+              variant="outlined"
+              density="comfortable"
+              rows="3"
+              class="mt-3"
+            />
+            <p class="hint-sm">Le trilingue FR + AR + EN est obligatoire pour publier. Utilisez le Coach Djawal (à droite) pour générer ou traduire.</p>
             <div class="cover-upload mt-3">
               <ImageUpload
                 v-model="coverImageUrl"
@@ -581,11 +652,15 @@ function typeLabel(t: string) {
                 variant="flat"
                 size="large"
                 :loading="saving"
+                :disabled="!canPublish"
                 @click="save('published')"
               >
                 🚀 Publier
               </v-btn>
             </div>
+            <p class="hint-sm" v-if="!canPublish">
+              ⓘ Pour publier : fiche trilingue complète, image de couverture, programme et score qualité suffisant (voir le Coach Djawal).
+            </p>
             <p class="hint-sm" v-if="auth.isGuideJunior">
               ⓘ En tant que Guide Junior, votre publication passera par une modération admin.
             </p>
@@ -595,8 +670,17 @@ function typeLabel(t: string) {
           </section>
         </div>
 
-        <!-- === COLONNE DROITE : CATALOGUE === -->
+        <!-- === COLONNE DROITE : COACH + CATALOGUE === -->
         <aside class="catalog-col">
+          <CoachPanel
+            class="coach-mb"
+            :model="coachModel"
+            :catalog="coachCatalog"
+            :destination-name="selectedDestination?.name"
+            @apply="onCoachApply"
+            @update:score="aiScore = $event"
+            @can-publish="canPublish = $event"
+          />
           <div class="card catalog-card">
             <h3>📚 Catalogue</h3>
             <p class="catalog-hint" v-if="!destinationId">
@@ -821,6 +905,7 @@ function typeLabel(t: string) {
   top: 24px;
 }
 .catalog-card { margin-bottom: 0; }
+.coach-mb { margin-bottom: var(--space-4); }
 .catalog-hint { color: var(--c-texte-doux); font-size: 13px; }
 
 .cat-chips {
