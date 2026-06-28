@@ -89,9 +89,3 @@ export function useStorageUpload(bucket: StorageBucket) {
 
   return { uploadFile, deleteFile, uploading, progress, error }
 }
-    return true
-  }
-
-  return { uploadFile, deleteFile, uploading, progress, error }
-}
-}
