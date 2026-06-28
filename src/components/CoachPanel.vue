@@ -40,7 +40,8 @@ watch(result, (r) => {
 
 onMounted(async () => {
   // Seuil configurable (app_settings)
-  const { data } = await supabase.from('app_settings').select('value').eq('key', 'publish_quality_threshold').maybeSingle()
+  // app_settings n'est pas (encore) dans les types générés -> cast pour le typecheck
+  const { data } = await (supabase as any).from('app_settings').select('value').eq('key', 'publish_quality_threshold').maybeSingle()
   if (data?.value) threshold.value = parseInt(data.value) || 70
 })
 
