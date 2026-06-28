@@ -68,9 +68,13 @@ function fmtDate(iso: string) {
           <span class="eyebrow-line"></span>
         </div>
         <h1>Récits <em>de voyage</em></h1>
-        <p class="lead">
-          {{ memories.length }} fragments d'expérience partagés par celles et ceux qui ont
-          parcouru l'Algérie. Chaque souvenir est un appel au voyage.
+        <p class="lead" v-if="memories.length > 0">
+          {{ memories.length }} fragment{{ memories.length > 1 ? 's' : '' }} d'expérience partagé{{ memories.length > 1 ? 's' : '' }}
+          par celles et ceux qui ont parcouru l'Algérie. Chaque souvenir est un appel au voyage.
+        </p>
+        <p class="lead" v-else>
+          Les premiers récits arrivent bientôt. Revenez de votre voyage et partagez le vôtre —
+          chaque souvenir devient un appel au voyage pour les suivants.
         </p>
       </div>
     </header>
@@ -118,7 +122,10 @@ function fmtDate(iso: string) {
       <div v-if="loading" class="loading">Chargement…</div>
 
       <div v-else-if="filtered.length === 0" class="empty">
-        <p v-if="memories.length === 0">Pas encore de souvenirs partagés.</p>
+        <template v-if="memories.length === 0">
+          <p class="empty-title">Aucun souvenir partagé pour l'instant</p>
+          <p class="empty-sub">Soyez le premier à raconter votre Algérie — un lieu, une rencontre, une lumière.</p>
+        </template>
         <p v-else>Aucun souvenir ne correspond à votre recherche.</p>
       </div>
 

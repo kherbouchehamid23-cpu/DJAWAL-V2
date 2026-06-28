@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useSEO } from '@/composables/useSEO'
 import FavoriteButton from '@/components/FavoriteButton.vue'
+import { prettyName } from '@/lib/displayName'
 
 useSEO({
   title: 'Guides locaux — Djawal',
@@ -210,7 +211,7 @@ function openGuide(id: string) {
             </div>
             <div class="guide-info">
               <div class="guide-meta" v-if="g.region">📍 {{ g.region }}</div>
-              <h3 class="guide-name">{{ g.display_name || 'Guide Djawal' }}</h3>
+              <h3 class="guide-name">{{ prettyName(g.display_name) }}</h3>
               <p v-if="g.specialties && g.specialties.length > 0" class="guide-spec">
                 {{ g.specialties.slice(0, 2).join(' · ') }}
               </p>

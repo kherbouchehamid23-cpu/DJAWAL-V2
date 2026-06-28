@@ -16,9 +16,9 @@ interface SEOData {
   type?: 'website' | 'article'
 }
 
-const BASE_URL = 'https://djawal-v2.vercel.app'
+const BASE_URL = 'https://www.djawal.com'
 const SUFFIX = ' — Djawal'
-const DEFAULT_IMAGE = `${BASE_URL}/icons/pwa-512.png`
+const DEFAULT_IMAGE = `${BASE_URL}/og-cover.jpg`
 
 function setMeta(selector: string, content: string) {
   let el = document.head.querySelector(selector) as HTMLMetaElement | null

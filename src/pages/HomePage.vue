@@ -9,7 +9,9 @@ useSEO({
 })
 
 const router = useRouter()
-const stats = ref({ travellers: 12000, guides: 450 })
+// Stats honnêtes : comptages réels en base, jamais de valeurs gonflées.
+const stats = ref({ destinations: 0, guides: 0 })
+const showStats = ref(false)
 
 function fmtPriceDA(p: number) {
   return new Intl.NumberFormat('fr-DZ').format(p) + ' DA'
@@ -213,13 +215,18 @@ function formatMessage(text: string): string {
 }
 
 onMounted(async () => {
-  // Stats guides
+  // Stats réelles (guides approuvés + destinations publiées)
   const { count: guidesCount } = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
     .in('role', ['guide_senior', 'guide_junior'])
     .eq('kyc_status', 'approved')
-  if (guidesCount && guidesCount >= 50) stats.value.guides = guidesCount
+  const { count: destCount } = await supabase
+    .from('destinations')
+    .select('id', { count: 'exact', head: true })
+  stats.value.guides = guidesCount || 0
+  stats.value.destinations = destCount || 0
+  showStats.value = (stats.value.guides > 0 || stats.value.destinations > 0)
 
   // Destinations vedettes : 1) featured d'abord 2) sinon top 10 DB 3) sinon fallback statique
   const mapDest = (d: any) => ({
@@ -337,13 +344,13 @@ onMounted(async () => {
           Ou parcourir nos voyages signés <span aria-hidden="true">↓</span>
         </a>
 
-        <div class="hero-stats">
+        <div class="hero-stats" v-if="showStats">
           <span class="stats-dots" aria-hidden="true">
             <span class="dot dot-1">A</span>
             <span class="dot dot-2">Y</span>
             <span class="dot dot-3">L</span>
           </span>
-          <span class="stats-num">{{ fmtNumber(stats.travellers) }}+</span> voyageurs ·
+          <span class="stats-num">{{ fmtNumber(stats.destinations) }}</span> destinations ·
           <span class="stats-num">{{ fmtNumber(stats.guides) }}</span> guides locaux
         </div>
       </div>

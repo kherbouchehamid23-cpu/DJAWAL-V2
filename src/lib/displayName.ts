@@ -1,0 +1,22 @@
+/**
+ * Embellit un nom d'affichage quand il ressemble à un identifiant (username).
+ * Correctif de surface pour D-04 : certains profils ont un display_name égal à
+ * leur username (ex. "ahmedstitten06", "hanane.abd.ms2"). Le vrai correctif est
+ * en base (renseigner un display_name propre) ; ceci évite d'afficher du brut.
+ */
+export function prettyName(name?: string | null, fallback = 'Guide Djawal'): string {
+  const raw = (name || '').trim()
+  if (!raw) return fallback
+  const looksLikeUsername = !/\s/.test(raw) && (/\d/.test(raw) || /[._]/.test(raw))
+  if (!looksLikeUsername) return raw
+  const cleaned = raw
+    .replace(/[._]+/g, ' ')
+    .replace(/\d+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!cleaned) return fallback
+  return cleaned
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
