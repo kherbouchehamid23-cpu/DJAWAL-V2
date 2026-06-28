@@ -436,8 +436,19 @@ function typeLabel(t: string) {
       <div v-if="loading" class="loading">Chargement…</div>
 
       <div v-else class="builder-grid">
-        <!-- === COLONNE GAUCHE : MÉTADONNÉES + JOURNÉES === -->
+        <!-- === COLONNE GAUCHE : COACH + MÉTADONNÉES + JOURNÉES === -->
         <div class="main-col">
+
+          <!-- COACH DJAWAL (pleine largeur, en tête) -->
+          <CoachPanel
+            class="coach-mb"
+            :model="coachModel"
+            :catalog="coachCatalog"
+            :destination-name="selectedDestination?.name"
+            @apply="onCoachApply"
+            @update:score="aiScore = $event"
+            @can-publish="canPublish = $event"
+          />
 
           <!-- MÉTADONNÉES -->
           <section class="card">
@@ -670,17 +681,8 @@ function typeLabel(t: string) {
           </section>
         </div>
 
-        <!-- === COLONNE DROITE : COACH + CATALOGUE === -->
+        <!-- === COLONNE DROITE : CATALOGUE === -->
         <aside class="catalog-col">
-          <CoachPanel
-            class="coach-mb"
-            :model="coachModel"
-            :catalog="coachCatalog"
-            :destination-name="selectedDestination?.name"
-            @apply="onCoachApply"
-            @update:score="aiScore = $event"
-            @can-publish="canPublish = $event"
-          />
           <div class="card catalog-card">
             <h3>📚 Catalogue</h3>
             <p class="catalog-hint" v-if="!destinationId">
@@ -905,7 +907,8 @@ function typeLabel(t: string) {
   top: 24px;
 }
 .catalog-card { margin-bottom: 0; }
-.coach-mb { margin-bottom: var(--space-4); }
+/* Coach en tête de colonne principale : pleine largeur, non sticky (sinon il masque le contenu/le catalogue) */
+.coach-mb { margin-bottom: var(--space-4); position: static !important; top: auto !important; }
 .catalog-hint { color: var(--c-texte-doux); font-size: 13px; }
 
 .cat-chips {
