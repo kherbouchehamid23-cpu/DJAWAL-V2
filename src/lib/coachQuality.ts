@@ -29,16 +29,16 @@ export interface QualityResult {
   canPublish: boolean           // mustsOk && score >= threshold
 }
 
-const VOWELS = /[aeiouyàâäéèêëïîôöùûü]/i
-
 /** Détecte une chaîne "données de test" (charabia, placeholder). */
 export function looksLikeTestData(s: string): boolean {
   const t = (s || '').trim()
   if (!t) return false
   if (/^(test|aaa+|xxx+|asdf|qwerty|lorem)/i.test(t)) return true
-  // mot long sans aucune voyelle => charabia type "bhmsdbfgj"
-  const compact = t.replace(/\s+/g, '')
-  if (compact.length >= 6 && !VOWELS.test(compact)) return true
+  // Heuristique "mot long sans voyelle" (charabia type "bhmsdbfgj") :
+  // appliquée UNIQUEMENT aux lettres latines, sinon l'arabe / le tifinagh
+  // (sans voyelles latines) serait flagué à tort.
+  const latin = t.replace(/[^a-zA-Zàâäéèêëïîôöùûü]/g, '')
+  if (latin.length >= 6 && !/[aeiouyàâäéèêëïîôöùûü]/i.test(latin)) return true
   return false
 }
 
