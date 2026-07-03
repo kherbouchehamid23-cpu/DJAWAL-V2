@@ -245,6 +245,10 @@ function goToStructuredForm() {
           </div>
           <div class="answer-text" v-html="(response.answer).replace(/\n/g, '<br>')"></div>
 
+          <p v-if="response.destinations?.length || response.trips?.length || response.resources?.length" class="answer-sources">
+            💡 Suggestions tirées de nos guides locaux et des souvenirs de voyageurs.
+          </p>
+
           <!-- Ressources -->
           <section v-if="response.destinations?.length" class="answer-section">
             <h3>Destinations suggérées</h3>
@@ -517,7 +521,14 @@ function goToStructuredForm() {
   font-size: 16px;
   line-height: 1.7;
   color: #FAF7F2;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
+}
+.answer-sources {
+  font-size: 12.5px;
+  color: #E8B96B;
+  font-style: italic;
+  margin: 0 0 24px;
+  opacity: 0.85;
 }
 .answer-section { margin-top: 24px; }
 .answer-section h3 {

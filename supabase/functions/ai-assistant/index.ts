@@ -375,28 +375,41 @@ serve(async (req) => {
     const destinations: DestinationMatch[] = (destinationsRes.data || []).filter((d: DestinationMatch) => d.similarity >= SIMILARITY_THRESHOLD)
     const trips: TripMatch[] = (tripsRes.data || []).filter((t: TripMatch) => t.similarity >= SIMILARITY_THRESHOLD)
 
-    // 3. Si rien trouvé : réponse honnête sans inventer
+    // 3. Si rien trouvé : ne pas laisser un cul-de-sac — proposer de vraies destinations
     if (resources.length === 0 && destinations.length === 0 && trips.length === 0) {
-      const fallback = ({
-        ar: 'ليس لدي معلومة دقيقة عن هذا بعد. جرّب صياغة أخرى أو ألقِ نظرة على قائمة الرحلات — قد تجد ما يلهمك.',
-        en: "I don't have precise info on that yet. Try rephrasing, or browse the Trips menu — you might find the inspiration you're after.",
-        fr: "Je n'ai pas la connaissance précise pour répondre à ça. Reformule autrement ou jette un œil au menu Voyages — il y a peut-être déjà l'inspiration que tu cherches."
-      } as Record<string, string>)[answerLang] || "Je n'ai pas la connaissance précise pour répondre à ça. Reformule autrement ou jette un œil au menu Voyages — il y a peut-être déjà l'inspiration que tu cherches."
+      const { data: suggested } = await supabase
+        .from('destinations')
+        .select('id, name, wilaya, cultural_theme, description')
+        .limit(3)
+      const hasSugg = Array.isArray(suggested) && suggested.length > 0
+
+      const fallback = hasSugg
+        ? ({
+            ar: "لست متأكدًا من هذا التفصيل بعد، لكن إليك بعض الوجهات الجزائرية الجميلة التي قد تلهمك 👇",
+            en: "I'm not sure about that detail yet, but here are a few beautiful Algerian destinations that might inspire you 👇",
+            fr: "Je ne suis pas certain sur ce point précis, mais voici quelques belles destinations algériennes qui pourraient t'inspirer 👇"
+          } as Record<string, string>)[answerLang]
+        : ({
+            ar: 'ليس لدي معلومة دقيقة عن هذا بعد. جرّب صياغة أخرى أو ألقِ نظرة على قائمة الرحلات.',
+            en: "I don't have precise info on that yet. Try rephrasing, or browse the Trips menu.",
+            fr: "Je n'ai pas la connaissance précise pour répondre à ça. Reformule autrement ou jette un œil au menu Voyages."
+          } as Record<string, string>)[answerLang]
+      const fallbackText = fallback || "Je ne suis pas certain sur ce point précis, mais explore le menu Voyages pour t'inspirer."
 
       await supabase.from('ai_conversations').insert({
         user_id: user_id || null,
         user_query: question,
         retrieved_resource_ids: [],
-        llm_response: { text: fallback, fallback: true },
+        llm_response: { text: fallbackText, fallback: true },
         validation_passed: true,
-        validation_notes: 'Aucune ressource pertinente.',
+        validation_notes: 'Aucune ressource pertinente — suggestions de destinations.',
         tokens_used: 0,
         latency_ms: Date.now() - startTime
       })
 
       return new Response(JSON.stringify({
-        answer: fallback,
-        resources: [], destinations: [], trips: []
+        answer: fallbackText,
+        resources: [], destinations: suggested || [], trips: []
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
