@@ -50,46 +50,57 @@ interface TripMatch {
   similarity: number
 }
 
+// === Appel Gemini résilient : retry + backoff sur erreurs transitoires (503/429/surcharge) ===
+async function geminiFetch(url: string, body: unknown, label: string, retries = 2): Promise<any> {
+  let lastErr = ''
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    let res: Response
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+    } catch (netErr: any) {
+      // Erreur réseau : traiter comme transitoire
+      lastErr = netErr?.message || String(netErr)
+      if (attempt === retries) break
+      await new Promise(r => setTimeout(r, 500 * Math.pow(3, attempt) + Math.random() * 300))
+      continue
+    }
+    if (res.ok) return await res.json()
+    lastErr = await res.text()
+    const transient = res.status === 503 || res.status === 429 || res.status === 500 ||
+      /overloaded|high demand|unavailable|try again|rate limit/i.test(lastErr)
+    if (!transient || attempt === retries) break
+    // backoff exponentiel : ~0.5s, ~1.5s (+ jitter)
+    await new Promise(r => setTimeout(r, 500 * Math.pow(3, attempt) + Math.random() * 300))
+  }
+  throw new Error(`Gemini ${label} error: ${lastErr}`)
+}
+
 // === Génération d'embedding ===
 async function embed(text: string): Promise<number[]> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:embedContent?key=${GEMINI_API_KEY}`
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: `models/${EMBED_MODEL}`,
-      content: { parts: [{ text }] },
-      outputDimensionality: EMBED_DIM
-    })
-  })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Gemini embed error: ${err}`)
-  }
-  const json = await res.json()
+  const json = await geminiFetch(url, {
+    model: `models/${EMBED_MODEL}`,
+    content: { parts: [{ text }] },
+    outputDimensionality: EMBED_DIM
+  }, 'embed')
   return json.embedding.values
 }
 
 // === Génération de texte ===
 async function generate(prompt: string): Promise<{ text: string; tokens: number }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_MODEL}:generateContent?key=${GEMINI_API_KEY}`
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.35,
-        maxOutputTokens: 1024,
-        topP: 0.85
-      }
-    })
-  })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Gemini generate error: ${err}`)
-  }
-  const json = await res.json()
+  const json = await geminiFetch(url, {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.35,
+      maxOutputTokens: 1024,
+      topP: 0.85
+    }
+  }, 'generate')
   const text = json.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
   const tokens = json.usageMetadata?.totalTokenCount ?? 0
   return { text, tokens }
@@ -98,23 +109,14 @@ async function generate(prompt: string): Promise<{ text: string; tokens: number 
 // === Génération JSON strict (pour extraction de critères) ===
 async function generateJson(prompt: string): Promise<any> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_MODEL}:generateContent?key=${GEMINI_API_KEY}`
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 512,
-        responseMimeType: 'application/json'
-      }
-    })
-  })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Gemini JSON gen error: ${err}`)
-  }
-  const json = await res.json()
+  const json = await geminiFetch(url, {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: 512,
+      responseMimeType: 'application/json'
+    }
+  }, 'JSON gen')
   const text = json.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
   // En cas où Gemini ajoute du markdown malgré responseMimeType
   let clean = text.trim()
@@ -271,6 +273,22 @@ function buildClarificationQuestions(criteria: CriteriaAnalysis): { key: string;
   return questions
 }
 
+// Message doux « IA sollicitée » selon la langue (repli quand Gemini est saturé)
+function busyMessage(answerLang: string, hasCards: boolean): string {
+  if (hasCards) {
+    return ({
+      ar: 'خدمة الذكاء الاصطناعي مشغولة قليلاً الآن، لكن إليك ما وجدته لك 👇',
+      en: "Our AI is a bit busy right now, but here's what I found for you 👇",
+      fr: "Notre IA est un peu sollicitée en ce moment, mais voici ce que j'ai déniché pour toi 👇"
+    } as Record<string, string>)[answerLang] || "Notre IA est un peu sollicitée, mais voici ce que j'ai déniché pour toi 👇"
+  }
+  return ({
+    ar: 'خدمة الذكاء الاصطناعي مشغولة قليلاً الآن. في هذه الأثناء، إليك بعض الوجهات الجزائرية الجميلة 👇',
+    en: "Our AI is a bit busy right now. In the meantime, here are a few beautiful Algerian destinations 👇",
+    fr: "Notre IA est un peu sollicitée en ce moment. En attendant, voici quelques belles destinations algériennes 👇"
+  } as Record<string, string>)[answerLang] || "Notre IA est un peu sollicitée. En attendant, voici quelques belles destinations algériennes 👇"
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -351,7 +369,22 @@ serve(async (req) => {
     }
 
     // 1. Embed la question (reformulée avec le contexte si c'est un suivi)
-    const queryEmbedding = await embed(ragQuestion)
+    let queryEmbedding: number[]
+    try {
+      queryEmbedding = await embed(ragQuestion)
+    } catch (embErr: any) {
+      // Gemini indisponible pour l'embedding : ne pas planter, proposer des destinations réelles
+      console.warn('[ai-assistant] embed failed, degrading to destination suggestions:', embErr?.message || embErr)
+      const { data: suggested } = await supabase
+        .from('destinations')
+        .select('id, name, wilaya, cultural_theme, description')
+        .limit(3)
+      const hasSugg = Array.isArray(suggested) && suggested.length > 0
+      return new Response(JSON.stringify({
+        answer: busyMessage(answerLang, false),
+        resources: [], destinations: hasSugg ? suggested : [], trips: []
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
     // 2. Recherche vectorielle parallèle
     const [resourcesRes, destinationsRes, tripsRes] = await Promise.all([
@@ -459,7 +492,38 @@ INSTRUCTIONS :
 
 # TA RÉPONSE :`
 
-    const { text: answer, tokens } = await generate(prompt)
+    // Génération de la réponse — si Gemini est saturé (503) même après retries,
+    // on ne renvoie PAS une erreur : on affiche les cartes déjà trouvées avec un mot doux.
+    let answer: string
+    let tokens = 0
+    try {
+      const gen = await generate(prompt)
+      answer = gen.text
+      tokens = gen.tokens
+    } catch (genErr: any) {
+      console.warn('[ai-assistant] generate failed, returning retrieved cards:', genErr?.message || genErr)
+      await supabase.from('ai_conversations').insert({
+        user_id: user_id || null,
+        user_query: question,
+        retrieved_resource_ids: [
+          ...resources.map(r => r.resource_id),
+          ...destinations.map(d => d.id),
+          ...trips.map(t => t.id)
+        ],
+        llm_response: { text: null, degraded: true, reason: 'gemini_unavailable' },
+        validation_passed: true,
+        validation_notes: 'Génération indisponible (Gemini saturé) — cartes renvoyées.',
+        tokens_used: 0,
+        latency_ms: Date.now() - startTime
+      })
+      return new Response(JSON.stringify({
+        answer: busyMessage(answerLang, true),
+        resources: resources.slice(0, 4),
+        destinations: destinations.slice(0, 3),
+        trips: trips.slice(0, 3),
+        degraded: true
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
     const validation = validateAnswer(answer, contextNames)
 
     const resourceIds = [
