@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import CoachPanel from '@/components/CoachPanel.vue'
+import ImageUpload from '@/components/admin/ImageUpload.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -15,11 +17,21 @@ interface DayItem {
   accommodation: string
 }
 
-const title = ref('')
-const description = ref('')
+const title = ref('')          // = titre FR
+const titleAr = ref('')
+const titleEn = ref('')
+const description = ref('')     // = description FR
+const descriptionAr = ref('')
+const descriptionEn = ref('')
+const coverImageUrl = ref('')
 const destinationId = ref<string>('')
 const durationDays = ref(3)
 const priceDa = ref<number | null>(null)
+
+// === COACH DJAWAL ===
+const aiScore = ref(0)
+const aiAssisted = ref(false)
+const coachCanPublish = ref(false)
 const itinerary = ref<DayItem[]>([])
 const inclusions = ref<string[]>([])
 const exclusions = ref<string[]>([])
@@ -35,6 +47,30 @@ const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 
 const mealOptions = ['petit-déjeuner', 'déjeuner', 'dîner', 'goûter']
+
+// Modèle pour le Coach Djawal (mêmes règles que le TripBuilder guide)
+const coachModel = computed(() => ({
+  title_fr: title.value, title_ar: titleAr.value, title_en: titleEn.value,
+  description_fr: description.value, description_ar: descriptionAr.value, description_en: descriptionEn.value,
+  destinationId: destinationId.value,
+  durationDays: durationDays.value,
+  priceDa: priceDa.value || 0,
+  difficulty: 'modere',
+  tags: inclusions.value.join(', '),
+  hasCover: !!coverImageUrl.value,
+  days: itinerary.value.map(d => [d.title, d.description, d.accommodation].filter(Boolean).join(' '))
+}))
+const selectedDestinationName = computed(() => destinations.value.find(d => d.id === destinationId.value)?.name)
+function onCoachApply(data: Record<string, any>) {
+  if (data.title_fr !== undefined) title.value = data.title_fr
+  if (data.title_ar !== undefined) titleAr.value = data.title_ar
+  if (data.title_en !== undefined) titleEn.value = data.title_en
+  if (data.description_fr !== undefined) description.value = data.description_fr
+  if (data.description_ar !== undefined) descriptionAr.value = data.description_ar
+  if (data.description_en !== undefined) descriptionEn.value = data.description_en
+  if (Array.isArray(data.days)) data.days.forEach((txt: string, i: number) => { if (itinerary.value[i]) itinerary.value[i].description = txt })
+  if (data.ai_assisted) aiAssisted.value = true
+}
 
 onMounted(async () => {
   if (!auth.canSubmit('trip')) {
@@ -120,6 +156,9 @@ const canSubmit = computed(() =>
   validation.value.duration &&
   validation.value.price &&
   validation.value.itinerary &&
+  // Soumettre pour validation exige la qualité publiable (trilingue + image + score),
+  // sinon l'admin ne pourra pas publier (gate base). Le brouillon reste libre.
+  (!submitForReview.value || coachCanPublish.value) &&
   !saving.value
 )
 
@@ -131,6 +170,7 @@ const missingFields = computed(() => {
   if (!validation.value.duration) m.push('Durée (entre 1 et 30 jours)')
   if (!validation.value.price) m.push('Prix par personne')
   if (!validation.value.itinerary) m.push('Titre de chaque journée du programme')
+  if (submitForReview.value && !coachCanPublish.value) m.push('Qualité publiable : trilingue FR+AR+EN, image de couverture, score suffisant (voir Coach Djawal)')
   return m
 })
 
@@ -143,7 +183,16 @@ async function save() {
   try {
     const payload: any = {
       title: title.value.trim(),
+      title_fr: title.value.trim(),
+      title_ar: titleAr.value.trim() || null,
+      title_en: titleEn.value.trim() || null,
       description: description.value.trim(),
+      description_fr: description.value.trim(),
+      description_ar: descriptionAr.value.trim() || null,
+      description_en: descriptionEn.value.trim() || null,
+      cover_image_url: coverImageUrl.value.trim() || null,
+      ai_quality_score: aiScore.value,
+      ai_assisted: aiAssisted.value,
       destination_id: destinationId.value,
       duration_days: durationDays.value,
       price_da: priceDa.value,
@@ -194,25 +243,43 @@ async function save() {
       {{ successMsg }}
     </v-alert>
 
+    <!-- COACH DJAWAL — aide à la rédaction (trilingue, score, gate) -->
+    <CoachPanel
+      class="coach-mb"
+      :model="coachModel"
+      :catalog="[]"
+      :destination-name="selectedDestinationName"
+      @apply="onCoachApply"
+      @update:score="aiScore = $event"
+      @can-publish="coachCanPublish = $event"
+    />
+
     <v-form @submit.prevent="save">
       <!-- === Identité du package === -->
       <fieldset>
         <legend>Identité du package</legend>
+        <p class="field-help">Trilingue obligatoire (FR + AR + EN) pour la publication. Le Coach Djawal ci-dessus peut générer ou traduire.</p>
         <v-text-field
           v-model="title"
-          label="Titre du package *"
+          label="Titre (FR) *"
           density="comfortable"
           hint="Ex : 'Découverte du Tassili — 7 jours sur les traces des Touaregs'"
           persistent-hint
         />
+        <div class="row-2">
+          <v-text-field v-model="titleAr" label="Titre (AR) *" density="comfortable" class="arabic" />
+          <v-text-field v-model="titleEn" label="Titre (EN) *" density="comfortable" />
+        </div>
         <v-textarea
           v-model="description"
-          label="Description courte *"
+          label="Description (FR) *"
           rows="3"
           density="comfortable"
           counter="500"
           maxlength="500"
         />
+        <v-textarea v-model="descriptionAr" label="Description (AR) *" rows="3" density="comfortable" class="arabic" />
+        <v-textarea v-model="descriptionEn" label="Description (EN) *" rows="3" density="comfortable" />
         <v-select
           v-model="destinationId"
           :items="destinations"
@@ -221,6 +288,9 @@ async function save() {
           label="Destination principale *"
           density="comfortable"
         />
+        <div class="mt-3">
+          <ImageUpload v-model="coverImageUrl" bucket="trip-covers" label="Image de couverture *" />
+        </div>
       </fieldset>
 
       <!-- === Logistique === -->
@@ -416,6 +486,9 @@ h1 {
   margin-bottom: var(--space-2);
 }
 .lead { color: var(--c-texte-doux); }
+
+.coach-mb { margin-bottom: var(--space-4); position: static !important; top: auto !important; }
+.arabic :deep(input), .arabic :deep(textarea) { direction: rtl; text-align: right; }
 
 fieldset {
   border: 1px solid var(--c-gris-clair);
