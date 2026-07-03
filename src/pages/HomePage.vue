@@ -143,11 +143,15 @@ function openGuide(id: string) {
 }
 
 // ===== MINI-CHAT IA HOME =====
+interface ClarQuestion { key: string; question: string; suggestions: string[] }
 interface ChatMsg {
   role: 'user' | 'ai'
   text: string
+  questions?: ClarQuestion[]   // clarification en place (mode needs-clarification)
+  baseQuestion?: string        // question d'origine pour reconstruire l'enrichi
 }
 const chatMessages = ref<ChatMsg[]>([])
+const homeClarif = ref<Record<string, string>>({})
 const chatInput = ref('')
 const chatLoading = ref(false)
 const chatStarted = ref(false)
@@ -173,10 +177,19 @@ async function sendChatMessage(text?: string) {
     })
     if (error) throw error
     const ans = (data && (data.answer || data.message)) as string | undefined
-    if (data?.mode === 'too-vague' || data?.mode === 'needs-clarification') {
+    if (data?.mode === 'too-vague') {
       chatMessages.value.push({
         role: 'ai',
-        text: (data.answer || "Pour composer un vrai voyage, j'ai besoin de quelques précisions.") + "\n\n→ Cliquez sur « Continuer dans Djawal IA » ci-dessous pour préciser."
+        text: (data.answer || "Ta demande est large.") + "\n\n→ Continue dans Djawal IA (pleine page) pour un composeur détaillé."
+      })
+    } else if (data?.mode === 'needs-clarification') {
+      // Clarification EN PLACE : on affiche les questions + puces dans le chat
+      homeClarif.value = {}
+      chatMessages.value.push({
+        role: 'ai',
+        text: data.answer || "Pour composer le voyage parfait, j'ai besoin de quelques précisions :",
+        questions: Array.isArray(data.questions) ? data.questions : [],
+        baseQuestion: q
       })
     } else if (ans) {
       chatMessages.value.push({ role: 'ai', text: ans })
@@ -190,6 +203,34 @@ async function sendChatMessage(text?: string) {
     })
   } finally {
     chatLoading.value = false
+  }
+}
+
+function pickHomeChip(key: string, val: string) {
+  homeClarif.value = { ...homeClarif.value, [key]: val }
+}
+
+async function submitHomeClarif(m: ChatMsg) {
+  const parts = [m.baseQuestion || '']
+  for (const v of Object.values(homeClarif.value)) if (v) parts.push(v)
+  const enriched = parts.filter(Boolean).join('. ')
+  if (!enriched || chatLoading.value) return
+  m.questions = undefined  // on retire les puces une fois validées
+  const history = chatMessages.value.map(x => ({ role: x.role === 'ai' ? 'assistant' : 'user', content: x.text }))
+  chatMessages.value.push({ role: 'user', text: enriched })
+  chatLoading.value = true
+  try {
+    const { data, error } = await supabase.functions.invoke('ai-assistant', {
+      body: { question: enriched, user_id: null, history, skip_analysis: true }
+    })
+    if (error) throw error
+    const ans = (data && (data.answer || data.message)) as string | undefined
+    chatMessages.value.push({ role: 'ai', text: ans || 'Voici une première proposition — affine si tu veux.' })
+  } catch (e) {
+    chatMessages.value.push({ role: 'ai', text: "Je n'ai pas pu composer tout de suite. Réessaie, ou continue en pleine page." })
+  } finally {
+    chatLoading.value = false
+    homeClarif.value = {}
   }
 }
 
@@ -511,7 +552,18 @@ onMounted(async () => {
               <template v-else>
                 <div v-for="(m, i) in chatMessages" :key="i" class="chat-msg" :class="m.role">
                   <div v-if="m.role === 'user'" class="bubble user-bubble">{{ m.text }}</div>
-                  <div v-else class="bubble ai-bubble" v-html="formatMessage(m.text)"></div>
+                  <div v-else class="bubble ai-bubble">
+                    <span v-html="formatMessage(m.text)"></span>
+                    <div v-if="m.questions && m.questions.length" class="home-clarif">
+                      <div v-for="qq in m.questions" :key="qq.key" class="hcq">
+                        <div class="hcq-label">{{ qq.question }}</div>
+                        <div class="hcq-chips">
+                          <button v-for="s in qq.suggestions" :key="s" type="button" class="hcq-chip" :class="{ on: homeClarif[qq.key] === s }" @click="pickHomeChip(qq.key, s)">{{ s }}</button>
+                        </div>
+                      </div>
+                      <button type="button" class="hcq-go" @click="submitHomeClarif(m)">Composer avec ces précisions →</button>
+                    </div>
+                  </div>
                 </div>
                 <div v-if="chatLoading" class="chat-msg ai">
                   <div class="bubble ai-bubble typing"><span></span><span></span><span></span></div>
@@ -1106,6 +1158,26 @@ onMounted(async () => {
   border: 1px solid rgba(212, 168, 68, 0.18);
   border-bottom-left-radius: 4px;
 }
+/* Clarification en place dans le mini-chat accueil */
+.home-clarif { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+.hcq-label { font-size: 13px; color: #E8B96B; margin-bottom: 6px; }
+.hcq-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hcq-chip {
+  background: rgba(250, 247, 242, 0.06);
+  border: 1px solid rgba(212, 168, 68, 0.35);
+  color: rgba(250, 247, 242, 0.9);
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 12.5px; cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.hcq-chip:hover { border-color: #D4A844; }
+.hcq-chip.on { background: #D4A844; color: #0F2419; border-color: #D4A844; font-weight: 600; }
+.hcq-go {
+  align-self: flex-start; margin-top: 4px;
+  background: #D4A844; color: #0F2419; border: 0;
+  padding: 9px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.hcq-go:hover { background: #E8B96B; }
 .ai-bubble.typing {
   display: inline-flex; gap: 4px; padding: 14px 16px;
 }
