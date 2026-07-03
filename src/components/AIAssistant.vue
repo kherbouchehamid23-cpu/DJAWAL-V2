@@ -55,6 +55,10 @@ async function send() {
   const question = input.value.trim()
   if (!question || sending.value) return
 
+  // Historique (mémoire de conversation) — capturé avant d'empiler le nouveau message
+  const history = messages.value
+    .filter(m => !m.loading && m.text)
+    .map(m => ({ role: m.role, content: m.text }))
   messages.value.push({ role: 'user', text: question })
   input.value = ''
   sending.value = true
@@ -67,7 +71,8 @@ async function send() {
     const { data, error } = await supabase.functions.invoke('ai-assistant', {
       body: {
         question,
-        user_id: auth.user?.id || null
+        user_id: auth.user?.id || null,
+        history
       }
     })
 

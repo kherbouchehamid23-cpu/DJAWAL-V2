@@ -162,19 +162,21 @@ async function sendChatMessage(text?: string) {
   const q = (text ?? chatInput.value).trim()
   if (!q || chatLoading.value) return
   chatStarted.value = true
+  // Historique des tours précédents (pour la mémoire de conversation)
+  const history = chatMessages.value.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }))
   chatMessages.value.push({ role: 'user', text: q })
   chatInput.value = ''
   chatLoading.value = true
   try {
     const { data, error } = await supabase.functions.invoke('ai-assistant', {
-      body: { question: q, user_id: null }
+      body: { question: q, user_id: null, history }
     })
     if (error) throw error
     const ans = (data && (data.answer || data.message)) as string | undefined
     if (data?.mode === 'too-vague' || data?.mode === 'needs-clarification') {
       chatMessages.value.push({
         role: 'ai',
-        text: data.answer || "Pour vous répondre précisément, j'ai besoin de quelques détails. Cliquez sur « Continuer dans Djawal IA » ci-dessous."
+        text: (data.answer || "Pour composer un vrai voyage, j'ai besoin de quelques précisions.") + "\n\n→ Cliquez sur « Continuer dans Djawal IA » ci-dessous pour préciser."
       })
     } else if (ans) {
       chatMessages.value.push({ role: 'ai', text: ans })
