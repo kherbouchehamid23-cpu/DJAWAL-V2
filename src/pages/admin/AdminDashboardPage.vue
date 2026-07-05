@@ -200,6 +200,11 @@ const totalPendingResources = computed(() =>
           <h3>Messages contact</h3>
           <p>Boîte de réception du formulaire public, suivi et archivage.</p>
         </router-link>
+        <router-link to="/mon-espace/visites" class="module-card">
+          <div class="module-icon">🥽</div>
+          <h3>Visites virtuelles</h3>
+          <p>Créer et publier des visites 360° navigables (musées, sites, hôtels…) et gérer les accès créateurs.</p>
+        </router-link>
       </div>
     </section>
   </div>
