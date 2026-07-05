@@ -139,6 +139,34 @@ async function loadVR(): Promise<void> {
   if (!(window as any).AFRAME) await loadScript(AFRAME_JS)
 }
 
+/**
+ * iOS/Safari affiche un ciel NOIR avec les grandes images équirectangulaires non power-of-two
+ * (limite de taille de texture + NPOT en WebGL). On redimensionne en 4096×2048 (power-of-two,
+ * ratio 2:1, dans les limites iOS) via un canvas avant de la passer à A-Frame.
+ * Si le canvas est « tainted » (CORS), on retombe sur l'URL d'origine.
+ */
+function makeSafeSky(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      try {
+        const W = 4096, H = 2048
+        const c = document.createElement('canvas')
+        c.width = W; c.height = H
+        const ctx = c.getContext('2d')
+        if (!ctx) { resolve(url); return }
+        ctx.drawImage(img, 0, 0, W, H)
+        resolve(c.toDataURL('image/jpeg', 0.9))
+      } catch {
+        resolve(url)
+      }
+    }
+    img.onerror = () => reject(new Error('panorama image load failed'))
+    img.src = url
+  })
+}
+
 async function enterVR() {
   if (!props.panoramaUrl || vrEl.value) return
   vrLoading.value = true
@@ -148,7 +176,8 @@ async function enterVR() {
     vrLoading.value = false
     return
   }
-  const src = proxyIfNeeded(props.panoramaUrl)
+  let safeSrc = proxyIfNeeded(props.panoramaUrl)
+  try { safeSrc = await makeSafeSky(safeSrc) } catch { /* on garde l'URL d'origine */ }
   const overlay = document.createElement('div')
   overlay.className = 'djawal-vr-overlay'
   overlay.innerHTML = `
@@ -156,7 +185,7 @@ async function enterVR() {
              device-orientation-permission-ui="enabled: true"
              loading-screen="dotsColor: #C04A3A; backgroundColor: #0A1F2E"
              style="width:100%;height:100%;display:block">
-      <a-assets timeout="30000"><img id="djawal-vr-pano" crossorigin="anonymous" src="${src}"></a-assets>
+      <a-assets timeout="30000"><img id="djawal-vr-pano" crossorigin="anonymous" src="${safeSrc}"></a-assets>
       <a-sky src="#djawal-vr-pano" rotation="0 -90 0"></a-sky>
       <a-camera></a-camera>
     </a-scene>
