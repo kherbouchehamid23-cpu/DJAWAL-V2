@@ -103,6 +103,68 @@ function toggleFullscreen() {
   }
 }
 
+// ===== Réalité virtuelle (WebXR via A-Frame, chargé à la demande) =====
+const AFRAME_JS = 'https://aframe.io/releases/1.5.0/aframe.min.js'
+const vrEl = ref<HTMLDivElement | null>(null)
+const vrLoading = ref(false)
+
+function loadAframe(): Promise<void> {
+  if ((window as any).AFRAME) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = AFRAME_JS
+    s.async = true
+    s.onload = () => resolve()
+    s.onerror = () => reject(new Error('A-Frame failed to load'))
+    document.head.appendChild(s)
+  })
+}
+
+async function enterVR() {
+  if (!props.panoramaUrl || vrEl.value) return
+  vrLoading.value = true
+  try {
+    await loadAframe()
+  } catch {
+    vrLoading.value = false
+    return
+  }
+  const src = proxyIfNeeded(props.panoramaUrl)
+  const overlay = document.createElement('div')
+  overlay.className = 'djawal-vr-overlay'
+  overlay.innerHTML = `
+    <a-scene embedded vr-mode-ui="enabled: true"
+             device-orientation-permission-ui="enabled: true"
+             loading-screen="dotsColor: #C04A3A; backgroundColor: #0A1F2E"
+             style="width:100%;height:100%;display:block">
+      <a-assets timeout="30000"><img id="djawal-vr-pano" crossorigin="anonymous" src="${src}"></a-assets>
+      <a-sky src="#djawal-vr-pano" rotation="0 -90 0"></a-sky>
+      <a-camera></a-camera>
+    </a-scene>
+    <button class="djawal-vr-go" type="button">🥽 <span>Entrer en VR</span></button>
+    <button class="djawal-vr-close" type="button" aria-label="Fermer">✕</button>
+    <div class="djawal-vr-hint">Bougez le téléphone pour regarder autour · glissez-le dans un casque pour la VR</div>
+  `
+  document.body.appendChild(overlay)
+  vrEl.value = overlay
+  vrLoading.value = false
+  const scene: any = overlay.querySelector('a-scene')
+  overlay.querySelector('.djawal-vr-close')?.addEventListener('click', closeVR)
+  overlay.querySelector('.djawal-vr-go')?.addEventListener('click', () => {
+    try { scene && scene.enterVR && scene.enterVR() } catch {}
+  })
+}
+
+function closeVR() {
+  if (!vrEl.value) return
+  try {
+    const scene: any = vrEl.value.querySelector('a-scene')
+    if (scene && scene.is && scene.is('vr-mode') && scene.exitVR) scene.exitVR()
+  } catch {}
+  vrEl.value.remove()
+  vrEl.value = null
+}
+
 onMounted(() => {
   if (props.panoramaUrl) initViewer()
   document.addEventListener('fullscreenchange', onFSChange)
@@ -112,6 +174,7 @@ onBeforeUnmount(() => {
   if (viewer.value && viewer.value.destroy) {
     try { viewer.value.destroy() } catch {}
   }
+  closeVR()
   document.removeEventListener('fullscreenchange', onFSChange)
 })
 
@@ -133,6 +196,9 @@ watch(() => props.panoramaUrl, () => {
         <span class="badge-icon">🌐</span>
         <span>Visite 360°</span>
       </div>
+      <button class="vr-btn" @click="enterVR" :disabled="vrLoading" title="Voir en réalité virtuelle">
+        <span class="vr-ico">🥽</span><span>{{ vrLoading ? '…' : 'VR' }}</span>
+      </button>
       <button class="fs-btn" @click="toggleFullscreen" :title="fullscreen ? 'Quitter' : 'Plein écran'">
         {{ fullscreen ? '⤓' : '⤢' }}
       </button>
@@ -222,6 +288,31 @@ watch(() => props.panoramaUrl, () => {
 }
 .fs-btn:hover { background: var(--c-primaire); transform: scale(1.05); }
 
+/* Bouton VR */
+.vr-btn {
+  position: absolute;
+  bottom: 14px; right: 58px;
+  background: var(--c-primaire, #C04A3A);
+  color: #fff;
+  border: none;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-pill, 999px);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+  box-shadow: 0 6px 16px -6px rgba(0,0,0,0.5);
+  transition: var(--t-base, 0.2s);
+}
+.vr-btn:hover { transform: scale(1.05); filter: brightness(1.06); }
+.vr-btn:disabled { opacity: 0.6; cursor: default; }
+.vr-ico { font-size: 15px; }
+
 .panorama-loading {
   position: absolute;
   inset: 0;
@@ -254,4 +345,34 @@ watch(() => props.panoramaUrl, () => {
   font-style: italic;
 }
 .no-panorama span { font-size: 48px; opacity: 0.4; }
+</style>
+
+<!-- Styles globaux : l'overlay VR est monté sur <body>, hors portée du scoped -->
+<style>
+.djawal-vr-overlay { position: fixed; inset: 0; z-index: 99999; background: #000; }
+.djawal-vr-overlay a-scene { width: 100%; height: 100%; }
+.djawal-vr-go {
+  position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+  background: #C04A3A; color: #fff; border: none;
+  padding: 14px 26px; border-radius: 999px;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: 0 12px 30px -10px rgba(0,0,0,0.7); z-index: 100000;
+}
+.djawal-vr-go:hover { filter: brightness(1.06); }
+.djawal-vr-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(10,31,46,0.7); color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  font-size: 20px; cursor: pointer; z-index: 100000;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.djawal-vr-close:hover { background: rgba(10,31,46,0.9); }
+.djawal-vr-hint {
+  position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%);
+  color: rgba(255,255,255,0.85); font-size: 12.5px; text-align: center;
+  max-width: 90%; z-index: 100000; pointer-events: none;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.85);
+}
 </style>
