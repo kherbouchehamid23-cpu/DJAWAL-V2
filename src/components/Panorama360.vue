@@ -105,26 +105,45 @@ function toggleFullscreen() {
 
 // ===== Réalité virtuelle (WebXR via A-Frame, chargé à la demande) =====
 const AFRAME_JS = 'https://aframe.io/releases/1.5.0/aframe.min.js'
+const WEBXR_POLYFILL = 'https://cdn.jsdelivr.net/npm/webxr-polyfill@2.0.3/build/webxr-polyfill.min.js'
 const vrEl = ref<HTMLDivElement | null>(null)
 const vrLoading = ref(false)
 
-function loadAframe(): Promise<void> {
-  if ((window as any).AFRAME) return Promise.resolve()
+function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    if ([...document.scripts].some(s => s.src === src)) { resolve(); return }
     const s = document.createElement('script')
-    s.src = AFRAME_JS
+    s.src = src
     s.async = true
     s.onload = () => resolve()
-    s.onerror = () => reject(new Error('A-Frame failed to load'))
+    s.onerror = () => reject(new Error('Script failed: ' + src))
     document.head.appendChild(s)
   })
+}
+
+/**
+ * Charge le polyfill WebXR (pour iOS/Safari sans WebXR natif → mode Cardboard stéréoscopique),
+ * PUIS A-Frame. Sur Android/Chrome (WebXR natif présent) le polyfill est ignoré.
+ * L'ordre importe : le polyfill doit être instancié avant qu'A-Frame ne lise navigator.xr.
+ */
+async function loadVR(): Promise<void> {
+  if (!(navigator as any).xr && !(window as any).__djawalXRPolyfill) {
+    try {
+      await loadScript(WEBXR_POLYFILL)
+      const WP = (window as any).WebXRPolyfill
+      if (WP) { new WP(); (window as any).__djawalXRPolyfill = true }
+    } catch {
+      // Pas de polyfill disponible : on retombera sur le suivi gyroscope (magic window).
+    }
+  }
+  if (!(window as any).AFRAME) await loadScript(AFRAME_JS)
 }
 
 async function enterVR() {
   if (!props.panoramaUrl || vrEl.value) return
   vrLoading.value = true
   try {
-    await loadAframe()
+    await loadVR()
   } catch {
     vrLoading.value = false
     return
