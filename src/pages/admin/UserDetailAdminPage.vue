@@ -22,6 +22,7 @@ interface UserProfile {
   is_active: boolean
   kyc_status: string
   created_at: string
+  can_create_virtual_tours?: boolean
 }
 
 interface UserAuthInfo {
@@ -81,7 +82,7 @@ onMounted(async () => {
   // Profil — colonnes réelles du schema profiles
   const { data: profileData, error: profileErr } = await supabase
     .from('profiles')
-    .select('id, display_name, avatar_url, role, bio, region, company_name, operator_type, specialties, is_active, kyc_status, created_at')
+    .select('id, display_name, avatar_url, role, bio, region, company_name, operator_type, specialties, is_active, kyc_status, created_at, can_create_virtual_tours')
     .eq('id', userId.value)
     .maybeSingle()
 
@@ -156,6 +157,20 @@ async function toggleActive(target: boolean) {
     return
   }
   profile.value.is_active = target
+}
+
+const tourRightLoading = ref(false)
+async function toggleTourRight(target: boolean) {
+  if (!profile.value) return
+  tourRightLoading.value = true
+  actionError.value = ''
+  const { error } = await supabase
+    .from('profiles')
+    .update({ can_create_virtual_tours: target })
+    .eq('id', profile.value.id)
+  tourRightLoading.value = false
+  if (error) { actionError.value = 'Erreur : ' + error.message; return }
+  profile.value.can_create_virtual_tours = target
 }
 
 async function openDeleteModal() {
@@ -377,6 +392,16 @@ function roleColor(role: string): string {
             @click="toggleActive(true)"
           >
             {{ actionLoading === 'reactivate' ? 'Réactivation…' : '✅ Réactiver le compte' }}
+          </button>
+
+          <!-- Droit visites virtuelles -->
+          <button
+            class="action-btn"
+            :class="profile.can_create_virtual_tours ? 'action-success-btn' : ''"
+            :disabled="tourRightLoading || profile.role === 'super_admin'"
+            @click="toggleTourRight(!profile.can_create_virtual_tours)"
+          >
+            {{ tourRightLoading ? '…' : (profile.role === 'super_admin' ? '🥽 Visites virtuelles (admin)' : (profile.can_create_virtual_tours ? '🥽 Retirer le droit « visites »' : '🥽 Autoriser à créer des visites')) }}
           </button>
 
           <!-- Supprimer -->

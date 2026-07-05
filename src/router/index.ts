@@ -121,6 +121,14 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Réinitialiser le mot de passe — Djawal' }
   },
 
+  {
+    path: '/visite/:slug',
+    name: 'virtual-tour',
+    component: () => import('@/pages/VirtualTourPage.vue'),
+    props: true,
+    meta: { title: 'Visite virtuelle — Djawal' }
+  },
+
   // === Espace voyageur (authentifié) ===
   {
     path: '/mon-espace',
@@ -145,6 +153,12 @@ const routes: RouteRecordRaw[] = [
     name: 'my-reviews',
     component: () => import('@/pages/account/MyReviewsPage.vue'),
     meta: { requiresAuth: true, title: 'Mes avis — Djawal' }
+  },
+  {
+    path: '/mon-espace/visites',
+    name: 'my-virtual-tours',
+    component: () => import('@/pages/VirtualToursManagePage.vue'),
+    meta: { requiresAuth: true, title: 'Visites virtuelles — Djawal' }
   },
 
   // === Espace guide (authentifié + rôle guide) ===
@@ -338,24 +352,20 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
-  // Attendre l'initialisation de l'auth si pas encore faite
   if (auth.loading) {
     await auth.initialize()
   }
 
   if (to.meta.title) document.title = to.meta.title as string
 
-  // Route publique mais utilisateur déjà connecté → renvoyer vers mon-espace
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return next({ name: 'my-account' })
   }
 
-  // Route nécessite une authentification
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
-  // Route nécessite un rôle spécifique
   if (to.meta.requiresRole) {
     const allowedRoles = to.meta.requiresRole as string[]
     if (!auth.role || !allowedRoles.includes(auth.role)) {

@@ -25,6 +25,8 @@ export interface Profile {
   slug: string | null
   gallery_urls: string[] | null
   specialties: string[] | null
+  // Droit accordé par le super_admin de créer des visites virtuelles
+  can_create_virtual_tours?: boolean
 }
 
 export interface SignupPayload {
@@ -58,6 +60,8 @@ export const useAuthStore = defineStore('auth', () => {
   const isGuideJunior = computed(() => role.value === 'guide_junior')
   const isVoyageur = computed(() => role.value === 'voyageur')
   const isOperator = computed(() => role.value === 'tourist_operator')
+  // Peut créer des visites virtuelles : super_admin, ou droit accordé explicitement
+  const canCreateVirtualTours = computed(() => isAdmin.value || !!profile.value?.can_create_virtual_tours)
   const operatorType = computed<OperatorType | null>(() => profile.value?.operator_type ?? null)
   const isOperatorArtisan = computed(() => isOperator.value && operatorType.value === 'artisan')
   const isOperatorRestaurant = computed(() => isOperator.value && operatorType.value === 'restaurant')
@@ -249,7 +253,7 @@ export const useAuthStore = defineStore('auth', () => {
     user, session, profile, loading, lastError,
     // computed
     isAuthenticated, role, isAdmin, isGuide, isGuideSenior, isGuideJunior, isVoyageur,
-    isOperator, operatorType,
+    isOperator, operatorType, canCreateVirtualTours,
     isOperatorArtisan, isOperatorRestaurant, isOperatorAccommodation, isOperatorAgency,
     needsKyc, kycRejected, kycApproved,
     // helpers
