@@ -12,6 +12,7 @@ const auth = useAuthStore()
 type ProductType = 'accommodation' | 'restaurant' | 'activity' | 'trip'
 type TableName = 'accommodations' | 'restaurants' | 'activities' | 'trips'
 
+const opTourType = computed(() => (({ accommodations: 'accommodation', restaurants: 'restaurant', activities: 'activity', trips: 'trip' }) as Record<string, string>)[currentTable.value])
 const tableMap: Record<ProductType, TableName> = {
   accommodation: 'accommodations',
   restaurant: 'restaurants',
@@ -430,6 +431,7 @@ async function deleteProduct(p: any) {
           <v-chip :color="statusColor(p.status)" size="small" variant="tonal">
             {{ statusLabel(p.status) }}
           </v-chip>
+          <v-btn v-if="auth.canCreateVirtualTours" size="small" variant="text" color="deep-purple-accent-4" :to="{ path: '/mon-espace/visites', query: { target_type: opTourType, target_id: p.id, target_name: p.name || p.title } }">🥽 Visite</v-btn>
           <v-btn v-if="p.status === 'rejected' || p.status === 'draft'" size="small" variant="outlined" color="primary" @click="resubmit(p)">
             Soumettre
           </v-btn>
