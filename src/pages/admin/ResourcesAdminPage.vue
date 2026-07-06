@@ -3,6 +3,7 @@ import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useGeocode } from '@/composables/useGeocode'
+import { useAuthStore } from '@/stores/auth'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
 import GalleryUpload from '@/components/admin/GalleryUpload.vue'
 
@@ -11,6 +12,9 @@ import GalleryUpload from '@/components/admin/GalleryUpload.vue'
  * Le type est déterminé par route.params.type.
  */
 const route = useRoute()
+const auth = useAuthStore()
+const tourTargetType = computed(() => (({ accommodations: 'accommodation', sites: 'site', restaurants: 'restaurant', activities: 'activity' }) as Record<string, string>)[resourceType.value] || 'site')
+const tourLink = computed(() => editing.value ? { path: '/mon-espace/visites', query: { target_type: tourTargetType.value, target_id: editing.value.id, target_name: form.name || editing.value.name } } : undefined)
 const resourceType = computed(() => route.params.type as 'accommodations' | 'sites' | 'restaurants' | 'activities')
 
 const configs = {
@@ -471,6 +475,7 @@ async function remove(r: any) {
 
         <v-card-actions>
           <v-spacer />
+          <v-btn v-if="editing && auth.canCreateVirtualTours" variant="text" color="deep-purple-accent-4" :to="tourLink">🥽 Visite virtuelle</v-btn>
           <v-btn variant="text" @click="dialogOpen = false">Annuler</v-btn>
           <v-btn color="primary" variant="flat" @click="save">{{ editing ? 'Enregistrer' : 'Créer' }}</v-btn>
         </v-card-actions>
