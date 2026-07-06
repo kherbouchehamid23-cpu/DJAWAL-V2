@@ -10,6 +10,7 @@ import ResourceDetailDialog from '@/components/ResourceDetailDialog.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import FeaturedBadge from '@/components/FeaturedBadge.vue'
 import ReviewSection from '@/components/ReviewSection.vue'
+import VirtualTourEmbed from '@/components/VirtualTourEmbed.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -234,6 +235,7 @@ function parsePriceRange(range: any): string {
     <!-- DESCRIPTION -->
     <section class="djawal-container intro-section">
       <p class="intro-text">{{ destination.description }}</p>
+      <VirtualTourEmbed target-type="destination" :target-id="destination.id" class="dest-vt-embed" />
 
       <div class="stats-row">
         <div class="stat">
@@ -552,6 +554,7 @@ function parsePriceRange(range: any): string {
 }
 
 /* === INTRO === */
+.dest-vt-embed { margin-top: 18px; }
 .intro-section {
   padding: var(--space-6) var(--space-5);
 }
