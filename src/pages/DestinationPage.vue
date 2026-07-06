@@ -36,6 +36,7 @@ interface Resource {
   images?: string[]
   panorama_360_url?: string | null
   virtual_tour_url?: string | null
+  featured_label?: 'vedette' | 'coup_de_coeur' | 'tendance' | null
   // hotel-specific
   address?: string
   star_rating?: number
