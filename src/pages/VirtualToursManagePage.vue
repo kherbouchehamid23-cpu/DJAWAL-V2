@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import VirtualTour from '@/components/VirtualTour.vue'
+import VirtualTourEditor from '@/components/VirtualTourEditor.vue'
 
 const auth = useAuthStore()
 
@@ -41,6 +42,12 @@ const EXAMPLE = {
 
 const parsedConfig = computed(() => { try { return JSON.parse(configText.value) } catch { return null } })
 const canPreview = computed(() => parsedConfig.value && Array.isArray(parsedConfig.value.scenes) && parsedConfig.value.scenes.length > 0)
+
+// Modèle piloté par l'éditeur visuel (get = config courante, set = réécrit le JSON)
+const editModel = computed<any>({
+  get() { const p = parsedConfig.value; return p && Array.isArray(p.scenes) ? p : { firstScene: '', scenes: [] } },
+  set(v) { configText.value = JSON.stringify(v, null, 2); configError.value = null }
+})
 
 function slugify(s: string) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -167,14 +174,22 @@ onMounted(loadTours)
         </div>
         <label>Image de couverture (URL)<input v-model="editing.cover_url" placeholder="https://…"></label>
 
-        <label class="vtm-json">Configuration de la visite (JSON)
-          <textarea v-model="configText" spellcheck="false" rows="14" @blur="refreshPreview"></textarea>
-        </label>
-        <div class="vtm-jsonbar">
-          <button class="btn ghost" @click="refreshPreview">Rafraîchir l'aperçu</button>
-          <span v-if="configError" class="err">{{ configError }}</span>
-          <span class="hint">Chaque scène : id, title, panorama (image équirectangulaire), hotspots (flèches & points d'info).</span>
+        <div class="vtm-visual">
+          <div class="vtm-visual-head">
+            <h3>Composition de la visite</h3>
+            <span class="hint">Ajoutez des scènes, collez vos images 360°, puis cliquez dans l'image pour poser flèches et points d'info.</span>
+          </div>
+          <VirtualTourEditor v-model="editModel" />
         </div>
+
+        <details class="vtm-advanced">
+          <summary>Mode avancé — éditer le JSON</summary>
+          <textarea v-model="configText" spellcheck="false" rows="12" @blur="refreshPreview"></textarea>
+          <div class="vtm-jsonbar">
+            <button class="btn ghost" type="button" @click="refreshPreview">Rafraîchir l'aperçu</button>
+            <span v-if="configError" class="err">{{ configError }}</span>
+          </div>
+        </details>
 
         <div class="vtm-preview" v-if="canPreview">
           <VirtualTour :key="previewKey" :config="parsedConfig" height="380px" />
@@ -224,6 +239,12 @@ onMounted(loadTours)
 .vtm-jsonbar .hint { color: #9aa0a6; font-size: 12px; }
 .vtm-jsonbar .err { color: #c0392b; font-size: 12.5px; font-weight: 600; }
 .vtm-preview { border-radius: 16px; overflow: hidden; border: 1px solid #e6e0d6; }
+.vtm-visual-head { margin-bottom: 10px; }
+.vtm-visual-head h3 { font-family: Georgia, serif; font-size: 17px; color: #2a2a2a; }
+.vtm-visual-head .hint { display: block; color: #9aa0a6; font-size: 12.5px; margin-top: 2px; }
+.vtm-advanced { border: 1px solid #e6e0d6; border-radius: 12px; padding: 10px 14px; background: #fbf9f5; }
+.vtm-advanced summary { cursor: pointer; font-size: 13px; font-weight: 600; color: #7a5a2a; }
+.vtm-advanced textarea { width: 100%; margin-top: 10px; font-family: ui-monospace, monospace; font-size: 12.5px; line-height: 1.5; padding: 11px 13px; border: 1px solid #d9d2c6; border-radius: 10px; }
 .vtm-save { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
 .vtm-save .pub { flex-direction: row; align-items: center; gap: 8px; font-weight: 600; }
 .vtm-save .spacer { flex: 1; }
