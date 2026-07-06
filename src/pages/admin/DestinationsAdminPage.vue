@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useGeocode } from '@/composables/useGeocode'
+import { useAuthStore } from '@/stores/auth'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
 
 interface Destination {
@@ -20,6 +21,8 @@ interface Destination {
 const destinations = ref<any[]>([])
 const loading = ref(true)
 const dialogOpen = ref(false)
+const auth = useAuthStore()
+const destTourLink = computed(() => editing.value && editing.value.id ? { path: '/mon-espace/visites', query: { target_type: 'destination', target_id: editing.value.id, target_name: form.name || editing.value.name } } : undefined)
 const editing = ref<Destination | null>(null)
 const errorMsg = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
@@ -326,6 +329,7 @@ async function remove(dest: any) {
 
         <v-card-actions>
           <v-spacer />
+          <v-btn v-if="editing && auth.canCreateVirtualTours" variant="text" color="deep-purple-accent-4" :to="destTourLink">🥽 Visite virtuelle</v-btn>
           <v-btn variant="text" @click="dialogOpen = false">Annuler</v-btn>
           <v-btn color="primary" variant="flat" @click="save">
             {{ editing ? 'Enregistrer' : 'Créer' }}
