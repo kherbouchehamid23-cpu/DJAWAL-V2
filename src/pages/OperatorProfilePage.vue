@@ -246,19 +246,19 @@ async function load() {
       </section>
 
       <!-- Avis sur l'opérateur -->
-      <section v-if="operator?.id" class="djawal-container djawal-section">
+      <section v-if="profile?.id" class="djawal-container djawal-section">
         <ReviewSection
           target-type="operator"
-          :target-id="operator.id"
-          :title="`⭐ Avis sur ${operator.business_name || 'cet opérateur'}`"
+          :target-id="profile.id"
+          :title="`⭐ Avis sur ${profile.company_name || profile.display_name || 'cet opérateur'}`"
         />
       </section>
 
       <!-- Bouton favori opérateur -->
       <FavoriteButton
-        v-if="operator?.id"
+        v-if="profile?.id"
         target-type="operator"
-        :target-id="operator.id"
+        :target-id="profile.id"
         size="lg"
         class="op-fav-btn"
       />
