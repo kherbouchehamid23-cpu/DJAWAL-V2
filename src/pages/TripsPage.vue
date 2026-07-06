@@ -34,6 +34,7 @@ interface PublishedTrip {
   duration_days: number
   price_da: number
   cover_image_url: string | null
+  featured_label?: 'vedette' | 'coup_de_coeur' | 'tendance' | null
   destinations?: { name: string; cultural_theme: string } | null
   profiles?: { display_name: string; role: string } | null
 }
