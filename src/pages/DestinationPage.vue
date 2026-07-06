@@ -10,6 +10,7 @@ import ResourceDetailDialog from '@/components/ResourceDetailDialog.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import FeaturedBadge from '@/components/FeaturedBadge.vue'
 import ReviewSection from '@/components/ReviewSection.vue'
+import VirtualTourEmbed from '@/components/VirtualTourEmbed.vue'
 
 const route = useRoute()
 const themeStore = useThemeStore()
@@ -35,6 +36,7 @@ interface Resource {
   images?: string[]
   panorama_360_url?: string | null
   virtual_tour_url?: string | null
+  featured_label?: 'vedette' | 'coup_de_coeur' | 'tendance' | null
   // hotel-specific
   address?: string
   star_rating?: number
@@ -234,6 +236,7 @@ function parsePriceRange(range: any): string {
     <!-- DESCRIPTION -->
     <section class="djawal-container intro-section">
       <p class="intro-text">{{ destination.description }}</p>
+      <VirtualTourEmbed target-type="destination" :target-id="destination.id" class="dest-vt-embed" />
 
       <div class="stats-row">
         <div class="stat">
@@ -552,6 +555,7 @@ function parsePriceRange(range: any): string {
 }
 
 /* === INTRO === */
+.dest-vt-embed { margin-top: 18px; }
 .intro-section {
   padding: var(--space-6) var(--space-5);
 }

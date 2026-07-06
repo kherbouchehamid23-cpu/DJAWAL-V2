@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import VirtualTourEmbed from '@/components/VirtualTourEmbed.vue'
 
 /**
  * Modal détaillé d'une ressource (site, hébergement, restaurant, activité).
@@ -224,6 +225,8 @@ watch(() => props.resource, () => {
               </div>
             </dl>
           </section>
+
+          <VirtualTourEmbed v-if="resourceType && resource?.id" :target-type="resourceType" :target-id="resource.id" class="rd-vt-embed" />
 
           <!-- Actions bas -->
           <div class="rd-actions">
@@ -514,6 +517,7 @@ watch(() => props.resource, () => {
   cursor: pointer;
   font-size: 14px;
 }
+.rd-vt-embed { margin-bottom: 14px; }
 .rd-btn-360 {
   background: linear-gradient(135deg, #D4A04F, #B8862E);
   color: white;

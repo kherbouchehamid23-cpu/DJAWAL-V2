@@ -2,10 +2,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { useRoute } from 'vue-router'
 import VirtualTour from '@/components/VirtualTour.vue'
 import VirtualTourEditor from '@/components/VirtualTourEditor.vue'
 
 const auth = useAuthStore()
+const route = useRoute()
+const prefillName = ref<string>('')
 
 const tours = ref<any[]>([])
 const loading = ref(true)
@@ -123,7 +126,21 @@ async function del(t: any) {
   await loadTours()
 }
 
-onMounted(loadTours)
+onMounted(async () => {
+  await loadTours()
+  const q = route.query
+  if (q.target_type && q.target_id) {
+    newTour()
+    editing.value.target_type = String(q.target_type)
+    editing.value.target_id = String(q.target_id)
+    if (q.target_name) {
+      const nm = String(q.target_name)
+      prefillName.value = nm
+      editing.value.title = 'Visite — ' + nm
+      editing.value.slug = slugify(editing.value.title)
+    }
+  }
+})
 </script>
 
 <template>
@@ -160,6 +177,7 @@ onMounted(loadTours)
 
       <!-- Éditeur -->
       <section v-if="editing" class="vtm-editor">
+        <div v-if="prefillName" class="vtm-attach">🔗 Rattachée à : <strong>{{ prefillName }}</strong> <span>({{ editing.target_type }})</span></div>
         <div class="row2">
           <label>Titre<input v-model="editing.title" placeholder="Ex : Musée national du Bardo" @blur="!editing.slug && (editing.slug = slugify(editing.title))"></label>
           <label>Slug (URL)<input v-model="editing.slug" placeholder="musee-bardo"></label>
@@ -239,6 +257,8 @@ onMounted(loadTours)
 .vtm-jsonbar .hint { color: #9aa0a6; font-size: 12px; }
 .vtm-jsonbar .err { color: #c0392b; font-size: 12.5px; font-weight: 600; }
 .vtm-preview { border-radius: 16px; overflow: hidden; border: 1px solid #e6e0d6; }
+.vtm-attach { background: #eef6f0; border: 1px solid #cfe6d8; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; color: #1c6b45; }
+.vtm-attach span { color: #6b8f7d; }
 .vtm-visual-head { margin-bottom: 10px; }
 .vtm-visual-head h3 { font-family: Georgia, serif; font-size: 17px; color: #2a2a2a; }
 .vtm-visual-head .hint { display: block; color: #9aa0a6; font-size: 12.5px; margin-top: 2px; }
